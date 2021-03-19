@@ -1,5 +1,6 @@
 # Win32App Migration Tool
  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg)  
    
 ## Version History  
   
@@ -94,22 +95,21 @@ Pass this parameter to reset the log file
   
 ## Screenshots  
   
-#### Application Selection  
-  
+#### Application Selection   
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg)  
   
 #### Create Application Folders  
-  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg)  
   
 #### Create Application Folders  
-  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_3.jpg  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_3.jpg)  
   
 #### Create Deployment Type Folders  
-  
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg)  
 
 #### Create .Intunewin File  
-  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg  
