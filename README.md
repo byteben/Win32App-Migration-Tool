@@ -44,6 +44,8 @@ Instead of manually checking Application and Deployment Type information and gat
   
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
   
+#### // Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //
+  
 ##### Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package
   
 ## Parameters  
