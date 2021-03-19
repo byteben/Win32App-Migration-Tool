@@ -91,4 +91,25 @@ Pass this parameter to reset the log file
 
 ##### .Example
 .\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
+  
+## Screenshots  
+  
+#### Application Selection  
+  
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg  
+  
+#### Create Application Folders  
+  
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg  
+  
+#### Create Application Folders  
+  
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_3.jpg  
+  
+#### Create Deployment Type Folders  
+  
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg
 
+#### Create .Intunewin File  
+  
+https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg  
