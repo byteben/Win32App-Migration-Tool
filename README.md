@@ -113,3 +113,4 @@ https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg
 
 #### Create .Intunewin File  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg) 
