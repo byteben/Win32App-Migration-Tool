@@ -11,35 +11,31 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
-Version 1.03.20.01 - 20/03/2021
-## BETA ##
-- Added support for .vbs script installers
-- Fixed logic error for string matching
 
-Version 1.03.19.01 - 19/03/2021
-## BETA ##
-- Added Function Get-ScriptEnd
+**Version 1.03.20.01 - 20/03/2021 - BETA**  
+- Added support for .vbs script installers  
+- Fixed logic error for string matching  
+    
+**Version 1.03.19.01 - 19/03/2021 - BETA**    
+- Added Function Get-ScriptEnd  
+  
+**Version 1.03.18.03 - 18/03/2021 - BETA**   
+- Fixed an issue where Intunewin SetupFile was being detected as an .exe when msiexec was present in the install command  
+  
+**Version 1.03.18.02 - 18/03/2021 - BETA**   
+- Removed the character " from SetupFile command when an install command is wrapped in double quotes  
+  
+**Version 1.03.18.01 - 18/03/2021  - BETA**  
+- Robocopy for content now padding Source and Destination variables if content path has white space  
+- Deployment Type Count was failing from the SDMPackageXML. Using the measure tool to check if Deployment Types exist for an Application  
+- Removed " from SetupFile command if install commands are in double quotes  
+  
+**Version 1.03.18 - 18/03/2021  - BETA**
+- Release for Testing  
+- Logging Added  
 
-Version 1.03.18.03 - 18/03/2021
-## BETA ##
-- Fixed issue where Intunewin SetupFile was being detected as an .exe when msiexec was present in the install command
-
-Version 1.03.18.02 - 18/03/2021
-## BETA ##
-- Removed " from SetupFile command if install commands are in double quotes
-
-Version 1.03.18.01 - 18/03/2021
-## BETA ##
-- Robocopy for content now padding Source and Destination variables if content path has white space
-- Deployment Type Count was failing from the SDMPackageXML. Using the measure tool to check if Deployment Types exist for an Application
-- Removed " from SetupFile command if install commands are in double quotes
-
-Version 1.03.18 - 18/03/2021
-## BETA Release for Testing ##
--Logging Added
-
-Version 1.0 - 14/03/2021
-## DEV Release ##
+**Version 1.0 - 14/03/2021 - DEV**  
+- DEV Release  
 
 .Parameter AppName
 Pass a string to the toll to search for applications in ConfigMgr
