@@ -5,6 +5,10 @@
    
 ## Version History  
   
+**Version 1.03.20.01 - 20/03/2021 - BETA**  
+- Added support for .vbs script installers  
+- Fixed logic error for string matching  
+    
 **Version 1.03.19.01 - 19/03/2021 - BETA**    
 - Added Function Get-ScriptEnd  
   
@@ -36,7 +40,7 @@
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
-- Add support for .VBS   
+- ~~Add support for .VBS~~   
    
 ## Synopsis  
   
