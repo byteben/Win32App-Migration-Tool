@@ -36,7 +36,8 @@
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
-  
+- Add support for vbs 
+   
 ## Synopsis  
   
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.  
@@ -45,6 +46,16 @@ Instead of manually checking Application and Deployment Type information and gat
   
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
  
+## Supported Install Commands. 
+  
+The Win32App Migration Tool will automatically detect the deployment technology based on the program install command for the Deployment Type. The following installers are supported:-  
+  
+- PowerShell Scripts  
+- .EXE  
+- .MSI  
+- .CMD  
+- .BAT  
+  
 ### Important  
    
 _**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
