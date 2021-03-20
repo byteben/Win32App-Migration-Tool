@@ -64,6 +64,10 @@ _**Local Disk:** Today, the tool pulls Deployment Type content from your content
 
 _**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
   
+## Troubleshooting  
+  
+Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output of the solution  
+ 
 ## Parameters  
   
 **.Parameter AppName**
