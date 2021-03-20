@@ -36,7 +36,7 @@
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
-- Add support for vbs 
+- Add support for .VBS   
    
 ## Synopsis  
   
@@ -46,7 +46,7 @@ Instead of manually checking Application and Deployment Type information and gat
   
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
  
-## Supported Install Commands. 
+## Supported Install Commands  
   
 The Win32App Migration Tool will automatically detect the deployment technology based on the program install command for the Deployment Type. The following installers are supported:-  
   
@@ -56,7 +56,7 @@ The Win32App Migration Tool will automatically detect the deployment technology 
 - .CMD  
 - .BAT  
   
-### Important  
+## Important Information    
    
 _**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
   
