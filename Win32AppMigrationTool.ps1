@@ -11,6 +11,11 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+Version 1.03.20.01 - 20/03/2021
+## BETA ##
+- Added support for .vbs script installers
+- Fixed logic error for string matching
+
 Version 1.03.19.01 - 19/03/2021
 ## BETA ##
 - Added Function Get-ScriptEnd
@@ -152,7 +157,7 @@ Function New-IntuneWin {
     #>
     Write-Log -Message "Function: New-IntuneWin was called" -Log "Main.log" 
 
-    #If PowerShell is reference, grab the name of the .ps1 referenced in the Install Command line
+    #Search the Install Command line for other the installer type
     If ($SetupFile -match "powershell" -and $SetupFile -match "\.ps1") {
         Write-Log -Message "Powershell script detected" -Log "Main.log" 
         Write-Host "Powershell script detected" -ForegroundColor Yellow
@@ -166,66 +171,77 @@ Function New-IntuneWin {
         Write-Log -Message "$($Command)" -Log "Main.log" 
         Write-Host $Command -ForegroundColor Green
     }
-    else {
-
-        #Search the Install Command line for other .exe installers
-        If (($SetupFile -match "`.exe") -and (!($SetupFile -match "msiexec"))) {
-            $Installer = ".exe"
-            Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
-            Write-Host "$Installer installer detected"
-            $Right = ($SetupFile -split "\.exe")[0]
-            $Right = ($Right -Split " ")[-1]
-            $Right = $Right.TrimStart("\", ".", "`"")
-            $Command = $Right + $Installer
-            $Command -replace '"', ''
-            Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
-            Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
-            Write-Log -Message "$($Command)" -Log "Main.log" 
-            Write-Host $Command -ForegroundColor Green
-        }
-        elseif ($SetupFile -match "`.msi") {
-            $Installer = ".msi"
-            Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
-            Write-Host "$Installer installer detected"
-            $Right = ($SetupFile -split "\.msi")[0]
-            $Right = ($Right -Split " ")[-1]
-            $Right = $Right.TrimStart("\", ".", "`"")
-            $Command = $Right + $Installer
-            $Command -replace '"', ''
-            Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
-            Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
-            Write-Log -Message "$($Command)" -Log "Main.log" 
-            Write-Host $Command -ForegroundColor Green
-        }
-        elseif ($SetupFile -match "`.cmd") {
-            $Installer = ".cmd"
-            Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
-            Write-Host "$Installer installer detected"
-            $Right = ($SetupFile -split "\.cmd")[0]
-            $Right = ($Right -Split " ")[-1]
-            $Right = $Right.TrimStart("\", ".", "`"")
-            $Command = $Right + $Installer
-            $Command -replace '"', ''
-            Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
-            Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
-            Write-Log -Message "$($Command)" -Log "Main.log" 
-            Write-Host $Command -ForegroundColor Green
-        }
-        elseif ($SetupFile -match "`.bat") {
-            $Installer = ".bat"
-            Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
-            Write-Host "$Installer installer detected"
-            $Right = ($SetupFile -split "\.bat")[0]
-            $Right = ($Right -Split " ")[-1]
-            $Right = $Right.TrimStart("\", ".", "`"")
-            $Command = $Right + $Installer
-            $Command -replace '"', ''
-            Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
-            Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
-            Write-Log -Message "$($Command)" -Log "Main.log" 
-            Write-Host $Command -ForegroundColor Green
-        }
+    elseif ($SetupFile -match "\.exe" -and $SetupFile -notmatch "msiexec" -and $SetupFile -notmatch "cscript" -and $SetupFile -notmatch "wscript") {
+        $Installer = ".exe"
+        Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
+        Write-Host "$Installer installer detected"
+        $Right = ($SetupFile -split "\.exe")[0]
+        $Right = ($Right -Split " ")[-1]
+        $Right = $Right.TrimStart("\", ".", "`"")
+        $Command = $Right + $Installer
+        $Command -replace '"', ''
+        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
+        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
+        Write-Log -Message "$($Command)" -Log "Main.log" 
+        Write-Host $Command -ForegroundColor Green
     }
+    elseif ($SetupFile -match "\.msi") {
+        $Installer = ".msi"
+        Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
+        Write-Host "$Installer installer detected"
+        $Right = ($SetupFile -split "\.msi")[0]
+        $Right = ($Right -Split " ")[-1]
+        $Right = $Right.TrimStart("\", ".", "`"")
+        $Command = $Right + $Installer
+        $Command -replace '"', ''
+        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
+        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
+        Write-Log -Message "$($Command)" -Log "Main.log" 
+        Write-Host $Command -ForegroundColor Green
+    }
+    elseif ($SetupFile -match "\.vbs") {
+        $Installer = ".vbs"
+        Write-Log -Message "$($Installer) script detected" -Log "Main.log" 
+        Write-Host "$Installer installer detected"
+        $Right = ($SetupFile -split "\.vbs")[0]
+        $Right = ($Right -Split " ")[-1]
+        $Right = $Right.TrimStart("\", ".", "`"")
+        $Command = $Right + $Installer
+        $Command -replace '"', ''
+        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
+        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
+        Write-Log -Message "$($Command)" -Log "Main.log" 
+        Write-Host $Command -ForegroundColor Green
+    }
+    elseif ($SetupFile -match "\.cmd") {
+        $Installer = ".cmd"
+        Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
+        Write-Host "$Installer installer detected"
+        $Right = ($SetupFile -split "\.cmd")[0]
+        $Right = ($Right -Split " ")[-1]
+        $Right = $Right.TrimStart("\", ".", "`"")
+        $Command = $Right + $Installer
+        $Command -replace '"', ''
+        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
+        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
+        Write-Log -Message "$($Command)" -Log "Main.log" 
+        Write-Host $Command -ForegroundColor Green
+    }
+    elseif ($SetupFile -match "\.bat") {
+        $Installer = ".bat"
+        Write-Log -Message "$($Installer) installer detected" -Log "Main.log" 
+        Write-Host "$Installer installer detected"
+        $Right = ($SetupFile -split "\.bat")[0]
+        $Right = ($Right -Split " ")[-1]
+        $Right = $Right.TrimStart("\", ".", "`"")
+        $Command = $Right + $Installer
+        $Command -replace '"', ''
+        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
+        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
+        Write-Log -Message "$($Command)" -Log "Main.log" 
+        Write-Host $Command -ForegroundColor Green
+    }
+
     Write-Host ''
 
     Try {
