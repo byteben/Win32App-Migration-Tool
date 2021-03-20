@@ -60,7 +60,7 @@ The Win32App Migration Tool will automatically detect the deployment technology 
    
 _**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
   
-_Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package_
+_**Local Disk:** Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package_
 
 _**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
   
