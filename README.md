@@ -79,6 +79,7 @@ _**Permissions:** You will need local admin permissions for the folder structure
 ## Troubleshooting  
   
 Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output of the solution  
+Get-Help New-Win32App  
  
 ## Parameters  
   
