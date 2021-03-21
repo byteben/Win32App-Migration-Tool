@@ -12,6 +12,9 @@ The Win32App Migration Tool is still in BETA so I would welcome any feedback or 
 
 .Description
 
+**Version 1.03.21.02 - 21/03/2021 - BETA**  
+- Fixed Function error for New-Win32App
+
 **Version 1.03.21.01 - 21/03/2021 - BETA**  
 - Added to PSGallery and converted to Module
 
