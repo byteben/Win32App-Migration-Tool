@@ -9,7 +9,7 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-# RootModule = ''
+RootModule = 'Win32AppMigrationTool.psm1'
 
 # Version number of this module.
 ModuleVersion = '1.03.21.02'
