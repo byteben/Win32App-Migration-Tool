@@ -30,7 +30,7 @@
     Copyright         = '(c) Ben Whitmore. All rights reserved.'
 
     # Description of the functionality provided by this module
-    # Description = ''
+    Description = 'Win32AppMigrationTool is designed to export the Application and Deployment Data from ConfigMgr to firstly create a .intunewin file and secondly publish the Win32App to Intune'
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
