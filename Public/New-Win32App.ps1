@@ -2,7 +2,7 @@
 .Synopsis
 Created on:   14/03/2021
 Created by:   Ben Whitmore
-Filename:     Win32AppMigrationTool.ps1
+Filename:     New-Win32App.ps1
 
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.
 
@@ -11,6 +11,9 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+
+**Version 1.03.21.01 - 21/03/2021 - BETA**  
+- Added to PSGallery and converted to Module
 
 **Version 1.03.20.01 - 20/03/2021 - BETA**  
 - Added support for .vbs script installers  
