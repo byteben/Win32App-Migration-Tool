@@ -40,7 +40,9 @@
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
+- Add to PSGallery  
 - ~~Add support for .VBS~~   
+- ~~Convert to a Module~~
    
 ## Synopsis  
   
@@ -59,6 +61,7 @@ The Win32App Migration Tool will automatically detect the deployment technology 
 - .MSI  
 - .CMD  
 - .BAT  
+- .VBS  
   
 ## Important Information    
    
@@ -68,6 +71,10 @@ _**Local Disk:** Today, the tool pulls Deployment Type content from your content
 
 _**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
   
+## Getting Started  
+  
+**Start-Win32App.ps1**   -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
+   
 ## Troubleshooting  
   
 Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output of the solution  
@@ -108,19 +115,19 @@ Pass this parameter to reset the log file
 ## Examples  
   
 **.Example**
-.\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
+.\Start-Win32App.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
 **.Example**
-.\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
+.\Start-Win32App.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
 
 **.Example**
-.\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
+.\Start-Win32App.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
 
 **.Example**
-.\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps
+.\Start-Win32App.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps
 
 **.Example**
-.\Win32AppMigrationTool.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
+.\Start-Win32App.ps1 -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
   
 ## Screenshots  
   
