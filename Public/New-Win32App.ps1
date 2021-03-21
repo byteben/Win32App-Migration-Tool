@@ -11,8 +11,10 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.03.21.03 - 21/03/2021 - BETA**  
+- Fixed RootModule issue in psm1
 
-**Version 1.03.21.02 - 21/03/2021 - BETA**  
+**Version 1.03.21.03 - 21/03/2021 - BETA**  
 - Fixed Function error for New-Win32App
 
 **Version 1.03.21.01 - 21/03/2021 - BETA**  
