@@ -5,6 +5,18 @@
    
 ## Version History  
   
+**Version 1.03.21.04 - 21/03/2021 - BETA**  
+- Fixed ScriptRoot issue
+
+**Version 1.03.21.03 - 21/03/2021 - BETA**  
+- Fixed RootModule issue in psm1
+
+**Version 1.03.21.03 - 21/03/2021 - BETA**  
+- Fixed Function error for New-Win32App
+
+**Version 1.03.21.01 - 21/03/2021 - BETA**  
+- Added to PSGallery and converted to Module
+
 **Version 1.03.20.01 - 20/03/2021 - BETA**  
 - Added support for .vbs script installers  
 - Fixed logic error for string matching  
@@ -28,7 +40,7 @@
 - Logging Added  
 
 **Version 1.0 - 14/03/2021 - DEV**  
-- DEV Release  
+- DEV Release    
 
 ## Bugs  
   
@@ -40,7 +52,7 @@
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
-- Add to PSGallery  
+- ~~Add to PSGallery~~  
 - ~~Add support for .VBS~~   
 - ~~Convert to a Module~~
    
