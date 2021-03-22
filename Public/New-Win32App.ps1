@@ -127,7 +127,7 @@ Function New-Win32App {
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host ''
 
-    $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+    $ScriptRoot = $PSScriptRoot
     Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
 
     #Connect to Site Server
