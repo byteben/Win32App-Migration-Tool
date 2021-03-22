@@ -162,7 +162,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
   
 **Application Selection**   
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg)  
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_0.jpg)  
   
 **Create Application Folders**  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg  
@@ -178,4 +178,4 @@ https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg
 
 **Create .Intunewin Files**  
 https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg) 
+![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_6.jpg) 
