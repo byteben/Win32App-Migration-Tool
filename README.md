@@ -145,7 +145,8 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 ## Bugs  
   
-- Still in BETA, there are a few
+- Handle Script exit better when an invalid parameter is passed to New-Win32App  
+- Remove SetupFile name from Write-Host after successful .intunewin creation  
   
 ## Planned Improvements  
   
