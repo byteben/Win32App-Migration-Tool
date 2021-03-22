@@ -15,9 +15,9 @@ Instead of manually checking Application and Deployment Type information and gat
 
 - **Configuration Manager Console** The console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH 
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
-- **Role** The necessary permissions to run the Configuration Manager cmdlet **Get-CMApplication**  
-- **Content Folder** Read permissions to the content source for the Deployment Types that will be exported  
-- **PowerShell** PowerShell 5.1
+- **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
+- **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
+- **PowerShell 5.1**
   
 ## Getting Started  
   
