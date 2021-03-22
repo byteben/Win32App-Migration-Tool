@@ -11,6 +11,9 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.03.22.01 - 22/03/2021 - BETA**  
+- Updates Manifest to only export New-Win32App Function
+
 **Version 1.03.21.03 - 21/03/2021 - BETA**  
 - Fixed RootModule issue in psm1
 
@@ -127,7 +130,7 @@ Function New-Win32App {
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host ''
 
-    $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+    $ScriptRoot = $PSScriptRoot
     Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
 
     #Connect to Site Server
