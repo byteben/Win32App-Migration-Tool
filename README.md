@@ -10,25 +10,6 @@ The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and
 Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you. Currently, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also exporting the logo for the selected Application(s).  
   
 ** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**    
- 
-## Supported Install Commands  
-  
-The Win32App Migration Tool will automatically detect the deployment technology based on the program install command for the Deployment Type. The following installers are supported:-  
-  
-- PowerShell Scripts  
-- .EXE  
-- .MSI  
-- .CMD  
-- .BAT  
-- .VBS  
-  
-## Important Information    
-   
-_**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
-  
-_**Local Disk:** Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package_
-
-_**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
   
 ## Getting Started  
   
@@ -48,6 +29,25 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Log events to %WorkingDirectory\Logs\Main.log
   
 After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.
+   
+## Supported Install Commands  
+  
+The Win32App Migration Tool will automatically detect the deployment technology based on the program install command for the Deployment Type. The following installers are supported:-  
+  
+- PowerShell Scripts  
+- .EXE  
+- .MSI  
+- .CMD  
+- .BAT  
+- .VBS  
+  
+## Important Information    
+   
+_**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
+  
+_**Local Disk:** Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package_
+
+_**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
    
 ## Troubleshooting  
   
