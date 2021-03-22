@@ -9,13 +9,20 @@ The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and
   
 Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you. Currently, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also exporting the logo for the selected Application(s).  
   
-** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**    
+** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**  
+  
+## Requirements  
+
+- **Configuration Manager Console** The console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH 
+- **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
+- **Role** The necessary permissions to run the Configuration Manager cmdlet **Get-CMApplication**  
+- **Content Folder** Read permissions to the content source for the Deployment Types that will be exported  
   
 ## Getting Started  
   
   **1. Install-Module Win32AppMigrationTool**  
-  **2. New-Win32App**   -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
-  **3. Use Information from the CSVs to build a Win32App in Intune**
+  **2. New-Win32App**  -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
+  **3. Use Information from the CSVs to build a Win32App in Intune**  
     
 The current release of the Win32 App Migration Tool will do the following:-  
   
@@ -44,10 +51,6 @@ The Win32App Migration Tool will automatically detect the deployment technology 
 ## Important Information    
    
 _**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
-  
-_**Local Disk:** Today, the tool pulls Deployment Type content from your content source so be mindful of this when selecting multiple apps to package_
-
-_**Permissions:** You will need local admin permissions for the folder structure to be created in the root of C:\ (unless you specify a different working folder by passing the "WorkingFolder" parameter_  
    
 ## Troubleshooting  
   
