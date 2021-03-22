@@ -17,6 +17,7 @@ Instead of manually checking Application and Deployment Type information and gat
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
 - **Role** The necessary permissions to run the Configuration Manager cmdlet **Get-CMApplication**  
 - **Content Folder** Read permissions to the content source for the Deployment Types that will be exported  
+- **PowerShell** PowerShell 5.1
   
 ## Getting Started  
   
