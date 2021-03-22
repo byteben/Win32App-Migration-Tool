@@ -69,9 +69,7 @@ Description = 'Win32AppMigrationTool is designed to export the Application and D
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Connect-SiteServer', 'Export-Logo', 'Get-AppInfo', 'Get-ContentFiles', 
-               'Get-FileFromInternet', 'Get-ScriptEnd', 'New-FolderToCreate', 
-               'New-IntuneWin', 'New-Win32App', 'Write-Log'
+FunctionsToExport = 'New-Win32App'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
