@@ -5,15 +5,15 @@
    
 ## Version History  
   
+**Version 1.03.22.01 - 22/03/2021 - BETA**  
+- Updates Manifest to only export New-Win32App Function  
+  
 **Version 1.03.21.04 - 21/03/2021 - BETA**  
-- Fixed ScriptRoot issue
-
+- Fixed RootModule issue in psm1  
+  
 **Version 1.03.21.03 - 21/03/2021 - BETA**  
-- Fixed RootModule issue in psm1
-
-**Version 1.03.21.03 - 21/03/2021 - BETA**  
-- Fixed Function error for New-Win32App
-
+- Fixed Function error for New-Win32App  
+  
 **Version 1.03.21.01 - 21/03/2021 - BETA**  
 - Added to PSGallery and converted to Module
 
