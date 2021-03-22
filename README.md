@@ -1,7 +1,7 @@
 # Win32App Migration Tool
  
  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_0.jpg)  
-  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg) 
+  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_6.jpg) 
    
 ## Synopsis  
   
