@@ -60,9 +60,9 @@
   
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.  
   
-Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32APp Migration Tool is designed to do that for you. To date, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also collecting the logo for the application.  
+Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you. Currently, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also exporting the logo for the selected Application(s).  
   
-The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
+** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**    
  
 ## Supported Install Commands  
   
@@ -87,6 +87,20 @@ _**Permissions:** You will need local admin permissions for the folder structure
   
   **1. Install-Module Win32AppMigrationTool**  
   **2. New-Win32App**   -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
+  **3. Use Information from the CSVs to build a Win32App in Intune**
+    
+The current release of the Win32 App Migration Tool will do the following:-  
+  
+- Download the Win32app Content Prep Tool to %WorkingDirectory\ContentPrepTool
+- Export .intunewin files to %WorkingDirectory\Win32Apps\<Application GUID>\<Deployment Type GUID>  
+- Export Application Details to %WorkingDirectory\Details\Applications.csv  
+- Export Deployment Type Details to %WorkingDirectory\Details\DeploymentTypes.csv  
+- Export Content Details to %WorkingDirectory\Details\Content.csv
+- Copy Select Deployment Type Content to %WorkingDirectory\Content\<Deployment Type GUID>
+- Export Application Logo(s) to %WorkingDirectory\Logos
+- Log events to %WorkingDirectory\Logs\Main.log
+  
+After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.
    
 ## Troubleshooting  
   
