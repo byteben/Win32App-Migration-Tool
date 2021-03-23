@@ -11,6 +11,9 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.03.23.01 - 23/03/2021 - BETA**  
+- Error handling improved when connecting to the Site Server and passing a Null app name
+
 **Version 1.03.22.01 - 22/03/2021 - BETA**  
 - Updates Manifest to only export New-Win32App Function
 
@@ -114,6 +117,7 @@ Function New-Win32App {
     )
 
     #Create Global Variables
+    $Global:SiteCode = $SiteCode
     $Global:WorkingFolder_Root = $WorkingFolder
     $Global:WorkingFolder_Logos = Join-Path -Path $WorkingFolder_Root -ChildPath "Logos"
     $Global:WorkingFolder_Content = Join-Path -Path $WorkingFolder_Root -ChildPath "Content"
@@ -122,6 +126,15 @@ Function New-Win32App {
     $Global:WorkingFolder_Detail = Join-Path -Path $WorkingFolder_Root -ChildPath "Details"
     $Global:WorkingFolder_Win32Apps = Join-Path -Path $WorkingFolder_Root -ChildPath "Win32Apps"
 
+    #Initialize Woking Folder and Log Folder Folders
+    Write-Host "Initializing Required Folders..." -ForegroundColor Cyan
+    If (!(Test-Path -Path $WorkingFolder_Root)) {
+        New-Item -Path $WWorkingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    }
+    If (!(Test-Path -Path $WorkingFolder_Logs)) {
+        New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    }
+    
     Write-Log -Message "--------------------------------------------" -Log "Main.log"
     Write-Log -Message "Script Start Win32AppMigrationTool" -Log "Main.log"
     Write-Log -Message "--------------------------------------------" -Log "Main.log"
@@ -134,8 +147,6 @@ Function New-Win32App {
     Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
 
     #Connect to Site Server
-    Write-Host 'Connecting to Site Server...' -ForegroundColor Cyan
-    Write-Log -Message "Connect-SiteServer -SiteCode $($SiteCode) -ProviderMachineName $($ProviderMachineName)" -Log "Main.log" 
     Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
     #Region Check_Folders
@@ -150,8 +161,9 @@ Function New-Win32App {
 
     #Create Folders
     Write-Host "Creating Folders..."-ForegroundColor Cyan
-    Write-Log -Message "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @("""", ""Logos"", ""Content"", ""ContentPrepTool"", ""Logs"", ""Details"", ""Win32Apps"")" -Log "Main.log" 
-    New-FolderToCreate -Root $WorkingFolder_Root -Folders @("", "Logos", "Content", "ContentPrepTool", "Logs", "Details", "Win32Apps")
+    New-FolderToCreate -Root $WorkingFolder_Root -Folders @("", "Logs")
+    Write-Log -Message "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @(""Logos"", ""Content"", ""ContentPrepTool"",  ""Details"", ""Win32Apps"")" -Log "Main.log" 
+    New-FolderToCreate -Root $WorkingFolder_Root -Folders @("Logos", "Content", "ContentPrepTool", "Details", "Win32Apps")
     #EndRegion Check_Folders
 
     #Region Get_Content_Tool
@@ -206,10 +218,10 @@ Function New-Win32App {
         }
     }
     else {
-        Write-Log -Message "AppName ""$($AppName)"" could not be found." -Log "Main.log"
-        Write-Host "AppName ""$($AppName)"" could not be found. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -ForegroundColor Red
+        Write-Log -Message "AppName ""$($AppName)"" could not be found or no selection was made." -Log "Main.log"
+        Write-Host "AppName ""$($AppName)"" could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -ForegroundColor Red
         Get-ScriptEnd
-        Exit 1
+        break
     }
     #EndRegion Display_Application_Results
 

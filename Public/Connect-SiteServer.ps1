@@ -14,34 +14,51 @@ Function Connect-SiteServer {
     )
 
     Write-Log -Message "Function: Connect-SiteServer was called" -Log "Main.log" 
-
+    Write-Log -Message "Import-Module $($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" -Log "Main.log"
+    Write-Host "Importing Module: ConfigurationManager.psd1 and connecting to Provider $($ProviderMachineName)..." -ForegroundColor Cyan
+            
     # Import the ConfigurationManager.psd1 module 
     Try {
         If ($Null -eq (Get-Module ConfigurationManager)) {
-            Write-Log -Message "Import-Module $($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" -Log "Main.log"
-            Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1"
+            Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" -Verbose:$False
         }
     }
     Catch {
         Write-Log -Message "Warning: Could not import the ConfigurationManager.psd1 Module" -Log "Main.log"
         Write-Host 'Warning: Could not import the ConfigurationManager.psd1 Module' -ForegroundColor Red
+        break
+    }
+
+    # Check Provider is valid
+    if (!($ProviderMachineName -eq (Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Root)) {
+        Write-Log -Message "Could not connect to the Provider $($ProviderMachineName). Did you specify the correct Site Server?" -Log "Main.log"
+        Write-Host "Could not connect to the Provider $($ProviderMachineName). Did you specify the correct Site Server?" -ForegroundColor Red
+        Get-ScriptEnd
+        break
+    }
+    else {
+        Write-Log -Message "Connected to provider $($ProviderMachineName) at site $($SiteCode)" -Log "Main.log" 
+        Write-Host "Connected to provider ""$($ProviderMachineName)""" -ForegroundColor Green
     }
 
     # Connect to the site's drive if it is not already present
     Try {
-        if ($Null -eq (Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue)) {
-            Write-Log -Message "New-PSDrive -Name $($SiteCode) -PSProvider CMSite -Root $($ProviderMachineName)" -Log "Main.log"
-            New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName
+        if (!($SiteCode -eq (Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Name)) {
+            Write-Log -Message "No PSDrive found for $($SiteCode) in PSProvider CMSite for Root $($ProviderMachineName)" -Log "Main.log"
+            Write-Host "No PSDrive found for $($SiteCode) in PSProvider CMSite for Root $($ProviderMachineName). Did you specify the correct Site Code?" -ForegroundColor Red
+            Get-ScriptEnd
+            break
         }
-        #Set the current location to be the site code.
-        Write-Log -Message "Set-Location $($SiteCode):\" -Log "Main.log"
-        Set-Location "$($SiteCode):\"
-        Write-Log -Message "Connected to provider $($ProviderMachineName) at site $($SiteCode)" -Log "Main.log" 
-        Write-Host "Connected to provider ""$($ProviderMachineName)"" at site ""$($SiteCode)""" -ForegroundColor Green
+        else {
+            Write-Log -Message "Connected to PSDrive $($SiteCode)" -Log "Main.log" 
+            Write-Host "Connected to PSDrive $($SiteCode)" -ForegroundColor Green
+            Set-Location "$($SiteCode):\"
+        }
     }
     Catch {
         Write-Log -Message "Warning: Could not connect to the specified provider $($ProviderMachineName) at site $($SiteCode)" -Log "Main.log"
         Write-Host "Warning: Could not connect to the specified provider ""$($ProviderMachineName)"" at site ""$($SiteCode)""" -ForegroundColor Red
+        break
     }
     
 }

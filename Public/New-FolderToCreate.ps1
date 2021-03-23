@@ -12,7 +12,7 @@ Function New-FolderToCreate {
         [String]$Root,
         [String[]]$Folders
     )
-
+    
     Write-Log -Message "Function: New-FolderToCreate was called" -Log "Main.log" 
     
     If (!($Root)) {
