@@ -110,6 +110,9 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
   
 ## Version History  
   
+**Version 1.03.23.01 - 23/03/2021 - BETA**  
+- Error handling improved when connecting to the Site Server and passing a Null app name  
+ 
 **Version 1.03.22.01 - 22/03/2021 - BETA**  
 - Updates Manifest to only export New-Win32App Function  
   
