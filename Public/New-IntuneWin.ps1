@@ -24,8 +24,8 @@ Function New-IntuneWin {
         Write-Host ''
         $Right = ($SetupFile -split ".ps1")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + ".ps1"
+        $Filename = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + ".ps1"
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
         Write-Log -Message "$($Command)" -Log "Main.log" 
@@ -37,8 +37,8 @@ Function New-IntuneWin {
         Write-Host "$Installer installer detected"
         $Right = ($SetupFile -split "\.exe")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + $Installer
+        $FileName = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + $Installer
         $Command -replace '"', ''
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
@@ -51,8 +51,8 @@ Function New-IntuneWin {
         Write-Host "$Installer installer detected"
         $Right = ($SetupFile -split "\.msi")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + $Installer
+        $FileName = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + $Installer
         $Command -replace '"', ''
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
@@ -65,8 +65,8 @@ Function New-IntuneWin {
         Write-Host "$Installer installer detected"
         $Right = ($SetupFile -split "\.vbs")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + $Installer
+        $FileName = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + $Installer
         $Command -replace '"', ''
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
@@ -79,8 +79,8 @@ Function New-IntuneWin {
         Write-Host "$Installer installer detected"
         $Right = ($SetupFile -split "\.cmd")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + $Installer
+        $FileName = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + $Installer
         $Command -replace '"', ''
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
@@ -93,8 +93,8 @@ Function New-IntuneWin {
         Write-Host "$Installer installer detected"
         $Right = ($SetupFile -split "\.bat")[0]
         $Right = ($Right -Split " ")[-1]
-        $Right = $Right.TrimStart("\", ".", "`"")
-        $Command = $Right + $Installer
+        $FileName = $Right.TrimStart("\", ".", "`"")
+        $Command = $Filename + $Installer
         $Command -replace '"', ''
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -Log "Main.log" 
         Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
@@ -136,9 +136,17 @@ Function New-IntuneWin {
                 "-q"
             )
             Write-Log -Message "Start-Process -FilePath (Join-Path -Path $($WorkingFolder_ContentPrepTool) -ChildPath ""IntuneWinAppUtil.exe"") -ArgumentList $($Arguments) -Wait" -Log "Main.log" 
-            Start-Process -FilePath (Join-Path -Path $WorkingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe") -ArgumentList $Arguments -Wait
-            Write-Log -Message "Function Return: $($Right)" -Log "Main.log"
-            Return $Right
+            Start-Process -FilePath (Join-Path -Path $WorkingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe") -ArgumentList $Arguments -Wait 
+            Write-Host ''
+                 
+            If (Test-Path (Join-Path -Path $OutputFolder -ChildPath "*.intunewin") ) {
+                Write-Log -Message "Successfully created ""$($Filename).intunewin"" at ""$($OutputFolder)""" -Log "Main.log" 
+                Write-Host "Successfully created ""$($Filename).intunewin"" at ""$($OutputFolder)""" -ForegroundColor Cyan
+            }
+            else {
+                Write-Log -Message "Error: We couldn't verify that ""$($Filename).intunewin"" was created at ""$($OutputFolder)""" -Log "Main.log" 
+                Write-Host "Error: We couldn't verify that ""$($Filename).intunewin"" was created at ""$($OutputFolder)""" -ForegroundColor Red
+            }
         }
         Catch {
             Write-Log -Message "Error creating the .intunewin file" -Log "Main.log"

@@ -12,17 +12,17 @@ function Write-Log {
     [CmdletBinding()]
     param(
         [Parameter()]
-        [Switch]$TimeStamp,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [String]$Message,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [String]$Log
+        [String]$Log,
+        [Switch]$ResetLogFile
     )
- 
-    $Output = (Get-Date -f g) + ": " + $Message
-    $Output | Out-File -Encoding Ascii -Append (Join-Path -Path $WorkingFolder_Logs -ChildPath $Log)
+    If ($ResetLogFile) {
+        $Output = (Get-Date -f g) + ": Log File Reset"
+        $Output | Out-File -Encoding Ascii (Join-Path -Path $WorkingFolder_Logs -ChildPath $Log) 
+    }
+    else {
+
+        $Output = (Get-Date -f g) + ": " + $Message
+        $Output | Out-File -Encoding Ascii -Append (Join-Path -Path $WorkingFolder_Logs -ChildPath $Log)
+    }
 }

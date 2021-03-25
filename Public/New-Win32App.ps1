@@ -11,6 +11,11 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.03.25.01 - 25/03/2021 - BETA**  
+- Removed duplicate name in message for successful .intunewin creation
+- Added a new switch "-NoOGV" which will suppress the Out-Grid view. Thanks @philschwan
+- Fixed an issue where the -ResetLog parameter was not working
+
 **Version 1.03.23.01 - 23/03/2021 - BETA**  
 - Error handling improved when connecting to the Site Server and passing a Null app name
 
@@ -113,7 +118,8 @@ Function New-Win32App {
         [String]$WorkingFolder = "C:\Win32AppMigrationTool",
         [Switch]$PackageApps,
         [Switch]$CreateApps,
-        [Switch]$ResetLog
+        [Switch]$ResetLog,
+        [Switch]$NoOGV
     )
 
     #Create Global Variables
@@ -133,6 +139,9 @@ Function New-Win32App {
     }
     If (!(Test-Path -Path $WorkingFolder_Logs)) {
         New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    }
+    If ($ResetLog) {
+        Write-Log -ResetLogFile -Log "Main.Log"
     }
     
     Write-Log -Message "--------------------------------------------" -Log "Main.log"
@@ -206,9 +215,15 @@ Function New-Win32App {
     Write-Host ''
 
     #Get list of Applications
-    Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -PassThru -OutVariable $($ApplicationName) -Title ""Select an Application(s) to process the associated Deployment Types""" -Log "Main.log" 
-    $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -Passthru -Title "Select an Application(s) to process the associated Deployment Types"
-
+    If (!$NoOGV) {
+        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -PassThru -OutVariable $($ApplicationName) -Title ""Select an Application(s) to process the associated Deployment Types""" -Log "Main.log" 
+        $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -Passthru -Title "Select an Application(s) to process the associated Deployment Types"
+    }
+    else {
+        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName" -Log "Main.log" 
+        $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName 
+    }
+    
     If ($ApplicationName) {
         Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log "Main.log"
         Write-Host "The Win32App Migration Tool will process the following Applications:"
@@ -441,18 +456,7 @@ Function New-Win32App {
                     Write-Log -Message "Creating .Intunewin for ""$($Deployment.DeploymentType_Name)""..." -Log "Main.log" 
                     Write-Host "Creating .Intunewin for ""$($Deployment.DeploymentType_Name)""..." -ForegroundColor Cyan
                     Write-Log -Message "`$IntuneWinFileCommand = New-IntuneWin -ContentFolder $($ContentFolder) -OutputFolder $($OutputFolder) -SetupFile $($SetupFile)" -Log "Main.log"
-                    $IntuneWinFileCommand = New-IntuneWin -ContentFolder $ContentFolder -OutputFolder $OutputFolder -SetupFile $SetupFile
-                    $IntuneWinFile = $IntuneWinFileCommand
-                    Write-Host ''
-                 
-                    If (Test-Path (Join-Path -Path $OutputFolder -ChildPath "*.intunewin") ) {
-                        Write-Log -Message "Successfully created ""$($IntuneWinFile).intunewin"" at ""$($OutputFolder)""" -Log "Main.log" 
-                        Write-Host "Successfully created ""$($IntuneWinFile).intunewin"" at ""$($OutputFolder)""" -ForegroundColor Cyan
-                    }
-                    else {
-                        Write-Log -Message "Error: We couldn't verify that ""$($IntuneWinFile).intunewin"" was created at ""$($OutputFolder)""" -Log "Main.log" 
-                        Write-Host "Error: We couldn't verify that ""$($IntuneWinFile).intunewin"" was created at ""$($OutputFolder)""" -ForegroundColor Red
-                    }
+                    New-IntuneWin -ContentFolder $ContentFolder -OutputFolder $OutputFolder -SetupFile $SetupFile
                 }
             }
         }
