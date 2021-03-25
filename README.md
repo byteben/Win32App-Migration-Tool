@@ -81,16 +81,19 @@ This is the working folder for the Win32AppMigration Tool. Care should be given 
 -Logos  
 -Logs  
 -Win32Apps  
-
-**.Parameter PackageApps**
+  
+**.Parameter PackageApps**  
 Pass this parameter to package selected apps in the .intunewin format
 
-**.Parameter CreateApps**
+**.Parameter CreateApps**  
 Pass this parameter to create the Win32apps in Intune
 
-**.Parameter ResetLog**
-Pass this parameter to reset the log file
-
+**.Parameter ResetLog**  
+Pass this parameter to reset the log file  
+  
+**.Parameter NoOGV**  
+Pass this parameter supress the Out-GridView to select Applications. You can still pass wildcards to the -AppName parameter 
+  
 ## Examples  
   
 **.Example**
@@ -108,7 +111,15 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 **.Example**
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog  
   
+**.Example**
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV
+  
 ## Version History  
+  
+**Version 1.03.25.01 - 25/03/2021 - BETA**  
+- Removed duplicate name in message for successful .intunewin creation  
+- Added a new switch "-NoOGV" which will suppress the Out-Grid view. Thanks @philschwan  
+- Fixed an issue where the -ResetLog parameter was not working  
   
 **Version 1.03.23.01 - 23/03/2021 - BETA**  
 - Error handling improved when connecting to the Site Server and passing a Null app name  
