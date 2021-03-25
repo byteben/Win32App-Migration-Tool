@@ -152,7 +152,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 ## Bugs  
   
-- Handle Script exit better when an invalid parameter is passed to New-Win32App  
+- ~~Handle Script exit better when an invalid parameter is passed to New-Win32App~~  
 - Remove SetupFile name from Write-Host after successful .intunewin creation  
   
 ## Planned Improvements  
@@ -161,6 +161,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
+- Deserialize the SDMPackageXML into Objects (Thanks @NickolajA)  
 - ~~Add to PSGallery~~  
 - ~~Add support for .VBS~~   
 - ~~Convert to a Module~~  
