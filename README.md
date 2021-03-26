@@ -28,14 +28,14 @@ Instead of manually checking Application and Deployment Type information and gat
     
 The current release of the Win32 App Migration Tool will do the following:-  
   
-- Download the Win32app Content Prep Tool to %WorkingDirectory\ContentPrepTool
-- Export .intunewin files to %WorkingDirectory\Win32Apps\<Application GUID>\<Deployment Type GUID>  
-- Export Application Details to %WorkingDirectory\Details\Applications.csv  
-- Export Deployment Type Details to %WorkingDirectory\Details\DeploymentTypes.csv  
-- Export Content Details to %WorkingDirectory\Details\Content.csv
-- Copy Select Deployment Type Content to %WorkingDirectory\Content\<Deployment Type GUID>
-- Export Application Logo(s) to %WorkingDirectory\Logos
-- Log events to %WorkingDirectory\Logs\Main.log
+- Download the Win32app Content Prep Tool to %WorkingDirectory%\ContentPrepTool
+- Export .intunewin files to %WorkingDirectory%\Win32Apps\<Application GUID>\<Deployment Type GUID>  
+- Export Application Details to %WorkingDirectory%\Details\Applications.csv  
+- Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
+- Export Content Details to %WorkingDirectory%\Details\Content.csv
+- Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>
+- Export Application Logo(s) to %WorkingDirectory%\Logos
+- Log events to %WorkingDirectory%\Logs\Main.log
   
 After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.
    
