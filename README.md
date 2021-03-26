@@ -62,7 +62,7 @@ Get-Help New-Win32App
 ## Parameters  
   
 **.Parameter AppName**
-Pass a string to the toll to search for applications in ConfigMgr
+Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
   
 **.Parameter SiteCode**
 Specify the Sitecode you wish to connect to
