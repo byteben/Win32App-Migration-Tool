@@ -11,6 +11,10 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.03.27.02 - 27/03/2021 - BETA**  
+- Fixed a grammar issue when creating the Working Folders
+
+
 **Version 1.03.25.01 - 25/03/2021 - BETA**  
 - Removed duplicate name in message for successful .intunewin creation
 - Added a new switch "-NoOGV" which will suppress the Out-Grid view. Thanks @philschwan
