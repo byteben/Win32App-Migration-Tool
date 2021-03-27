@@ -139,7 +139,7 @@ Function New-Win32App {
     #Initialize Woking Folder and Log Folder Folders
     Write-Host "Initializing Required Folders..." -ForegroundColor Cyan
     If (!(Test-Path -Path $WorkingFolder_Root)) {
-        New-Item -Path $WWorkingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        New-Item -Path $WorkingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
     If (!(Test-Path -Path $WorkingFolder_Logs)) {
         New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
