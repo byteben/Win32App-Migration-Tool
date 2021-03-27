@@ -17,7 +17,8 @@ Instead of manually checking Application and Deployment Type information and gat
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
 - **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
 - **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
-- **PowerShell 5.1**
+- **PowerShell 5.1**  
+- **Internet Access** to download the Win32 Content Prep Tool 
   
 ## Getting Started  
   
@@ -27,14 +28,14 @@ Instead of manually checking Application and Deployment Type information and gat
     
 The current release of the Win32 App Migration Tool will do the following:-  
   
-- Download the Win32app Content Prep Tool to %WorkingDirectory\ContentPrepTool
-- Export .intunewin files to %WorkingDirectory\Win32Apps\<Application GUID>\<Deployment Type GUID>  
-- Export Application Details to %WorkingDirectory\Details\Applications.csv  
-- Export Deployment Type Details to %WorkingDirectory\Details\DeploymentTypes.csv  
-- Export Content Details to %WorkingDirectory\Details\Content.csv
-- Copy Select Deployment Type Content to %WorkingDirectory\Content\<Deployment Type GUID>
-- Export Application Logo(s) to %WorkingDirectory\Logos
-- Log events to %WorkingDirectory\Logs\Main.log
+- Download the Win32app Content Prep Tool to %WorkingDirectory%\ContentPrepTool
+- Export .intunewin files to %WorkingDirectory%\Win32Apps\<Application GUID>\<Deployment Type GUID>  
+- Export Application Details to %WorkingDirectory%\Details\Applications.csv  
+- Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
+- Export Content Details to %WorkingDirectory%\Details\Content.csv
+- Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>
+- Export Application Logo(s) to %WorkingDirectory%\Logos
+- Log events to %WorkingDirectory%\Logs\Main.log
   
 After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.
    
@@ -61,7 +62,7 @@ Get-Help New-Win32App
 ## Parameters  
   
 **.Parameter AppName**
-Pass a string to the toll to search for applications in ConfigMgr
+Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
   
 **.Parameter SiteCode**
 Specify the Sitecode you wish to connect to
