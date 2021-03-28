@@ -17,18 +17,18 @@ Instead of manually checking Application and Deployment Type information and gat
   
 The Win32App Migration Tool is still in development. This is a FREE community tool and will have input from various community members through each development stage. At the time of writing this post the tool is still in BETA with the intention to move rapidly to RELEASE and then General Availability (GA). You can expect the following features at each release cycle  
     
-http://byteben.com/bb/wp-content/uploads/2021/03/image-23.png  
+ ![alt text](http://byteben.com/bb/wp-content/uploads/2021/03/image-23.png)  
   
 ## Requirements  
   
-- Configuration Manager Console The ConfigMgr console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH
-- Local Administrator The default Working folder is %SystemDrive%\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive
-- Roles Permission to run the Configuration Manager cmdlet Get-CMApplication * 
-- Content Folder Permission Read permissions to the content source for the Deployment Types that will be exported
-- PowerShell 5.1
-- .NET Framework 4.7.2 (to run the Win32 Content Prep Tool)
-- NuGet Provider 2.8.5.201 or newer
-- Internet Access to download the Win32 Content Prep Tool 
+- **Configuration Manager Console** The ConfigMgr console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH
+- **Local Administrator** The default Working folder is %SystemDrive%\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive
+- **Roles** Permission to run the Configuration Manager cmdlet Get-CMApplication * 
+- **Content Folder** Permission Read permissions to the content source for the Deployment Types that will be exported
+- **PowerShell 5.1**
+- **.NET Framework 4.7.2** to run the Win32 Content Prep Tool
+- **NuGet Provider 2.8.5.201** or newer
+- **Internet Access** to download the Win32 Content Prep Tool 
   
 ## Getting Started  
   
