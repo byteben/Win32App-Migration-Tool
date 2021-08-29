@@ -1,8 +1,9 @@
 # Win32App Migration Tool
  
  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_0.jpg)  
+  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_6.jpg) 
    
-## Introduction 
+## Synopsis  
   
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.  
   
@@ -11,22 +12,14 @@ Instead of manually checking Application and Deployment Type information and gat
 ** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**  
   
 **Blog Post** https://byteben.com/bb/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/  
- 
-**Planned Development** 
-  
-The Win32App Migration Tool is still in development. This is a FREE community tool and will have input from various community members through each development stage. At the time of writing this post the tool is still in BETA with the intention to move rapidly to RELEASE and then General Availability (GA). You can expect the following features at each release cycle  
-    
- ![alt text](http://byteben.com/bb/wp-content/uploads/2021/03/image-23.png)  
   
 ## Requirements  
-  
-- **Configuration Manager Console** The ConfigMgr console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH
-- **Local Administrator** The default Working folder is %SystemDrive%\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive
-- **Roles** Permission to run the Configuration Manager cmdlet Get-CMApplication * 
-- **Content Folder** Permission Read permissions to the content source for the Deployment Types that will be exported
-- **PowerShell 5.1**
-- **.NET Framework 4.7.2** to run the Win32 Content Prep Tool
-- **NuGet Provider 2.8.5.201** or newer
+
+- **Configuration Manager Console** The console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH 
+- **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
+- **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
+- **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
+- **PowerShell 5.1**  
 - **Internet Access** to download the Win32 Content Prep Tool 
   
 ## Getting Started  

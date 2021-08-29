@@ -14,6 +14,7 @@ Function New-IntuneWin {
         [String]$OutputFolder,
         [String]$SetupFile
     )
+    write-host $ContentFolder
 
     Write-Log -Message "Function: New-IntuneWin was called" -Log "Main.log" 
 
@@ -128,11 +129,11 @@ Function New-IntuneWin {
         Try {
             $Arguments = @(
                 "-s"
-                $Command
+                """$Command"""
                 "-c"
-                $ContentFolder
+                """$ContentFolder"""
                 "-o"
-                $OutputFolder
+                """$OutputFolder"""
                 "-q"
             )
             Write-Log -Message "Start-Process -FilePath (Join-Path -Path $($WorkingFolder_ContentPrepTool) -ChildPath ""IntuneWinAppUtil.exe"") -ArgumentList $($Arguments) -Wait" -Log "Main.log" 

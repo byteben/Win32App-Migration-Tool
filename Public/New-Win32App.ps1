@@ -11,6 +11,11 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.08.29.01 - 29/08/2021 - BETA**  
+- Default to not copy content locally.
+- Use -DownloadContent switch to copy content to local working folder
+- Fixed an issue when the source content folder has a space in the path
+
 **Version 1.03.27.02 - 27/03/2021 - BETA**  
 - Fixed a grammar issue when creating the Working Folders
 
@@ -62,6 +67,9 @@ The Win32App Migration Tool is still in BETA so I would welcome any feedback or 
 .Parameter AppName
 Pass a string to the toll to search for applications in ConfigMgr
 
+.Parameter DownloadContent
+When passed, the content for the deployment type is saved locally to the working folder "Content"
+
 .Parameter SiteCode
 Specify the Sitecode you wish to connect to
 
@@ -94,6 +102,9 @@ Pass this parameter to reset the log file
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
 .Example
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent
+
+.Example
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
 
 .Example
@@ -117,6 +128,7 @@ Function New-Win32App {
         [ValidateLength(3, 3)]
         [String]$SiteCode,   
         [Parameter()]
+        [Switch]$DownloadContent,
         [Switch]$ExportLogo,
         [String]$WorkingFolder = "C:\Win32AppMigrationTool",
         [Switch]$PackageApps,
@@ -388,19 +400,32 @@ Function New-Win32App {
         #EndRegion Creating_Content_Folders
 
         #Region Downloading_Content
+
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Downloading Content" -Log "Main.log"
+        Write-Log -Message "Content Evaluation" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Downloading Content' -ForegroundColor DarkGray
+        Write-Host 'Content Evaluation' -ForegroundColor DarkGray
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
 
-        ForEach ($Content in $Content_Array) {
-            Write-Log -Message "Downloading Content for Deployment Type $($Content.Content_DeploymentType_LogicalName) from Content Source $($Content.Content_Location)..." -Log "Main.log"
-            Write-Host "Downloading Content for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" from Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
-            Write-Log -Message "Get-ContentFiles -Source $($Content.Content_Location) -Destination (Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Content.Content_DeploymentType_LogicalName))" -Log "Main.log" 
-            Get-ContentFiles -Source $Content.Content_Location -Destination (Join-Path -Path $WorkingFolder_Content -ChildPath $Content.Content_DeploymentType_LogicalName)
+        If ($DownloadContent) {
+
+            ForEach ($Content in $Content_Array) {
+                Write-Log -Message "Downloading Content for Deployment Type $($Content.Content_DeploymentType_LogicalName) from Content Source $($Content.Content_Location)..." -Log "Main.log"
+                Write-Host "Downloading Content for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" from Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
+                Write-Log -Message "Get-ContentFiles -Source $($Content.Content_Location) -Destination (Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Content.Content_DeploymentType_LogicalName))" -Log "Main.log" 
+                Get-ContentFiles -Source $Content.Content_Location -Destination (Join-Path -Path $WorkingFolder_Content -ChildPath $Content.Content_DeploymentType_LogicalName)
+            }
+        }
+        else {
+            ForEach ($Content in $Content_Array) {
+                Write-Log -Message "DownloadContent switch not passed. Skipping Content download for Deployment Type $($Content.Content_DeploymentType_LogicalName) at Content Source $($Content.Content_Location)..." -Log "Main.log"
+                Write-Host "DownloadContent switch not passed. Skipping Content download for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" at Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
+                $SkipFileName = "DownloadContent-Skipped.txt"
+                New-Item -Path (Join-Path -Path $WorkingFolder_Content -ChildPath $Content.Content_DeploymentType_LogicalName) -Name $SkipFileName -Force | Out-Null
+            }
+
         }
         #EndRegion Downloading_Content
 
@@ -444,8 +469,21 @@ Function New-Win32App {
                 ForEach ($Content in $Content_Array | Where-Object { $_.Content_DeploymentType_LogicalName -eq $Deployment.DeploymentType_LogicalName }) {
 
                     #Create variables to pass to Function
-                    Write-Log -Message "`$ContentFolder = Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Deployment.DeploymentType_LogicalName)" -Log "Main.log"
-                    $ContentFolder = Join-Path -Path $WorkingFolder_Content -ChildPath $Deployment.DeploymentType_LogicalName
+
+                    If ($DownloadContent) {
+                        Write-Log -Message "`$ContentFolder = Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Deployment.DeploymentType_LogicalName)" -Log "Main.log"
+                        $ContentFolder = Join-Path -Path $WorkingFolder_Content -ChildPath $Deployment.DeploymentType_LogicalName
+                    }
+                    else {
+                        Write-Log -Message "`$ContentFolder = $($Content.Content_Location)" -Log "Main.log"
+                        $ContentFolder = $Content.Content_Location  
+                    }
+
+                    #Trim ending backslash if it exists on folder path
+                    If ($ContentFolder -match "\\$") {
+                        $ContentFolder = $ContentFolder.TrimEnd('\')
+                    }
+
                     Write-Log -Message "`$OutputFolder = Join-Path -Path (Join-Path -Path $($WorkingFolder_Win32Apps) -ChildPath $($Application.Application_LogicalName)) -ChildPath $Deployment.DeploymentType_LogicalName" -Log "Main.log"
                     $OutputFolder = Join-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $Application.Application_LogicalName) -ChildPath $Deployment.DeploymentType_LogicalName
                     Write-Log -Message "Install Command: ""$($SetupFile)""" -Log "Main.log"
