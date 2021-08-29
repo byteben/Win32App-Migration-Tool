@@ -68,20 +68,20 @@ Get-Help New-Win32App
 **.Parameter AppName**  
 Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
   
-**.Parameter DownloadContent**
+**.Parameter DownloadContent**  
 When passed, the content for the deployment type is saved locally to the working folder "Content"
   
-**.Parameter SiteCode**
+**.Parameter SiteCode**  
 Specify the Sitecode you wish to connect to
 
-**.Parameter ProviderMachineName**
+**.Parameter ProviderMachineName**  
 Specify the Site Server to connect to
 
-**.Parameter ExportLogo**
+**.Parameter ExportLogo**  
 When passed, the Application logo is decoded from base64 and saved to the Logos folder
 
-**.Parameter WorkingFolder**
-This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-
+**.Parameter WorkingFolder**  
+This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-  
   
 -Content  
 -ContentPrepTool  
