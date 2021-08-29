@@ -65,8 +65,11 @@ Get-Help New-Win32App
  
 ## Parameters  
   
-**.Parameter AppName**
+**.Parameter AppName**  
 Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
+  
+**.Parameter DownloadContent**
+When passed, the content for the deployment type is saved locally to the working folder "Content"
   
 **.Parameter SiteCode**
 Specify the Sitecode you wish to connect to
@@ -120,6 +123,11 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV
   
 ## Version History  
+
+**Version 1.08.29.01 - 29/08/2021 - BETA**  
+- Default to not copy content locally  
+- Use -DownloadContent switch to copy content to local working folder  
+- Fixed an issue when the source content folder has a space in the path  
   
 **Version 1.03.27.02 - 27/03/2021 - BETA**  
 - Fixed a grammar issue when creating the Working Folders  
