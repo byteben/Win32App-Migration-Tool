@@ -189,6 +189,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
   
 - ~~Handle Script exit better when an invalid parameter is passed to New-Win32App~~  
 - ~~Remove SetupFile name from Write-Host after successful .intunewin creation~~  
+- Git Issue "Package Multiple sources #4" STATUS: Investigating logic issue when uninstall content path differs from install path
   
 ## Planned Improvements  
   
