@@ -34,7 +34,7 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Export .intunewin files to %WorkingDirectory%\Win32Apps\<Application GUID>\<Deployment Type GUID>  
 - Export Application Details to %WorkingDirectory%\Details\Applications.csv  
 - Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
-- Export Content Details to %WorkingDirectory%\Details\Content.csv
+- Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)
 - Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>
 - Export Application Logo(s) to %WorkingDirectory%\Logos
 - Log events to %WorkingDirectory%\Logs\Main.log
@@ -73,7 +73,10 @@ Specify the Sitecode you wish to connect to
 Specify the Site Server to connect to
 
 **.Parameter ExportLogo**
-When passed, the Application logo is decoded from base64 and saved to the Logos folder
+When passed, the Application logo is decoded from base64 and saved to the "Logos" folder
+
+**.Parameter DownloadContent**
+When passed, the source content will be download to the local "Content" folder
 
 **.Parameter WorkingFolder**
 This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-
@@ -99,25 +102,37 @@ Pass this parameter supress the Out-GridView to select Applications. You can sti
   
 ## Examples  
   
-**.Example**
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
-
-**.Example**
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
-
-**.Example**
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
-
-**.Example**
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps
-
-**.Example**
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
+  
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent  
+  
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo  
+  
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps  
+  
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps  
+  
+**.Example**  
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog  
   
-**.Example**
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV  
   
 ## Version History  
+  
+**Version 1.08.29.02 - 29/08/2021 - BETA**  
+- Fixed an issue where logos were not being exported  
+- Fixed an issue where the Localized Display Name was not outputed correctly  
+  
+**Version 1.08.29.01 - 29/08/2021 - BETA**  
+- Default to not copy content locally.  
+- Use -DownloadContent switch to copy content to local working folder  
+- Fixed an issue when the source content folder has a space in the path  
   
 **Version 1.03.27.02 - 27/03/2021 - BETA**  
 - Fixed a grammar issue when creating the Working Folders  
