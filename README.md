@@ -192,7 +192,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
   
 ## Planned Improvements  
   
-- Option to build .Intunewin files without downloading the Deployment Type content locally
+- ~~Option to build .Intunewin files without downloading the Deployment Type content locally~~ Requires V1.8.29.1+
 - Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
 - Create the Win32app in Intune 
 - ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
