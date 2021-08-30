@@ -55,13 +55,13 @@ Function Export-Logo {
                 If (Test-Path $LogoFolder_Id) {
                     Try {
                         #Grab the SDMPackgeXML which contains the Application and Deployment Type details
-                        Write-Log -Message "`$XMLPackage = Get-CMApplication -Name ""$($AppName)"" | Where-Object { `$Null -ne `$_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML" -Log "Main.log" 
-                        $XMLPackage = Get-CMApplication -Name $AppName | Where-Object { $Null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
+                        Write-Log -Message "`$XMLPackage = Get-CMApplication -LocalizedDisplayName ""$($AppName)"" | Where-Object { `$Null -ne `$_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML" -Log "Main.log" 
+                        $XMLPackage = Get-CMApplication -LocalizedDisplayName $AppName | Where-Object { $Null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
 
                         #Deserialize SDMPackageXML
                         $XMLContent = [xml]($XMLPackage)
-
                         $Raw = $XMLContent.AppMgmtDigest.Resources.icon.Data
+
                         $Logo = [Convert]::FromBase64String($Raw)
                         [System.IO.File]::WriteAllBytes($Logo_File, $Logo)
                         If (Test-Path $Logo_File) {

@@ -41,8 +41,8 @@ Function Get-AppInfo {
             #Application Details
             Write-Log -Message "Application_LogicalName -Value $XMLContent.AppMgmtDigest.Application.LogicalName" -Log "Main.log"
             $ApplicationObject | Add-Member NoteProperty -Name Application_LogicalName -Value $XMLContent.AppMgmtDigest.Application.LogicalName
-            Write-Log -Message "Application_Name -Value $($XMLContent.AppMgmtDigest.Application.DisplayInfo.Info.Title)" -Log "Main.log"
-            $ApplicationObject | Add-Member NoteProperty -Name Application_Name -Value $XMLContent.AppMgmtDigest.Application.DisplayInfo.Info.Title
+            Write-Log -Message "Application_Name -Value $($XMLContent.AppMgmtDigest.Application.title.'#text')" -Log "Main.log"
+            $ApplicationObject | Add-Member NoteProperty -Name Application_Name -Value $XMLContent.AppMgmtDigest.Application.title.'#text'
             Write-Log -Message "Application_Description -Value $($XMLContent.AppMgmtDigest.Application.DisplayInfo.Info.Description)" -Log "Main.log"
             $ApplicationObject | Add-Member NoteProperty -Name Application_Description -Value $XMLContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
             Write-Log -Message "Application_Publisher -Value $($XMLContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher)" -Log "Main.log"

@@ -1,6 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
+Updated on:   29/08/21
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -11,6 +12,10 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.08.29.02 - 29/08/2021 - BETA**  
+- Fixed an issue where logos were not being exported
+- Fixed an issue where the Localized Display Name was not outputed correctly
+
 **Version 1.08.29.01 - 29/08/2021 - BETA**  
 - Default to not copy content locally.
 - Use -DownloadContent switch to copy content to local working folder
@@ -308,7 +313,7 @@ Function New-Win32App {
         ForEach ($Application in $Applications_Array) {
             Write-Log -Message "`$IconId = $($Application.Application_IconId)" -Log "Main.log"
             $IconId = $Application.Application_IconId
-            Write-Log -Message "Export-Logo -IconId $($IconId) -AppName $($Application.Application_Name)" -Log "Main.log"
+            Write-Log -Message "Export-Logo -IconId $($IconId) -AppName $($Application.Application_LogicalName)" -Log "Main.log"
             Export-Logo -IconId $IconId -AppName $Application.Application_Name
         }
     }
