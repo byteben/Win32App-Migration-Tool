@@ -13,6 +13,11 @@ Instead of manually checking Application and Deployment Type information and gat
   
 **Blog Post** https://byteben.com/bb/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/  
   
+  ## Development Roadmap 
+After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/win32approadmap.jpg)  
+  
 ## Requirements  
 
 - **Configuration Manager Console** The console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH 
@@ -34,12 +39,10 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Export .intunewin files to %WorkingDirectory%\Win32Apps\<Application GUID>\<Deployment Type GUID>  
 - Export Application Details to %WorkingDirectory%\Details\Applications.csv  
 - Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
-- Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)
-- Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>
-- Export Application Logo(s) to %WorkingDirectory%\Logos
-- Log events to %WorkingDirectory%\Logs\Main.log
-  
-After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.
+- Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)  
+- Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>  
+- Export Application Logo(s) to %WorkingDirectory%\Logos  
+- Log events to %WorkingDirectory%\Logs\Main.log  
    
 ## Supported Install Commands  
   
