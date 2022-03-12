@@ -103,6 +103,12 @@ Pass this parameter to reset the log file
 **.Parameter NoOGV**  
 Pass this parameter supress the Out-GridView to select Applications. You can still pass wildcards to the -AppName parameter 
   
+**.Parameter ExcludePMPC**  
+Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function  
+  
+**.Parameter ExcludeFilter**  
+Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"  
+  
 ## Examples  
   
 **.Example**  
@@ -126,7 +132,18 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 **.Example**  
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV  
   
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
+  
+**.Example**  
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"  
+  
 ## Version History  
+  
+**Version 1.103.12.01 - 12/03/2022 - BETA**  
+- Added UTF8 Encoding for CSV Exports https://github.com/byteben/Win32App-Migration-Tool/issues/6  
+- Added option to exclude PMPC apps https://github.com/byteben/Win32App-Migration-Tool/issues/5  
+- Added option to exclude specific apps using a filter  
   
 **Version 1.08.29.02 - 29/08/2021 - BETA**  
 - Fixed an issue where logos were not being exported  
@@ -187,8 +204,6 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 ## Bugs  
   
-- ~~Handle Script exit better when an invalid parameter is passed to New-Win32App~~  
-- ~~Remove SetupFile name from Write-Host after successful .intunewin creation~~  
 - Git Issue "Package Multiple sources #4" STATUS: Investigating logic issue when uninstall content path differs from install path
   
 ## Planned Improvements  
