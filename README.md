@@ -140,7 +140,7 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
   
 ## Version History  
   
-**Version 2.03.12.01 - 12/03/2022 - BETA**  
+**Version 1.103.12.01 - 12/03/2022 - BETA**  
 - Added UTF8 Encoding for CSV Exports https://github.com/byteben/Win32App-Migration-Tool/issues/6  
 - Added option to exclude PMPC apps https://github.com/byteben/Win32App-Migration-Tool/issues/5  
 - Added option to exclude specific apps using a filter  

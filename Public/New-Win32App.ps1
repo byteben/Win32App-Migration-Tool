@@ -12,7 +12,7 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
-**Version 2.03.12.01 - 12/03/2022 - BETA**  
+**Version 1.103.12.01 - 12/03/2022 - BETA**  
 - Added UTF8 Encoding for CSV Exports https://github.com/byteben/Win32App-Migration-Tool/issues/6
 - Added option to exclude PMPC apps https://github.com/byteben/Win32App-Migration-Tool/issues/5
 - Added option to exclude specific apps using a filter
