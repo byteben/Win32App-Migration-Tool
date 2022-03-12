@@ -271,7 +271,7 @@ Function New-Win32App {
 
     #Export $DeploymentTypes to CSV for reference
     Try {
-        $DeploymentTypes_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "DeploymentTypes.csv") -NoTypeInformation -Force
+        $DeploymentTypes_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "DeploymentTypes.csv") -Encoding UTF8 -NoTypeInformation -Force 
         Write-Log -Message "`$DeploymentTypes_Array is located at $($WorkingFolder_Detail)\DeploymentTypes.csv" -Log "Main.log" 
     }
     Catch {
@@ -279,7 +279,7 @@ Function New-Win32App {
         Write-Log -Message "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -Log "Main.log" 
     }
     Try {
-        $Applications_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Applications.csv") -NoTypeInformation -Force
+        $Applications_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Applications.csv") -Encoding UTF8 -NoTypeInformation -Force
         Write-Log -Message "`$Applications_Array is located at $($WorkingFolder_Detail)\Applications.csv" -Log "Main.log" 
     }
     Catch {
@@ -287,7 +287,7 @@ Function New-Win32App {
         Write-Log -Message "Error: Could not Export Applications.csv. Do you have it open?" -Log "Main.log" 
     }
     Try {
-        $Content_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Content.csv") -NoTypeInformation -Force
+        $Content_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Content.csv") -Encoding UTF8 -NoTypeInformation -Force
         Write-Log -Message "`$Content_Array is located at $($WorkingFolder_Detail)\Content.csv" -Log "Main.log" 
     }
     Catch {
