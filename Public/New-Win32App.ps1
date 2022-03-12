@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   29/08/21
+Updated on:   12/03/22
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -12,6 +12,11 @@ Instead of manually checking Application and Deployment Type information and gat
 The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
 
 .Description
+**Version 1.103.12.01 - 12/03/2022 - BETA**  
+- Added UTF8 Encoding for CSV Exports https://github.com/byteben/Win32App-Migration-Tool/issues/6
+- Added option to exclude PMPC apps https://github.com/byteben/Win32App-Migration-Tool/issues/5
+- Added option to exclude specific apps using a filter
+
 **Version 1.08.29.02 - 29/08/2021 - BETA**  
 - Fixed an issue where logos were not being exported
 - Fixed an issue where the Localized Display Name was not outputed correctly
@@ -103,6 +108,12 @@ Pass this parameter to create the Win32apps in Intune
 .Parameter ResetLog
 Pass this parameter to reset the log file
 
+.Parameter ExcludePMPC
+Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function
+
+.Parameter ExcludeFilter
+Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"
+
 .Example
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
@@ -120,6 +131,12 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 .Example
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
+
+.Example
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
+
+.Example
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"
 #>
 Function New-Win32App {
 
@@ -139,7 +156,9 @@ Function New-Win32App {
         [Switch]$PackageApps,
         [Switch]$CreateApps,
         [Switch]$ResetLog,
-        [Switch]$NoOGV
+        [Switch]$NoOGV,
+        [Switch]$ExcludePMPC,
+        [String]$ExcludeFilter
     )
 
     #Create Global Variables
@@ -235,22 +254,55 @@ Function New-Win32App {
     Write-Host ''
 
     #Get list of Applications
-    If (!$NoOGV) {
-        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -PassThru -OutVariable $($ApplicationName) -Title ""Select an Application(s) to process the associated Deployment Types""" -Log "Main.log" 
-        $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -Passthru -Title "Select an Application(s) to process the associated Deployment Types"
+    If ($ExcludePMPC -and $ExcludeFilter -and $NoOGV) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter -NoOGV
     }
-    else {
-        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName" -Log "Main.log" 
-        $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName 
+    If ($ExcludePMPC -and $ExcludeFilter -and (-not($NoOGV))) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter
     }
+    If ($ExcludePMPC -and (-not($ExcludeFilter)) -and $NoOGV) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
+    }
+    If ($ExcludePMPC -and (-not($ExcludeFilter)) -and (-not($NoOGV))) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC
+    }
+    If ((-not($ExcludePMPC)) -and $ExcludeFilter -and $NoOGV) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter -NoOGV
+    }
+    If ((-not($ExcludePMPC)) -and $ExcludeFilter -and (-not($NoOGV))) {
+        $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter
+    }
+    If ((-not($ExcludePMPC)) -and (-not($ExcludeFilter)) -and $NoOGV) {
+        $ApplicationName = Get-AppList -AppName $AppName -NoOGV
+    } 
+    If ((-not($ExcludePMPC)) -and (-not($ExcludeFilter)) -and (-not($NoOGV))) {
+        $ApplicationName = Get-AppList -AppName $AppName
+    }    
     
+    #ApplicationName(s) returned from Get-AppList Function
     If ($ApplicationName) {
+
+        If ($ExcludePMPC) {
+            Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -Log "Main.log"
+            Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications"
+        }
+
+        If ($ExcludeFilter) {
+            Write-Log -Message "The ExcludeApps parameter was passed. Ignoring applications that match the following keywords" -Log "Main.log"
+            Write-Host "The ExcludeApps parameter was passed. Ignoring applications that match the following keywords"
+            ForEach ($ExcludeApp in $ExcludeFilter) {
+                Write-Log -Message "$($ExcludeApp)" -Log "Main.log"
+                Write-Host """$($ExcludeApp)""" -ForegroundColor Green
+            }
+        }
+
         Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log "Main.log"
         Write-Host "The Win32App Migration Tool will process the following Applications:"
         ForEach ($Application in $ApplicationName) {
             Write-Log -Message "$($Application)" -Log "Main.log"
             Write-Host """$($Application)""" -ForegroundColor Green
         }
+        
     }
     else {
         Write-Log -Message "AppName ""$($AppName)"" could not be found or no selection was made." -Log "Main.log"

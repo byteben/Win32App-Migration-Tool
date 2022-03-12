@@ -131,16 +131,3 @@ Function Get-AppInfo {
     } 
     Return $DeploymentTypes, $ApplicationTypes, $Content
 }
-
-#Clear Logs if -ResetLog Parameter was passed
-If ($ResetLog) {
-    Write-Log -Message "The -ResetLog Parameter was passed to the script" -Log "Main.log"
-    Try {
-        Write-Log -Message "Get-ChildItem -Path $($WorkingFolder_Logs) | Remove-Item -Force" -Log "Main.log"
-        Get-ChildItem -Path $WorkingFolder_Logs | Remove-Item -Force
-    }
-    Catch {
-        Write-Log -Message "Error: Unable to delete log files at $($WorkingFolder_Logs). Do you have it open?" -Log "Main.log"
-        Write-Host "Error: Unable to delete log files at $($WorkingFolder_Logs). Do you have it open?" -ForegroundColor Red
-    }
-}
