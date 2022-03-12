@@ -288,12 +288,11 @@ Function New-Win32App {
         }
 
         If ($ExcludeFilter) {
-            Write-Log -Message "The ExcludeApps parameter was passed. Ignoring applications that match the following keywords" -Log "Main.log"
-            Write-Host "The ExcludeApps parameter was passed. Ignoring applications that match the following keywords"
-            ForEach ($ExcludeApp in $ExcludeFilter) {
-                Write-Log -Message "$($ExcludeApp)" -Log "Main.log"
-                Write-Host """$($ExcludeApp)""" -ForegroundColor Green
-            }
+            Write-Log -Message "The ExcludeFilter parameter was passed. Ignoring applications that match the name:-" -Log "Main.log"
+            Write-Host "The ExcludeFilter parameter was passed. Ignoring applications that match the filter:-"
+            Write-Log -Message "$($ExcludeFilter)" -Log "Main.log"
+            Write-Host """$($ExcludeFilter)""" -ForegroundColor Green
+            
         }
 
         Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log "Main.log"
