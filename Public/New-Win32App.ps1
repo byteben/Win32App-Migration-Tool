@@ -226,7 +226,7 @@ Function New-Win32App {
 
     #Download Win32 Content Prep Tool
     If ($PackageApps) {
-        Write-Host "Downloadling Win32 Content Prep Tool..." -ForegroundColor Cyan
+        Write-Host "Downloading Win32 Content Prep Tool..." -ForegroundColor Cyan
         If (Test-Path (Join-Path -Path $WorkingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
             Write-Log -Message "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -Log "Main.log" 
             Write-Host "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -ForegroundColor Magenta
