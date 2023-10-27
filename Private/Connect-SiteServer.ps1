@@ -34,8 +34,8 @@ function Connect-SiteServer {
     )
 
     process {
-        Write-Log -Message "Function: Connect-SiteServer was called" -Log 'Main.log' 
-        Write-Log -Message "Import-Module `$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1" -Log 'Main.log' -LogId $LogId
+        Write-Log -Message "Function: Connect-SiteServer was called" 
+        Write-Log -Message "Import-Module `$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1" -LogId $LogId
         Write-Host ("Importing Module: 'ConfigurationManager.psd1' and connecting to Provider '{0}'..." -f $ProviderMachineName) -ForegroundColor Cyan
             
         # Import the ConfigurationManager.psd1 module 
@@ -45,39 +45,39 @@ function Connect-SiteServer {
             }
         }
         catch {
-            Write-Log -Message "Warning: Could not import the ConfigurationManager.psd1 Module" -Log 'Main.log' -LogId $LogId
+            Write-Log -Message "Warning: Could not import the ConfigurationManager.psd1 Module" -LogId $LogId
             Write-Warning "Warning: Could not import the 'ConfigurationManager.psd1' module"
             break
         }
 
         # Check the SMS Provider is valid
         if ( -not ( $ProviderMachineName -eq (Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Root ) ) {
-            Write-Log -Message ("Could not connect to the Provider '{0}'. Did you specify the correct Site System?" -f $ProviderMachineName) -Log 'Main.log' -LogId $LogId -Severity 3
-            Write-Warning ("Could not connect to the Provider '{0}'. Did you specify the correct Site System?" -f $ProviderMachineName)
+            Write-Log -Message ("Could not connect to the Provider '{0}'" -f $ProviderMachineName) -LogId $LogId -Severity 3
+            Write-Warning ("Could not connect to the Provider '{0}' `nDid you specify the correct Site System?" -f $ProviderMachineName)
             Get-ScriptEnd
             break
         }
         else {
-            Write-Log -Message ("Connected to provider {0} at site '{1}'" -f $ProviderMachineName, $SiteCode ) -Log 'Main.log' -LogId $LogId
+            Write-Log -Message ("Connected to provider {0} at site '{1}'" -f $ProviderMachineName, $SiteCode ) -LogId $LogId
             Write-Host ("Connected to provider '{0}'" -f $ProviderMachineName) -ForegroundColor Green
         }
 
         # Connect to the site drive if it is not already present
         try {
             if (!($SiteCode -eq ( Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Name) ) {
-                Write-Log -Message ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'" -f $SiteCode, $ProviderMachineName) -Log 'Main.log' -LogId $LogId -Severity 3
+                Write-Log -Message ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'" -f $SiteCode, $ProviderMachineName) -LogId $LogId -Severity 3
                 Write-Warning ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'. Did you specify the correct Site Code?" -f $SiteCode, $ProviderMachineName)
                 Get-ScriptEnd
                 break
             }
             else {
-                Write-Log -Message ("Connected to PSDrive '{0}'" -f $SiteCode) -Log 'Main.log' -LogId $LogId
+                Write-Log -Message ("Connected to PSDrive '{0}'" -f $SiteCode) -LogId $LogId
                 Write-Host ("Connected to PSDrive '{0}'" -f $SiteCode) -ForegroundColor Green 
                 Set-Location "$($SiteCode):\"
             }
         }
         catch {
-            Write-Log -Message ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode) -Log 'Main.log' -LogId $LogId -Severity 3
+            Write-Log -Message ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode) -LogId $LogId -Severity 3
             Write-Warning ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode)
             break
         }
