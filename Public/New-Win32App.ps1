@@ -167,7 +167,7 @@ Function New-Win32App {
     $Global:WorkingFolder_Logos = Join-Path -Path $WorkingFolder_Root -ChildPath "Logos"
     $Global:WorkingFolder_Content = Join-Path -Path $WorkingFolder_Root -ChildPath "Content"
     $Global:WorkingFolder_ContentPrepTool = Join-Path -Path $WorkingFolder_Root -ChildPath "ContentPrepTool"
-    $Global:WorkingFolder_Logs = Join-Path -Path $WorkingFolder_Root -ChildPath "Logs"
+    $Global:workingFolder_Logs = Join-Path -Path $WorkingFolder_Root -ChildPath "Logs"
     $Global:WorkingFolder_Detail = Join-Path -Path $WorkingFolder_Root -ChildPath "Details"
     $Global:WorkingFolder_Win32Apps = Join-Path -Path $WorkingFolder_Root -ChildPath "Win32Apps"
 
@@ -195,7 +195,7 @@ Function New-Win32App {
     Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
 
     #Connect to Site Server
-    Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
+    Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName -Log "Main.log"
 
     #Region Check_Folders
     Write-Log -Message "--------------------------------------------" -Log "Main.log"
