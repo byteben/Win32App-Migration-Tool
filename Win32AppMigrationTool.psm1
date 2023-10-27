@@ -1,7 +1,6 @@
 <#
 .Synopsis
-Created on:   29/08/2021
-Updated on:   12/03/2022
+Created on:   27/10/2023
 Created by:   Ben Whitmore
 Filename:     Win32AppMigrationTool.psm1
 
@@ -9,15 +8,17 @@ Filename:     Win32AppMigrationTool.psm1
 Win32App Packaging Tool Function Import
 #>
 
-$PublicFunctions = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue )
-$PrivateFunctions = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue )
 
-foreach ($GetFunction in @($PublicFunctions + $PrivateFunctions)) {
-    Try {
+$functionsToImport = $[PSCustomObject]@ {
+    PublicFunctions = @(Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue)
+    PrivateFunctions = @(Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue)
+}
+
+foreach ($function in @($functionsToImport.PublicFunctions + $functionsToImport.PrivateFunctions)) {
+    try {
         . $GetFunction.FullName
     }
     Catch {
-        Write-Host "Failed to import function $($GetFunction.FullName)" -ForegroundColor Red
-        Write-Host "$_" -ForegroundColor Yellow
+        Write-Warning -Message ("Failed to import function '{0}'. {1}" -f $GetFunction.FullName, $_.Exception.Message)
     }
 }

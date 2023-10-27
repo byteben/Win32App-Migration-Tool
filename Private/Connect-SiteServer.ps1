@@ -13,6 +13,7 @@ This parameter is built from the line number of the call from the function up th
 
 .PARAMETER SiteCode
 The Site Code of the Site Server to connect to
+The Site Code must be only 3 alphanumeric characters
 
 .PARAMETER ProviderMachineName
 The Server name that has an SMS Provider site system role
@@ -25,10 +26,10 @@ function Connect-SiteServer {
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, Position = 0, HelpMessage = "Site Code")]
-        [ValidatePattern('(?##Site Code must be 3 alphanumeric chars##)^[a-zA-Z0-9]{3}$')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = "Site Code")]
+        [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
         [String]$SiteCode,
-        [Parameter(Mandatory = $true, valueFromPipelineByPropertyName = $true, Position = 1, HelpMessage = "Server name that has an SMS Provider site system role")]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 1, HelpMessage = "Server name that has an SMS Provider site system role")]
         [String]$ProviderMachineName
     )
 
