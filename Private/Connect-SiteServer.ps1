@@ -33,11 +33,14 @@ function Connect-SiteServer {
         [String]$ProviderMachineName
     )
 
-    process {
+    begin {
         Write-Log -Message "Function: Connect-SiteServer was called" 
         Write-Log -Message "Import-Module `$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1"
         Write-Host ("Importing Module: 'ConfigurationManager.psd1' and connecting to Provider '{0}'..." -f $ProviderMachineName) -ForegroundColor Cyan
-            
+    }
+    
+    process {
+
         # Import the ConfigurationManager.psd1 module 
         try {
             if (-not (Get-Module ConfigurationManager)) {

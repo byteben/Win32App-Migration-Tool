@@ -74,22 +74,25 @@ The Win32App Migration Tool is still in BETA so I would welcome any feedback or 
 **Version 1.0 - 14/03/2021 - DEV**  
 - DEV Release  
 
-.Parameter AppName
+.PARAMETER LogId
+The component (script name) passed as LogID to the 'Write-Log' function.
+
+.PARAMETER AppName
 Pass a string to the toll to search for applications in ConfigMgr
 
-.Parameter DownloadContent
+.PARAMETER DownloadContent
 When passed, the content for the deployment type is saved locally to the working folder "Content"
 
-.Parameter SiteCode
+.PARAMETER SiteCode
 Specify the Sitecode you wish to connect to
 
-.Parameter ProviderMachineName
+.PARAMETER ProviderMachineName
 Specify the Site Server to connect to
 
-.Parameter ExportLogo
+.PARAMETER ExportLogo
 When passed, the Application logo is decoded from base64 and saved to the Logos folder
 
-.Parameter WorkingFolder
+.PARAMETER WorkingFolder
 This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-
 
 -Content
@@ -99,49 +102,54 @@ This is the working folder for the Win32AppMigration Tool. Care should be given 
 -Logs
 -Win32Apps
 
-.Parameter PackageApps
+.PARAMETER PackageApps
 Pass this parameter to package selected apps in the .intunewin format
 
-.Parameter CreateApps
+.PARAMETER CreateApps
 Pass this parameter to create the Win32apps in Intune
 
-.Parameter ResetLog
+.PARAMETER ResetLog
 Pass this parameter to reset the log file
 
-.Parameter ExcludePMPC
+.PARAMETER ExcludePMPC
 Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function
 
-.Parameter ExcludeFilter
+.PARAMETER ExcludeFilter
 Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"
 
-.Example
+.PARAMETER Win32ContentPrepToolUri
+URI for Win32 Content Prep Tool
+
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
 
-.Example
+.EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"
 #>
-Function New-Win32App {
+function New-Win32App {
 
     [CmdletBinding()]
-    Param (
+    param (
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
+        [string]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
         [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
         [String]$SiteCode,
@@ -149,20 +157,29 @@ Function New-Win32App {
         [String]$ProviderMachineName,  
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The name of the application to search for. Accepts wildcards *')]
         [String]$AppName,
-        [Parameter()]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"')]
         [Switch]$DownloadContent,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application logo is decoded from base64 and saved to the Logos folder')]
         [Switch]$ExportLogo,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
         [String]$WorkingFolder = "C:\Win32AppMigrationTool",
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
         [Switch]$PackageApps,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
         [Switch]$CreateApps,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
         [Switch]$ResetLog,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
         [Switch]$NoOGV,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
-        [String]$ExcludeFilter
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"')]
+        [String]$ExcludeFilter,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'URI for Win32 Content Prep Tool')]
+        [String]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
     )
 
-    #Create Global Variables
-    $Global:siteCode = $SiteCode
+    # Create Global Variables
     $Global:workingFolder_Root = $workingFolder
     $Global:workingFolder_Logos = Join-Path -Path $workingFolder_Root -ChildPath 'Logos'
     $Global:workingFolder_Content = Join-Path -Path $workingFolder_Root -ChildPath 'Content'
@@ -171,16 +188,18 @@ Function New-Win32App {
     $Global:workingFolder_Detail = Join-Path -Path $workingFolder_Root -ChildPath 'Details'
     $Global:workingFolder_Win32Apps = Join-Path -Path $workingFolder_Root -ChildPath 'Win32Apps'
 
-    #Initialize Woking Folder and Log Folder Folders
+    # Initialize workspace folders
     Write-Host "Initializing Required Folders..." -ForegroundColor Cyan
-    If (!(Test-Path -Path $WorkingFolder_Root)) {
-        New-Item -Path $WorkingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    if (-not (Test-Path -Path $workingFolder_Root) ) {
+        New-Item -Path $workingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
-    If (!(Test-Path -Path $WorkingFolder_Logs)) {
-        New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    if (-not (Test-Path -Path $workingFolder_Logs) ) {
+        New-Item -Path $workingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
-    If ($ResetLog) {
-        Write-Log -ResetLogFile -Log "Main.Log"
+
+    # Rest the log file if the -ResetLog parameter is passed
+    if ($ResetLog -and (Test-Path -Path $WorkingFolder_Logs) ) {
+        Write-Log -ResetLogFile
     }
 
     # Begin Script
@@ -195,33 +214,33 @@ Function New-Win32App {
     # Check the folder structure for the working directory and create if necessary
     New-VerboseRegion -Message 'Checking Win32AppMigrationTool Folder Structure' -ForegroundColor 'DarkGrey'
 
-    #Region Create_Folders
+    #region Create_Folders
     Write-Host "Creating Folders..." -ForegroundColor Cyan
     New-FolderToCreate -Root $workingFolder_Root -Folders @("", "Logs")
-    Write-Log -Message "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @(""Logos"", ""Content"", ""ContentPrepTool"",  ""Details"", ""Win32Apps"")" -Log "Main.log" 
-    New-FolderToCreate -Root $WorkingFolder_Root -Folders @("Logos", "Content", "ContentPrepTool", "Details", "Win32Apps")
-    #EndRegion Create_Folders
+    Write-Log -Message ("New-FolderToCreate -Root '{0}' -Folders @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) 
+    New-FolderToCreate -Root $workingFolder_Root -Folders @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
+    #endRegion
 
-    #Region Get_Content_Tool
+    #region Get_Content_Tool
     New-VerboseRegion -Message 'Checking Win32AppMigrationTool Content Tool' -ForegroundColor 'DarkGrey'
 
-    #Download Win32 Content Prep Tool
-    If ($PackageApps) {
+    # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
+    if ($PackageApps) {
         Write-Host "Downloading Win32 Content Prep Tool..." -ForegroundColor Cyan
-        If (Test-Path (Join-Path -Path $WorkingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
-            Write-Log -Message "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -Log "Main.log" 
-            Write-Host "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -ForegroundColor Magenta
+        if (Test-Path (Join-Path -Path $workingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
+            Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool)
+            Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -ForegroundColor Magenta
         }
         else {
-            Write-Log -Message "Get-FileFromInternet -URI ""https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe"" -Destination $($WorkingFolder_ContentPrepTool)" -Log "Main.log" 
-            Get-FileFromInternet -URI "https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe" -Destination $WorkingFolder_ContentPrepTool
+            Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $workingFolder_ContentPrepTool) 
+            Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $workingFolder_ContentPrepTool
         }
     } 
     else {
-        Write-Log -Message "The -PackageApps parameter was not passed. Skipping downloading of the Win32 Content Prep Tool." -Log "Main.log" 
-        Write-Host "The -PackageApps parameter was not passed. Skipping downloading of the Win32 Content Prep Tool." -ForegroundColor Magenta
+        Write-Log -Message "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool"
+        Write-Host "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool" -ForegroundColor Yellow
     }
-    #EndRegion Get_Content_Tool
+    #endRegion
 
 
     #Region Display_Application_Results
