@@ -20,16 +20,16 @@ function New-FolderToCreate {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = 'The root folder to create the folder(s) in')]
         [String]$Root,
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 1, HelpMessage = 'The folder(s) to create')]
-        [String[]]$Folders
+        [String[]]$FolderNames
     )
     
     Write-Log -Message 'Function: New-FolderToCreate was called'
 
-    foreach ($folder in $Folders) {
+    foreach ($folder in $FolderNames) {
 
         #Create Folders
         Write-Log -Message ("`$FolderToCreate = Join-Path -Path '{0}' -ChildPath '{1}'"-f $Root, $folder)
-        $folderToCreate = Join-Path -Path $Root -ChildPath $Folder
+        $folderToCreate = Join-Path -Path $Root -ChildPath $folder
         
         If (!(Test-Path -Path $folderToCreate)) {
             Write-Host ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
@@ -39,13 +39,13 @@ function New-FolderToCreate {
                 Write-Host ("Folder '{0}' created succesfully" -f $folderToCreate) -ForegroundColor Green
             }
             catch {
-                Write-Log -Message ("Warning: Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
-                Write-Warning -Message ("Warning: Couldn't create '{0}' folder" -f $folderToCreate)
+                Write-Log -Message ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
+                Write-Warning -Message ("Couldn't create '{0}' folder" -f $folderToCreate)
             }
         }
         else {
-            Write-Log -Message ("Information: Folder '{0}' already exsts. Skipping folder creation" -f $folderToCreate) -Severity 2
-            Write-Host ("Information: Folder '{0}' already exsts. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
+            Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -Severity 2
+            Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
         }
     }
 } 

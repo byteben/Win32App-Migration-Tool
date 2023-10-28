@@ -169,12 +169,12 @@ function New-Win32App {
         [Switch]$CreateApps,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
         [Switch]$ResetLog,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
-        [Switch]$NoOGV,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"')]
         [String]$ExcludeFilter,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
+        [Switch]$NoOgv,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'URI for Win32 Content Prep Tool')]
         [String]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
     )
@@ -189,47 +189,51 @@ function New-Win32App {
     $Global:workingFolder_Win32Apps = Join-Path -Path $workingFolder_Root -ChildPath 'Win32Apps'
 
     # Initialize workspace folders
-    Write-Host "Initializing Required Folders..." -ForegroundColor Cyan
-    if (-not (Test-Path -Path $workingFolder_Root) ) {
-        New-Item -Path $workingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
-    }
-    if (-not (Test-Path -Path $workingFolder_Logs) ) {
-        New-Item -Path $workingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    Write-Host "Initializing required folders..." -ForegroundColor Cyan
+    foreach ($folder in $workingFolder_Root, $workingFolder_Logs) {
+        if (-not (Test-Path -Path $folder)) {
+            Write-Log -Message ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -LogId $LogId
+            Write-Host ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -ForegroundColor Cyan
+            New-Item -Path $workingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        }
+        else {
+            Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folder) -LogId $LogId -Severity 2
+            Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folder) -ForegroundColor Yellow
+        }
     }
 
     # Rest the log file if the -ResetLog parameter is passed
     if ($ResetLog -and (Test-Path -Path $WorkingFolder_Logs) ) {
-        Write-Log -ResetLogFile
+        Write-Log -Message $null -ResetLogFile
     }
 
     # Begin Script
     New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGray'
 
     $ScriptRoot = $PSScriptRoot
-    Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot)
+    Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot) -LogId $LogId
 
     # Connect to Site Server
     Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
     # Check the folder structure for the working directory and create if necessary
-    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Folder Structure' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool folder structure' -ForegroundColor 'DarkGray'
 
     #region Create_Folders
-    Write-Host "Creating Folders..." -ForegroundColor Cyan
-    New-FolderToCreate -Root $workingFolder_Root -Folders @("", "Logs")
-    Write-Log -Message ("New-FolderToCreate -Root '{0}' -Folders @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) 
-    New-FolderToCreate -Root $workingFolder_Root -Folders @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
+    Write-Host "Creating additionl folders..." -ForegroundColor Cyan
+    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
+    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
     #endRegion
 
     #region Get_Content_Tool
-    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Content Tool' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Checking if the intunewin content tool is present' -ForegroundColor 'DarkGray'
 
     # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
     if ($PackageApps) {
         Write-Host "Downloading Win32 Content Prep Tool..." -ForegroundColor Cyan
         if (Test-Path (Join-Path -Path $workingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
-            Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool)
-            Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -ForegroundColor Magenta
+            Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -LogId $LogId -Severity 2
+            Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -ForegroundColor Yellow
         }
         else {
             Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $workingFolder_ContentPrepTool) 
@@ -237,7 +241,7 @@ function New-Win32App {
         }
     } 
     else {
-        Write-Log -Message "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool"
+        Write-Log -Message "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool" -LogId $LogId -Severity 2
         Write-Host "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool" -ForegroundColor Yellow
     }
     #endRegion
@@ -246,73 +250,52 @@ function New-Win32App {
     #region Display_Application_Results
     New-VerboseRegion -Message 'Checking Applications' -ForegroundColor 'DarkGray'
 
-    # Get a list of applications based on search criteria
-    switch ($PSBoundParameters.Keys) {
-  ('ExcludePMPC', 'ExcludeFilter', 'NoOGV') {
-            Write-Verbose -Message 'You used the -ExcludePMPC, -ExcludeFilter and -NoOGV parameters'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter
-        }
-  ('ExcludePMPC', 'ExcludeFilter') {
-            Write-Verbose -Message 'You used the -ExcludePMPC and -ExcludeFilter parameters'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
-        }
-  ('ExcludePMPC', 'NoOGV') {
-            Write-Verbose -Message 'You used the -ExcludePMPC and -NoOGV parameters'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
-        }
-  ('ExcludeFilter', 'NoOGV') {
-            Write-Verbose -Message 'You used the -ExcludeFilter and -NoOGV parameters'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter -NoOGV
-        }
-        'ExcludePMPC' {
-            Write-Verbose -Message 'You used the -ExcludePMPC parameter'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC
-        }
-        'ExcludeFilter' {
-            Write-Verbose -Message 'You used the -ExcludeFilter parameter'
-            $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter
-        }
-        'NoOGV' {
-            Write-Verbose -Message 'You used the -NoOGV parameter'
-            $ApplicationName = Get-AppList -AppName $AppName -NoOGV
-        }
-        'Default' {
-            Write-Verbose -Message 'You did not use any parameters'
-            $ApplicationName = Get-AppList -AppName $AppName
-        }
+    # Build a hash table iw switch parameters to pass to the Get-AppList function
+    $paramsToPass = @{}
+    if ($ExcludePMPC) {
+        $paramsToPass.Add('ExcludePMPC', $true) 
+        Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId
+        Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications"
     }
-    
-    # ApplicationName(s) returned from Get-AppList Function
-    If ($ApplicationName) {
+    if ($ExcludeFilter) {
+        $paramsToPass.Add('ExcludeFilter', $ExcludeFilter) 
+        Write-Log -Message ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2
+        Write-Host ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Magenta
+    }
+    if ($NoOGV) {
+        $paramsToPass.Add('NoOGV', $true) 
+        Write-Log -Message 'The NoOgv parameter was passed. Suppressing Out-GridView' -Log $LogId -Severity 2   
+        Write-Host 'The NoOgv parameter was passed. Suppressing Out-GridView' -ForegroundColor Yellow
+    }
 
-        If ($ExcludePMPC) {
-            Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId
-            Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications"
-        }
+    Write-Log -Message ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -LogId $LogId
+    Write-Host ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -ForegroundColor Cyan
 
-        If ($ExcludeFilter) {
-            Write-Log -Message "The ExcludeFilter parameter was passed. Ignoring applications that match the name:-" -Log "Main.log"
-            Write-Host "The ExcludeFilter parameter was passed. Ignoring applications that match the filter:-"
-            Write-Log -Message "$($ExcludeFilter)" -Log "Main.log"
-            Write-Host """$($ExcludeFilter)""" -ForegroundColor Green
-            
-        }
-
-        Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log "Main.log"
-        Write-Host "The Win32App Migration Tool will process the following Applications:"
-        ForEach ($Application in $ApplicationName) {
-            Write-Log -Message "$($Application)" -Log "Main.log"
-            Write-Host """$($Application)""" -ForegroundColor Green
-        }
+    $ApplicationName = Get-AppList -AppName $AppName @paramsToPass
+ 
+    # ApplicationName(s) returned from the Get-AppList function
+    if ($ApplicationName) {
+        Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log $LogId
+        Write-Host "The Win32App Migration Tool will process the following Applications:" -ForegroundColor Cyan
         
+        forEach ($Application in $ApplicationName) {
+            Write-Log -Message ("'{0}'" -f $application) -Log $LogId
+            Write-Host ("'{0}'" -f $application) -ForegroundColor Green
+        }
     }
     else {
-        Write-Log -Message "AppName ""$($AppName)"" could not be found or no selection was made." -Log "Main.log"
-        Write-Host "AppName ""$($AppName)"" could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -ForegroundColor Red
+        if ($ApplicationName) { 
+            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $ApplicationName) -Log $LogId -Severity 3
+            Write-Warning -Message ("AppName '{0}' could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -f $ApplicationName)
+        }
+        else {
+            Write-Log -Message 'The Out-GrideView was closed. Cannot continue' -Log $LogId -Severity 3
+            Write-Warning -Message 'The Out-GrideView was closed. Cannot continue. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *'
+        }
         Get-ScriptEnd
         break
     }
-    #EndRegion Display_Application_Results
+    #endRegion
 
     #Region Export_Details_CSV
     Write-Log -Message "Calling function to grab deployment type detail for application(s)" -Log "Main.log" 
@@ -395,8 +378,8 @@ function New-Win32App {
             Write-Log -Message "Creating Application Folder $($Application.Application_LogicalName) for Application $($Application.Application_Name)" -Log "Main.log"
             Write-Host "Creating Application Folder ""$($Application.Application_LogicalName)"" for Application ""$($Application.Application_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $Application.Application_LogicalName ))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders $($Application.Application_LogicalName)" -Log "Main.log"
-                New-FolderToCreate -Root $WorkingFolder_Win32Apps -Folders $Application.Application_LogicalName
+                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -FolderNames $($Application.Application_LogicalName)" -Log "Main.log"
+                New-FolderToCreate -Root $WorkingFolder_Win32Apps -FolderNames $Application.Application_LogicalName
             }
             else {
                 Write-Log -Message "Information: Application Folder $($Application.Application_LogicalName) already exists" -Log "Main.log"
@@ -421,8 +404,8 @@ function New-Win32App {
             Write-Log -Message "Creating DeploymentType Folder $($DeploymentType.DeploymentType_LogicalName) for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
             Write-Host "Creating DeploymentType Folder ""$($DeploymentType.DeploymentType_LogicalName)"" for DeploymentType ""$($DeploymentType.DeploymentType_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $DeploymentType.Application_LogicalName ) -ChildPath $DeploymentType.DeploymentType_LogicalName))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders (Join-Path -Path $($DeploymentType.Application_LogicalName) -ChildPath $($DeploymentType.DeploymentType_LogicalName))" -Log "Main.log"
-                New-FolderToCreate -Root $WorkingFolder_Win32Apps -Folders (Join-Path -Path $DeploymentType.Application_LogicalName -ChildPath $DeploymentType.DeploymentType_LogicalName)
+                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -FolderNames (Join-Path -Path $($DeploymentType.Application_LogicalName) -ChildPath $($DeploymentType.DeploymentType_LogicalName))" -Log "Main.log"
+                New-FolderToCreate -Root $WorkingFolder_Win32Apps -FolderNames (Join-Path -Path $DeploymentType.Application_LogicalName -ChildPath $DeploymentType.DeploymentType_LogicalName)
             }
             else {
                 Write-Log -Message "Information: Folder ""$($WorkingFolder_Win32Apps)\$($DeploymentType.DeploymentType_LogicalName)\$($DeploymentType.DeploymentType_LogicalName)"" already exists" -Log "Main.log"
@@ -447,8 +430,8 @@ function New-Win32App {
             Write-Log -Message "Creating DeploymentType Content Folder for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
             Write-Host "Creating DeploymentType Content Folder for DeploymentType ""$($DeploymentType.DeploymentType_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path $WorkingFolder_Content -ChildPath $DeploymentType.Application_LogicalName))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Content) -Folders $($DeploymentType.DeploymentType_LogicalName)" -Log "Main.log"
-                New-FolderToCreate -Root $WorkingFolder_Content -Folders $DeploymentType.DeploymentType_LogicalName
+                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Content) -FolderNames $($DeploymentType.DeploymentType_LogicalName)" -Log "Main.log"
+                New-FolderToCreate -Root $WorkingFolder_Content -FolderNames $DeploymentType.DeploymentType_LogicalName
             }
             else {
                 Write-Log -Message "Information: Folder ""$($WorkingFolder_Content)\$($DeploymentType.DeploymentType_LogicalName)"" Content already exists" -Log "Main.log"

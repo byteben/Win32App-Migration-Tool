@@ -33,6 +33,7 @@ function Write-Log {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = 'Message to write to the log file')]
+        [AllowEmptyString()]
         [String]$Message,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = 'Location of the log file to write to')]
         [String]$LogFolder = $workingFolder_Logs, #$workingFolder_Logs is defined as a Global parameter in the main script
@@ -74,7 +75,7 @@ function Write-Log {
                     Write-Host ("Log file '{0}' wiped" -f $logToWrite) -ForegroundColor Yellow
                 }
                 else {
-                    Write-Warning ("Log file not found at '{0}'" -f $logToWrite)
+                    Write-Host ("Log file not found at '{0}'. Not restting log file" -f $logToWrite) -ForegroundColor Yellow
                 }
             }
             catch {
