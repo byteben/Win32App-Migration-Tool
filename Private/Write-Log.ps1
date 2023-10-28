@@ -29,24 +29,23 @@ This parameter is built from the line number of the call from the function up th
 .PARAMETER ResetLogFile
 If specified, the log file will be reset
 #>
-
 function Write-Log {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = "Message to write to the log file")]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = 'Message to write to the log file')]
         [String]$Message,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = "Location of the log file to write to")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = 'Location of the log file to write to')]
         [String]$LogFolder = $workingFolder_Logs, #$workingFolder_Logs is defined as a Global parameter in the main script
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 2, HelpMessage = "Name of the log file to write to. Main is the default log file")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 2, HelpMessage = 'Name of the log file to write to. Main is the default log file')]
         [String]$Log = 'Main.log',
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = "LogId name of the script of the calling function")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'LogId name of the script of the calling function')]
         [String]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 3, HelpMessage = "Severity of the log entry 1-3")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 3, HelpMessage = 'Severity of the log entry 1-3')]
         [ValidateSet(1, 2, 3)]
         [string]$Severity = 1,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function including line number of invociation")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the Write-Log function including line number of invociation')]
         [string]$Component = [string]::Format('{0}:{1}', $logID, $($MyInvocation.ScriptLineNumber)),
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 4, HelpMessage = "If specified, the log file will be reset")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 4, HelpMessage = 'If specified, the log file will be reset')]
         [Switch]$ResetLogFile
     )
 

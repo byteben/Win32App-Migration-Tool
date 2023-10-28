@@ -142,13 +142,13 @@ Function New-Win32App {
 
     [CmdletBinding()]
     Param (
-        [Parameter(Mandatory = $True)]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
+        [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
+        [String]$SiteCode,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'Server name that has an SMS Provider site system role')]
+        [String]$ProviderMachineName,  
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The name of the application to search for. Accepts wildcards *')]
         [String]$AppName,
-        [Parameter(Mandatory = $True)]
-        [String]$ProviderMachineName,
-        [Parameter(Mandatory = $True)]
-        [ValidateLength(3, 3)]
-        [String]$SiteCode,   
         [Parameter()]
         [Switch]$DownloadContent,
         [Switch]$ExportLogo,
@@ -162,14 +162,14 @@ Function New-Win32App {
     )
 
     #Create Global Variables
-    $Global:SiteCode = $SiteCode
-    $Global:WorkingFolder_Root = $WorkingFolder
-    $Global:WorkingFolder_Logos = Join-Path -Path $WorkingFolder_Root -ChildPath "Logos"
-    $Global:WorkingFolder_Content = Join-Path -Path $WorkingFolder_Root -ChildPath "Content"
-    $Global:WorkingFolder_ContentPrepTool = Join-Path -Path $WorkingFolder_Root -ChildPath "ContentPrepTool"
-    $Global:workingFolder_Logs = Join-Path -Path $WorkingFolder_Root -ChildPath "Logs"
-    $Global:WorkingFolder_Detail = Join-Path -Path $WorkingFolder_Root -ChildPath "Details"
-    $Global:WorkingFolder_Win32Apps = Join-Path -Path $WorkingFolder_Root -ChildPath "Win32Apps"
+    $Global:siteCode = $SiteCode
+    $Global:workingFolder_Root = $workingFolder
+    $Global:workingFolder_Logos = Join-Path -Path $workingFolder_Root -ChildPath 'Logos'
+    $Global:workingFolder_Content = Join-Path -Path $workingFolder_Root -ChildPath 'Content'
+    $Global:workingFolder_ContentPrepTool = Join-Path -Path $workingFolder_Root -ChildPath 'ContentPrepTool'
+    $Global:workingFolder_Logs = Join-Path -Path $workingFolder_Root -ChildPath 'Logs'
+    $Global:workingFolder_Detail = Join-Path -Path $workingFolder_Root -ChildPath 'Details'
+    $Global:workingFolder_Win32Apps = Join-Path -Path $workingFolder_Root -ChildPath 'Win32Apps'
 
     #Initialize Woking Folder and Log Folder Folders
     Write-Host "Initializing Required Folders..." -ForegroundColor Cyan
@@ -182,47 +182,28 @@ Function New-Win32App {
     If ($ResetLog) {
         Write-Log -ResetLogFile -Log "Main.Log"
     }
-    
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Script Start Win32AppMigrationTool" -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host 'Script Start Win32AppMigrationTool' -ForegroundColor DarkGray
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host ''
+
+    # Begin Script
+    New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGrey'
 
     $ScriptRoot = $PSScriptRoot
-    Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
+    Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot)
 
-    #Connect to Site Server
-    Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName -Log "Main.log"
+    # Connect to Site Server
+    Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
-    #Region Check_Folders
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Win32AppMigrationTool Folder Structure..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Host ''
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host 'Checking Win32AppMigrationTool Folder Structure...' -ForegroundColor DarkGray
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host ''
+    # Check the folder structure for the working directory and create if necessary
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Folder Structure' -ForegroundColor 'DarkGrey'
 
-    #Create Folders
-    Write-Host "Creating Folders..."-ForegroundColor Cyan
-    New-FolderToCreate -Root $WorkingFolder_Root -Folders @("", "Logs")
+    #Region Create_Folders
+    Write-Host "Creating Folders..." -ForegroundColor Cyan
+    New-FolderToCreate -Root $workingFolder_Root -Folders @("", "Logs")
     Write-Log -Message "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @(""Logos"", ""Content"", ""ContentPrepTool"",  ""Details"", ""Win32Apps"")" -Log "Main.log" 
     New-FolderToCreate -Root $WorkingFolder_Root -Folders @("Logos", "Content", "ContentPrepTool", "Details", "Win32Apps")
-    #EndRegion Check_Folders
+    #EndRegion Create_Folders
 
     #Region Get_Content_Tool
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Win32AppMigrationTool Content Tool..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Host ''
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host 'Checking Win32AppMigrationTool Content Tool...' -ForegroundColor DarkGray
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host ''
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Content Tool' -ForegroundColor 'DarkGrey'
 
     #Download Win32 Content Prep Tool
     If ($PackageApps) {
