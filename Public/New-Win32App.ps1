@@ -203,7 +203,7 @@ function New-Win32App {
     }
 
     # Begin Script
-    New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGrey'
+    New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGray'
 
     $ScriptRoot = $PSScriptRoot
     Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot)
@@ -212,7 +212,7 @@ function New-Win32App {
     Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
     # Check the folder structure for the working directory and create if necessary
-    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Folder Structure' -ForegroundColor 'DarkGrey'
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Folder Structure' -ForegroundColor 'DarkGray'
 
     #region Create_Folders
     Write-Host "Creating Folders..." -ForegroundColor Cyan
@@ -222,7 +222,7 @@ function New-Win32App {
     #endRegion
 
     #region Get_Content_Tool
-    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Content Tool' -ForegroundColor 'DarkGrey'
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool Content Tool' -ForegroundColor 'DarkGray'
 
     # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
     if ($PackageApps) {
@@ -243,47 +243,50 @@ function New-Win32App {
     #endRegion
 
 
-    #Region Display_Application_Results
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Applications..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Host ''
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host 'Checking Applications...' -ForegroundColor DarkGray
-    Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-    Write-Host ''
+    #region Display_Application_Results
+    New-VerboseRegion -Message 'Checking Applications' -ForegroundColor 'DarkGray'
 
-    #Get list of Applications
-    If ($ExcludePMPC -and $ExcludeFilter -and $NoOGV) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter -NoOGV
+    # Get a list of applications based on search criteria
+    switch ($PSBoundParameters.Keys) {
+  ('ExcludePMPC', 'ExcludeFilter', 'NoOGV') {
+            Write-Verbose -Message 'You used the -ExcludePMPC, -ExcludeFilter and -NoOGV parameters'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter
+        }
+  ('ExcludePMPC', 'ExcludeFilter') {
+            Write-Verbose -Message 'You used the -ExcludePMPC and -ExcludeFilter parameters'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
+        }
+  ('ExcludePMPC', 'NoOGV') {
+            Write-Verbose -Message 'You used the -ExcludePMPC and -NoOGV parameters'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
+        }
+  ('ExcludeFilter', 'NoOGV') {
+            Write-Verbose -Message 'You used the -ExcludeFilter and -NoOGV parameters'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter -NoOGV
+        }
+        'ExcludePMPC' {
+            Write-Verbose -Message 'You used the -ExcludePMPC parameter'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC
+        }
+        'ExcludeFilter' {
+            Write-Verbose -Message 'You used the -ExcludeFilter parameter'
+            $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter
+        }
+        'NoOGV' {
+            Write-Verbose -Message 'You used the -NoOGV parameter'
+            $ApplicationName = Get-AppList -AppName $AppName -NoOGV
+        }
+        'Default' {
+            Write-Verbose -Message 'You did not use any parameters'
+            $ApplicationName = Get-AppList -AppName $AppName
+        }
     }
-    If ($ExcludePMPC -and $ExcludeFilter -and (-not($NoOGV))) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -ExcludeFilter $ExcludeFilter
-    }
-    If ($ExcludePMPC -and (-not($ExcludeFilter)) -and $NoOGV) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC -NoOGV
-    }
-    If ($ExcludePMPC -and (-not($ExcludeFilter)) -and (-not($NoOGV))) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludePMPC
-    }
-    If ((-not($ExcludePMPC)) -and $ExcludeFilter -and $NoOGV) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter -NoOGV
-    }
-    If ((-not($ExcludePMPC)) -and $ExcludeFilter -and (-not($NoOGV))) {
-        $ApplicationName = Get-AppList -AppName $AppName -ExcludeFilter $ExcludeFilter
-    }
-    If ((-not($ExcludePMPC)) -and (-not($ExcludeFilter)) -and $NoOGV) {
-        $ApplicationName = Get-AppList -AppName $AppName -NoOGV
-    } 
-    If ((-not($ExcludePMPC)) -and (-not($ExcludeFilter)) -and (-not($NoOGV))) {
-        $ApplicationName = Get-AppList -AppName $AppName
-    }    
     
-    #ApplicationName(s) returned from Get-AppList Function
+    # ApplicationName(s) returned from Get-AppList Function
     If ($ApplicationName) {
 
         If ($ExcludePMPC) {
-            Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -Log "Main.log"
+            Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId
             Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications"
         }
 
