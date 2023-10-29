@@ -1,14 +1,22 @@
 <#
 .Synopsis
-Created on:   21/03/2021
+Created on:   28/10/2023
 Created by:   Ben Whitmore
 Filename:     Get-AppInfo.ps1
 
 .Description
-Function to get Application and Deployment Type information from ConfigMgr
+Function to get application and deployment type information from ConfigMgr
+
+.PARAMETER LogID
+The component (script name) passed as LogID to the 'Write-Log' function. 
+This parameter is built from the line number of the call from the function up the
+
+.PARAMETER ApplicationName
+The name of the application to get information for
 #>
-Function Get-AppInfo {
-    Param (
+function Get-AppInfo {
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The name of the application to get information for')]
         [String[]]$ApplicationName
     )
  

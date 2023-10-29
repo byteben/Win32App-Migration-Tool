@@ -161,8 +161,8 @@ function New-Win32App {
         [Switch]$DownloadContent,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application logo is decoded from base64 and saved to the Logos folder')]
         [Switch]$ExportLogo,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
-        [String]$WorkingFolder = "C:\Win32AppMigrationTool",
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
+        [String]$workingFolder = "C:\Win32AppMigrationTool",
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
         [Switch]$PackageApps,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
@@ -171,26 +171,22 @@ function New-Win32App {
         [Switch]$ResetLog,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"')]
         [String]$ExcludeFilter,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
         [Switch]$NoOgv,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'URI for Win32 Content Prep Tool')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = 'URI for Win32 Content Prep Tool')]
         [String]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
     )
 
-    # Create Global Variables
-    $Global:workingFolder_Root = $workingFolder
-    $Global:workingFolder_Logos = Join-Path -Path $workingFolder_Root -ChildPath 'Logos'
-    $Global:workingFolder_Content = Join-Path -Path $workingFolder_Root -ChildPath 'Content'
-    $Global:workingFolder_ContentPrepTool = Join-Path -Path $workingFolder_Root -ChildPath 'ContentPrepTool'
-    $Global:workingFolder_Logs = Join-Path -Path $workingFolder_Root -ChildPath 'Logs'
-    $Global:workingFolder_Detail = Join-Path -Path $workingFolder_Root -ChildPath 'Details'
-    $Global:workingFolder_Win32Apps = Join-Path -Path $workingFolder_Root -ChildPath 'Win32Apps'
+    # Create global variable(s) 
+    $global:workingFolder_Root = $workingFolder
 
-    # Initialize workspace folders
+    #region Prepare_Workspace
+    # Initialize folders to prepare workspace for logging
     Write-Host "Initializing required folders..." -ForegroundColor Cyan
-    foreach ($folder in $workingFolder_Root, $workingFolder_Logs) {
+
+    foreach ($folder in $workingFolder_Root, "$workingFolder_Root\Logs") {
         if (-not (Test-Path -Path $folder)) {
             Write-Log -Message ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -LogId $LogId
             Write-Host ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -ForegroundColor Cyan
@@ -203,9 +199,10 @@ function New-Win32App {
     }
 
     # Rest the log file if the -ResetLog parameter is passed
-    if ($ResetLog -and (Test-Path -Path $WorkingFolder_Logs) ) {
+    if ($ResetLog -and (Test-Path -Path "$workingFolder_Root\Logs") ) {
         Write-Log -Message $null -ResetLogFile
     }
+    #endregion
 
     # Begin Script
     New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGray'
@@ -226,18 +223,18 @@ function New-Win32App {
     #endRegion
 
     #region Get_Content_Tool
-    New-VerboseRegion -Message 'Checking if the intunewin content tool is present' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Checking if the Win32contentpreptool is required' -ForegroundColor 'DarkGray'
 
     # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
     if ($PackageApps) {
-        Write-Host "Downloading Win32 Content Prep Tool..." -ForegroundColor Cyan
-        if (Test-Path (Join-Path -Path $workingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
-            Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -LogId $LogId -Severity 2
-            Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f $workingFolder_ContentPrepTool) -ForegroundColor Yellow
+        Write-Host "Downloading the Win32contentpreptool..." -ForegroundColor Cyan
+        if (Test-Path (Join-Path -Path "$workingFolder_Root\ContentPrepTool" -ChildPath "IntuneWinAppUtil.exe")) {
+            Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f "$workingFolder_Root\ContentPrepTool") -LogId $LogId -Severity 2
+            Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f "$workingFolder_Root\ContentPrepTool") -ForegroundColor Yellow
         }
         else {
-            Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $workingFolder_ContentPrepTool) 
-            Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $workingFolder_ContentPrepTool
+            Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, "$workingFolder_Root\ContentPrepTool") -LogId $LogId
+            Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination "$workingFolder_Root\ContentPrepTool"
         }
     } 
     else {
@@ -250,42 +247,42 @@ function New-Win32App {
     #region Display_Application_Results
     New-VerboseRegion -Message 'Checking Applications' -ForegroundColor 'DarkGray'
 
-    # Build a hash table iw switch parameters to pass to the Get-AppList function
+    # Build a hash table of switch parameters to pass to the Get-AppList function
     $paramsToPass = @{}
     if ($ExcludePMPC) {
         $paramsToPass.Add('ExcludePMPC', $true) 
-        Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId
-        Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications"
+        Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId -Severity 2
+        Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -ForegroundColor Cyan
     }
     if ($ExcludeFilter) {
         $paramsToPass.Add('ExcludeFilter', $ExcludeFilter) 
         Write-Log -Message ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2
-        Write-Host ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Magenta
+        Write-Host ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Cyan
     }
     if ($NoOGV) {
         $paramsToPass.Add('NoOGV', $true) 
-        Write-Log -Message 'The NoOgv parameter was passed. Suppressing Out-GridView' -Log $LogId -Severity 2   
-        Write-Host 'The NoOgv parameter was passed. Suppressing Out-GridView' -ForegroundColor Yellow
+        Write-Log -Message 'The NoOgv parameter was passed. Suppressing Out-GridView' -LogId $LogId -Severity 2   
+        Write-Host 'The NoOgv parameter was passed. Suppressing Out-GridView' -ForegroundColor Cyan
     }
 
     Write-Log -Message ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -LogId $LogId
     Write-Host ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -ForegroundColor Cyan
 
-    $ApplicationName = Get-AppList -AppName $AppName @paramsToPass
+    $applicationName = Get-AppList -AppName $AppName @paramsToPass
  
     # ApplicationName(s) returned from the Get-AppList function
-    if ($ApplicationName) {
-        Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log $LogId
-        Write-Host "The Win32App Migration Tool will process the following Applications:" -ForegroundColor Cyan
+    if ($applicationName) {
+        Write-Log -Message "The Win32App Migration Tool will process the following applications:" -LogId $LogId
+        Write-Host "The Win32App Migration Tool will process the following applications:" -ForegroundColor Cyan
         
-        forEach ($Application in $ApplicationName) {
-            Write-Log -Message ("'{0}'" -f $application) -Log $LogId
-            Write-Host ("'{0}'" -f $application) -ForegroundColor Green
+        foreach ($application in $ApplicationName) {
+            Write-Log -Message ("CI_ID = '{0}', Name = '{1}'" -f $application.CI__ID, $application.LocalizedDisplayName) -LogId $LogId
+            Write-Host ("CI_ID = '{0}', Name = '{1}'" -f $application.CI__ID, $application.LocalizedDisplayName) -ForegroundColor Green
         }
     }
     else {
-        if ($ApplicationName) { 
-            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $ApplicationName) -Log $LogId -Severity 3
+        if ($applicationName) { 
+            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $applicationName.LocalizedDisplayName) -LogId $LogId -Severity 3
             Write-Warning -Message ("AppName '{0}' could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -f $ApplicationName)
         }
         else {
@@ -297,42 +294,45 @@ function New-Win32App {
     }
     #endRegion
 
-    #Region Export_Details_CSV
-    Write-Log -Message "Calling function to grab deployment type detail for application(s)" -Log "Main.log" 
-    #Calling function to grab deployment type detail for application(s)
-    Write-Log -Message "`$App_Array = Get-AppInfo -ApplicationName ""$($ApplicationName)""" -Log "Main.log"
-    $App_Array = Get-AppInfo -ApplicationName $ApplicationName
-    $DeploymentTypes_Array = $App_Array[0]
-    $Applications_Array = $App_Array[1]
-    $Content_Array = $App_Array[2]
+    #region Get_App_Details
+    New-VerboseRegion -Message 'Getting deployment types' -ForegroundColor 'DarkGray'
 
-    #Export $DeploymentTypes to CSV for reference
+    # Calling function to grab deployment types detail for application(s)
+    Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -LogId $LogId
+    Write-Message -Message "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -LogId $LogId -ForegroundColor Cyan
+
+    $app_Array = Get-AppInfo -ApplicationName $applicationName
+    $deploymentTypes_Array = $app_Array[0]
+    $applications_Array = $app_Array[1]
+    $content_Array = $app_Array[2]
+
+    # Export $DeploymentTypes to CSV for reference
     Try {
-        $DeploymentTypes_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "DeploymentTypes.csv") -Encoding UTF8 -NoTypeInformation -Force 
-        Write-Log -Message "`$DeploymentTypes_Array is located at $($WorkingFolder_Detail)\DeploymentTypes.csv" -Log "Main.log" 
+        $deploymentTypes_Array | Export-Csv "$workingFolder_Root\Detail\DeploymentTypes.csv" -Encoding UTF8 -NoTypeInformation -Force 
+        Write-Log -Message ("`$deploymentTypes_Array is located at '{0}\DeploymentTypes.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
     }
     Catch {
-        Write-Host "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -Log "Main.log" 
+        Write-Log -Message 'Error: Could not Export DeploymentTypes.csv. Do you have it open?' -LogId $LogId -Severity 3
+        Write-Warning -Message 'Error: Could not Export DeploymentTypes.csv. Do you have it open?'
     }
     Try {
-        $Applications_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Applications.csv") -Encoding UTF8 -NoTypeInformation -Force
-        Write-Log -Message "`$Applications_Array is located at $($WorkingFolder_Detail)\Applications.csv" -Log "Main.log" 
+        $applications_Array | Export-Csv "$workingFolder_Root\Detail\Applications.csv" -Encoding UTF8 -NoTypeInformation -Force
+        Write-Log -Message ("`$applications_Array is located at '{0}\Applications.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
     }
     Catch {
-        Write-Host "Error: Could not Export Applications.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export Applications.csv. Do you have it open?" -Log "Main.log" 
+        Write-Log -Message 'Error: Could not Export Applications.csv. Do you have it open?' -LogId $LogId -Severity 3
+        Write-Warning -Message 'Error: Could not Export Applications.csv. Do you have it open?'
     }
     Try {
-        $Content_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Content.csv") -Encoding UTF8 -NoTypeInformation -Force
-        Write-Log -Message "`$Content_Array is located at $($WorkingFolder_Detail)\Content.csv" -Log "Main.log" 
+        $content_Array | Export-Csv "$workingFolder_Root\Detail\Content.csv" -Encoding UTF8 -NoTypeInformation -Force
+        Write-Log -Message ("`$content_Array is located at '{0}\Applications.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
     }
     Catch {
-        Write-Host "Error: Could not Export Content.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export Content.csv. Do you have it open?" -Log "Main.log" 
+        Write-Log -Message 'Error: Could not Export Content.csv. Do you have it open?' -LogId $LogId -Severity 3
+        Write-Warning -Message 'Error: Could not Export Content.csv. Do you have it open?'
     }
-    Write-Host "Details of the selected Applications and Deployment Types can be found at ""$($WorkingFolder_Detail)"""
-    #EndRegion Export_Details_CSV
+    Write-Host ("Details of the selected Applications and Deployment Types can be found at '{0}'" -f "$workingFolder_Root\Detail") -ForegroundColor Magenta
+    #endRegion
 
     #Region Exporting_Logos
     If ($ExportLogo) {
@@ -347,7 +347,7 @@ function New-Win32App {
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
 
-        ForEach ($Application in $Applications_Array) {
+        ForEach ($Application in $applications_Array) {
             Write-Log -Message "`$IconId = $($Application.Application_IconId)" -Log "Main.log"
             $IconId = $Application.Application_IconId
             Write-Log -Message "Export-Logo -IconId $($IconId) -AppName $($Application.Application_LogicalName)" -Log "Main.log"
@@ -370,7 +370,7 @@ function New-Win32App {
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
 
-        ForEach ($Application in $Applications_Array) {
+        ForEach ($Application in $applications_Array) {
 
             #Create Application Parent Folder(s)
             Write-Log -Message "Application: $($Application.Application_Name)" -Log "Main.log"
@@ -398,7 +398,7 @@ function New-Win32App {
         Write-Host 'Creating DeploymentType Folder(s)' -ForegroundColor DarkGray
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
-        ForEach ($DeploymentType in $DeploymentTypes_Array) {
+        ForEach ($DeploymentType in $deploymentTypes_Array) {
 
             #Create DeploymentType Child Folder(s)
             Write-Log -Message "Creating DeploymentType Folder $($DeploymentType.DeploymentType_LogicalName) for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
@@ -424,7 +424,7 @@ function New-Win32App {
         Write-Host 'Creating Content Folder(s)' -ForegroundColor DarkGray
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
-        ForEach ($DeploymentType in $DeploymentTypes_Array) {
+        ForEach ($DeploymentType in $deploymentTypes_Array) {
 
             #Create DeploymentType Content Folder(s)
             Write-Log -Message "Creating DeploymentType Content Folder for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
@@ -453,7 +453,7 @@ function New-Win32App {
 
         If ($DownloadContent) {
 
-            ForEach ($Content in $Content_Array) {
+            ForEach ($Content in $content_Array) {
                 Write-Log -Message "Downloading Content for Deployment Type $($Content.Content_DeploymentType_LogicalName) from Content Source $($Content.Content_Location)..." -Log "Main.log"
                 Write-Host "Downloading Content for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" from Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
                 Write-Log -Message "Get-ContentFiles -Source $($Content.Content_Location) -Destination (Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Content.Content_DeploymentType_LogicalName))" -Log "Main.log" 
@@ -461,7 +461,7 @@ function New-Win32App {
             }
         }
         else {
-            ForEach ($Content in $Content_Array) {
+            ForEach ($Content in $content_Array) {
                 Write-Log -Message "DownloadContent switch not passed. Skipping Content download for Deployment Type $($Content.Content_DeploymentType_LogicalName) at Content Source $($Content.Content_Location)..." -Log "Main.log"
                 Write-Host "DownloadContent switch not passed. Skipping Content download for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" at Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
                 $SkipFileName = "DownloadContent-Skipped.txt"
@@ -481,7 +481,7 @@ function New-Win32App {
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
 
         #Get Application and Deployment Type Details and Files
-        ForEach ($Application in $Applications_Array) {
+        ForEach ($Application in $applications_Array) {
             Write-Log -Message "--------------------------------------------" -Log "Main.log" 
             Write-Log -Message "$($Application.Application_Name)" -Log "Main.log"
             Write-Log -Message "There are a total of $($Application.Application_TotalDeploymentTypes) Deployment Types for this Application:" -Log "Main.log"
@@ -493,7 +493,7 @@ function New-Win32App {
             Write-Host '--------------------------------------------' -ForegroundColor DarkGray
             Write-Host ''
 
-            ForEach ($Deployment in $DeploymentTypes_Array | Where-Object { $_.Application_LogicalName -eq $Application.Application_LogicalName }) {
+            ForEach ($Deployment in $deploymentTypes_Array | Where-Object { $_.Application_LogicalName -eq $Application.Application_LogicalName }) {
             
                 Write-Log -Message "--------------------------------------------" -Log "Main.log" 
                 Write-Log -Message "$($Deployment.DeploymentType_Name)" -Log "Main.log"
@@ -508,7 +508,7 @@ function New-Win32App {
                 Write-Log -Message "Install Command: ""$($SetupFile)""" -Log "Main.log"
                 Write-Host "Install Command: ""$($SetupFile)"""
 
-                ForEach ($Content in $Content_Array | Where-Object { $_.Content_DeploymentType_LogicalName -eq $Deployment.DeploymentType_LogicalName }) {
+                ForEach ($Content in $content_Array | Where-Object { $_.Content_DeploymentType_LogicalName -eq $Deployment.DeploymentType_LogicalName }) {
 
                     #Create variables to pass to Function
 

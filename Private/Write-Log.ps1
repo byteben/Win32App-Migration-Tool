@@ -36,7 +36,7 @@ function Write-Log {
         [AllowEmptyString()]
         [String]$Message,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = 'Location of the log file to write to')]
-        [String]$LogFolder = $workingFolder_Logs, #$workingFolder_Logs is defined as a Global parameter in the main script
+        [String]$LogFolder = "$workingFolder_Root\Logs", #$workingFolder is defined as a Global parameter in the main script
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 2, HelpMessage = 'Name of the log file to write to. Main is the default log file')]
         [String]$Log = 'Main.log',
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'LogId name of the script of the calling function')]
