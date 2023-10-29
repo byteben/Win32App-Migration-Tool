@@ -93,7 +93,7 @@
             # LicenseUri = ''
 
             # A URL to the main website for this project.
-            ProjectUri = 'https://msendpointmgr.com/2021/03/27/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/'
+            ProjectUri = 'https://github.com/byteben/Win32App-Migration-Tool'
 
             # A URL to an icon representing this module.
             # IconUri = ''
