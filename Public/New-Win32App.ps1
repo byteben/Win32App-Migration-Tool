@@ -299,7 +299,7 @@ function New-Win32App {
 
     # Calling function to grab deployment types detail for application(s)
     Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -LogId $LogId
-    Write-Message -Message "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -LogId $LogId -ForegroundColor Cyan
+    Write-Host "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -ForegroundColor Cyan
 
     $app_Array = Get-AppInfo -ApplicationName $applicationName
     $deploymentTypes_Array = $app_Array[0]
