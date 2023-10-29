@@ -276,13 +276,13 @@ function New-Win32App {
         Write-Host "The Win32App Migration Tool will process the following applications:" -ForegroundColor Cyan
         
         foreach ($application in $ApplicationName) {
-            Write-Log -Message ("CI_ID = '{0}', Name = '{1}'" -f $application.CI__ID, $application.LocalizedDisplayName) -LogId $LogId
-            Write-Host ("CI_ID = '{0}', Name = '{1}'" -f $application.CI__ID, $application.LocalizedDisplayName) -ForegroundColor Green
+            Write-Log -Message ("Id = '{0}', Name = '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId
+            Write-Host ("Id = '{0}', Name = '{1}'" -f $application.Id, $application.LocalizedDisplayName) -ForegroundColor Green
         }
     }
     else {
         if ($applicationName) { 
-            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $applicationName.LocalizedDisplayName) -LogId $LogId -Severity 3
+            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $AppName) -LogId $LogId -Severity 3
             Write-Warning -Message ("AppName '{0}' could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -f $ApplicationName)
         }
         else {
@@ -298,8 +298,8 @@ function New-Win32App {
     New-VerboseRegion -Message 'Getting deployment types' -ForegroundColor 'DarkGray'
 
     # Calling function to grab deployment types detail for application(s)
-    Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -LogId $LogId
-    Write-Host "Calling 'Get-AppInfo' function to grab deployment types detail for application(s)" -ForegroundColor Cyan
+    Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment type details" -LogId $LogId
+    Write-Host "Calling 'Get-AppInfo' function to grab deployment type details" -ForegroundColor Cyan
 
     $app_Array = Get-AppInfo -ApplicationName $applicationName
     $deploymentTypes_Array = $app_Array[0]

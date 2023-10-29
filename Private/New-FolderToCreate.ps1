@@ -27,8 +27,7 @@ function New-FolderToCreate {
 
     foreach ($folder in $FolderNames) {
 
-        #Create Folders
-        Write-Log -Message ("`$FolderToCreate = Join-Path -Path '{0}' -ChildPath '{1}'"-f $Root, $folder)
+        # Create Folders
         $folderToCreate = Join-Path -Path $Root -ChildPath $folder
         
         If (!(Test-Path -Path $folderToCreate)) {
