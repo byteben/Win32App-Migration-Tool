@@ -245,7 +245,7 @@ function New-Win32App {
 
 
     #region Display_Application_Results
-    New-VerboseRegion -Message 'Checking Applications' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Filtering application results' -ForegroundColor 'DarkGray'
 
     # Build a hash table of switch parameters to pass to the Get-AppList function
     $paramsToPass = @{}
@@ -295,7 +295,7 @@ function New-Win32App {
     #endRegion
 
     #region Get_App_Details
-    New-VerboseRegion -Message 'Getting deployment types' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Getting application details' -ForegroundColor 'DarkGray'
 
     # Calling function to grab deployment types detail for application(s)
     Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment type details" -LogId $LogId
