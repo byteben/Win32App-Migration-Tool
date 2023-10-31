@@ -42,7 +42,7 @@ function Get-AppInfo {
             $i++
 
             Write-Log -Message ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -LogId $LogId
-            Write-Host ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -ForegroundColor Green
+            Write-Host ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -ForegroundColor Cyan
         
 
             # Grab the SDMPackgeXML which contains the application details
@@ -56,7 +56,6 @@ function Get-AppInfo {
             # Get the total number of deployment types for the application
             $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
             Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
-            Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -ForegroundColor Cyan
 
             # Create a new custom hashtable to store application details
             $applicationObject = [PSCustomObject]@{}
@@ -106,7 +105,7 @@ function Get-AppInfo {
             }
 
             # Output the application object
-            Write-Host $applicationObject
+            Write-Host "`n$applicationObject" -ForegroundColor Green
 
             # Add the application object to the array
             $applicationTypes += $applicationObject

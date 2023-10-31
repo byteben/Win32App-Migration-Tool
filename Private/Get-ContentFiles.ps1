@@ -1,38 +1,74 @@
 <#
 .Synopsis
-Created on:   21/03/2021
+Created on:   31/10/2023
 Created by:   Ben Whitmore
 Filename:     Get-ContentFiles.ps1
 
 .Description
-Function to get content
+Function to get content from the content source folder for the deployment type and copy it to the content destination folder
+
+.PARAMETER LogId
+The component (script name) passed as LogID to the 'Write-Log' function. 
+This parameter is built from the line number of the call from the function up the
+
+.PARAMETER Source
+The source folder to copy content from
+
+.PARAMETER Destination
+The destination folder to copy content to
 #>
-Function Get-ContentFiles {
-    Param (
-        [String]$Source,
-        [String]$Destination
+function Get-ContentFiles {
+    param (
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
+        [string]$LogId = $($MyInvocation.MyCommand).Name,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The source folder to copy content from')]
+        [string]$Source,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'The destination folder to copy content to')]
+        [string]$Destination
     )
 
-    Write-Log -Message "Function: Get-ContentFiles was called" -Log "Main.log" 
-    Write-Log -Message "Padding $($Source) in case content path has spaces. Robocopy demand space at end of Source String" -Log "Main.log" 
-    $SourcePadded = "`"" + $Source + " `""
-    Write-Log -Message "Padding $($Destination) in case content path has spaces. Robocopy demand space at end of Destination String" -Log "Main.log" 
+    Write-Log -Message "Function: Get-ContentFiles was called" -LogId $LogId
+
+    # Add padding to the source and destination paths
+    Write-Log -Message ("Padding '{0}' in case content path has spaces. Note: Robocopy demands space at end of source string" -f $Source) -LogId $LogId
+    $sourcePadded = "`"" + $Source + " `""
+
+    Write-Log -Message ("Padding '{0}' in case content path has spaces. Note: Robocopy demands space at end of source string" -f $Destination) -LogId $LogId
     $DestinationPadded = "`"" + $Destination + " `""
 
-    Try {
-        Write-Log -Message "`$Log = Join-Path -Path $($WorkingFolder_Logs) -ChildPath ""Main.Log""" -Log "Main.log" 
-        $Log = Join-Path -Path $WorkingFolder_Logs -ChildPath "Main.Log"
-        Write-Log -Message "Robocopy.exe $($SourcePadded) $($DestinationPadded) /MIR /E /Z /R:5 /W:1 /NDL /NJH /NJS /NC /NS /NP /V /TEE  /UNILOG+:$($Log)" -Log "Main.log" 
-        $Robo = Robocopy.exe $SourcePadded $DestinationPadded /MIR /E /Z /R:5 /W:1 /NDL /NJH /NJS /NC /NS /NP /V /TEE /UNILOG+:$Log
-        $Robo
+    try {
+        Write-Log -Message ("Invoking robocopy.exe '{0}' '{1}' /MIR /E /Z /R:5 /W:1 /NDL /NJH /NJS /NC /NS /NP /V /TEE  /UNILOG+:'{2}'" -f $sourcePadded, $destinationPadded, $uniLog)-LogId $LogId 
+        
+        $args = @(
+            $SourcePadded
+            $DestinationPadded
+            /MIR
+            /E
+            /Z
+            /R:5
+            /W:1
+            /NDL
+            /NJH
+            /NJS
+            /NC
+            /NS
+            /NP
+            /V
+            /TEE
+            /UNILOG+:$uniLog
+        )
 
-        If ((Get-ChildItem -Path $Destination | Measure-Object).Count -eq 0 ) {
-            Write-Log -Message "Error: Could not transfer content from ""$($Source)"" to ""$($Destination)""" -Log "Main.log" 
-            Write-Host "Error: Could not transfer content from ""$($Source)"" to ""$($Destination)""" -ForegroundColor Red
+        # Invoke robocopy.exe
+        Start-Process Robocopy.exe -ArgumentList $args -Wait -NoNewWindow -PassThru 
+
+        if ((Get-ChildItem -Path $destination | Measure-Object).Count -eq 0 ) {
+
+            Write-Log -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $source, $destination) -LogId $LogId
+            Write-Warning -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $source, $destination)
         }
     }
-    Catch {
-        Write-Log -Message "Error: Could not transfer content from ""$($Source)"" to ""$($Destination)""" -Log "Main.log" 
-        Write-Host "Error: Could not transfer content from ""$($Source)"" to ""$($Destination)""" -ForegroundColor Red
+    catch {
+        Write-Log -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $source, $destination) -LogId $LogId
+        Write-Warning -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $source, $destination)
     }
 }

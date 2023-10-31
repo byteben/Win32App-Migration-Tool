@@ -40,6 +40,7 @@ function Get-DeploymentTypeInfo {
         # Get the total number of deployment types for the application
         $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
         Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
+        Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -ForegroundColor Cyan
 
         if ($totalDeploymentTypes -ge 0) {
 
@@ -56,10 +57,10 @@ function Get-DeploymentTypeInfo {
                 $deploymentObject | Add-Member NoteProperty -Name Name -Value $Object.Title.InnerText
                 $deploymentObject | Add-Member NoteProperty -Name Technology -Value $Object.Installer.Technology
                 $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $Object.Installer.ExecutionContext
-                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $Object.Installer.CustomData.InstallContent.ContentId
+                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $Object.Installer.Contents.Content.Location[0]
                 $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $Object.Installer.CustomData.InstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $Object.Installer.CustomData.UnInstallSetting
-                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $Object.Installer.CustomData.UninstallContent.ContentId
+                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $Object.Installer.Contents.Content.Location[1]
                 $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $Object.Installer.CustomData.UninstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
                 $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime
@@ -72,16 +73,16 @@ function Get-DeploymentTypeInfo {
                         $object.Title.InnerText, `
                         $object.Installer.Technology, `
                         $object.Installer.ExecutionContext, `
-                        $object.Installer.CustomData.InstallContent.ContentId, `
+                        $Object.Installer.Contents.Content.Location[0], `
                         $object.Installer.CustomData.InstallCommandLine, `
                         $object.Installer.CustomData.UnInstallSetting, `
-                        $object.Installer.CustomData.UninstallContent.ContentId, `
+                        $Object.Installer.Contents.Content.Location[1], `
                         $object.Installer.CustomData.UninstallCommandLine, `
                         $object.Installer.CustomData.ExecuteTime, `
                         $object.Installer.CustomData.MaxExecuteTime) -LogId $LogId
 
                 # Output the deployment type object
-                Write-Host $deploymentObject
+                Write-Host "`n$deploymentObject" -ForegroundColor Green
 
                 # Add the deployment type object to the array
                 $deploymentTypes += $deploymentObject          

@@ -204,7 +204,7 @@ function New-Win32App {
     #endregion
 
     # Begin Script
-    New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Start Win32AppMigrationTool' -ForegroundColor 'Gray'
 
     $ScriptRoot = $PSScriptRoot
     Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot) -LogId $LogId
@@ -213,7 +213,7 @@ function New-Win32App {
     Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
     # Check the folder structure for the working directory and create if necessary
-    New-VerboseRegion -Message 'Checking Win32AppMigrationTool folder structure' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Checking Win32AppMigrationTool folder structure' -ForegroundColor 'Gray'
 
     #region Create_Folders
     Write-Host "Creating additionl folders..." -ForegroundColor Cyan
@@ -222,7 +222,7 @@ function New-Win32App {
     #endRegion
 
     #region Get_Content_Tool
-    New-VerboseRegion -Message 'Checking if the Win32contentpreptool is required' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Checking if the Win32contentpreptool is required' -ForegroundColor 'Gray'
 
     # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
     if ($PackageApps) {
@@ -244,7 +244,7 @@ function New-Win32App {
 
 
     #region Display_Application_Results
-    New-VerboseRegion -Message 'Filtering application results' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Filtering application results' -ForegroundColor 'Gray'
 
     # Build a hash table of switch parameters to pass to the Get-AppList function
     $paramsToPass = @{}
@@ -294,17 +294,35 @@ function New-Win32App {
     #endRegion
 
     #region Get_App_Details
-    New-VerboseRegion -Message 'Getting application details' -ForegroundColor 'DarkGray'
+    New-VerboseRegion -Message 'Getting application details' -ForegroundColor 'Gray'
 
-    # Calling function to grab deployment types detail for application(s)
-    Write-Log -Message "Calling 'Get-AppInfo' function to grab deployment type details" -LogId $LogId
-    Write-Host "Calling 'Get-AppInfo' function to grab deployment type details" -ForegroundColor Cyan
+    # Calling function to grab application details
+    Write-Log -Message "Calling 'Get-AppInfo' function to grab application details" -LogId $LogId
+    Write-Host "Calling 'Get-AppInfo' function to grab application details" -ForegroundColor Cyan
 
     $app_Array = Get-AppInfo -ApplicationName $applicationName
-    $deployments = foreach ($app in $app_Array) {
-        Get-DeploymentTypeInfo -ApplicationId $app.Id
-        write-host $deployments
-    }
+    #endregion
+
+    #region Get_DeploymentType_Details
+    New-VerboseRegion -Message 'Getting deployment type details' -ForegroundColor 'Gray'
+
+    # Calling function to grab deployment types details
+    Write-Log -Message "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -LogId $LogId
+    Write-Host "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -ForegroundColor Cyan
+    
+    $deploymentTypes_Array = foreach ($app in $app_Array) { Get-DeploymentTypeInfo -ApplicationId $app.Id }
+    #endregion
+
+    #region Get_DeploymentType_Content
+    New-VerboseRegion -Message 'Getting deployment type content' -ForegroundColor 'Gray'
+
+    # Calling function to grab deployment type Content
+    Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
+    Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
+        
+    $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { Get-ContentFiles }
+    #endregion
+
 
     # Export $DeploymentTypes to CSV for reference
     Try {
@@ -342,9 +360,9 @@ function New-Win32App {
         Write-Log -Message "Exporting Logo(s)..." -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Exporting Logo(s)...' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Exporting Logo(s)...' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
 
         ForEach ($Application in $applications_Array) {
@@ -365,9 +383,9 @@ function New-Win32App {
         Write-Log -Message "Creating Application Folder(s)" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Creating Application Folder(s)' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Creating Application Folder(s)' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
 
         ForEach ($Application in $applications_Array) {
@@ -394,9 +412,9 @@ function New-Win32App {
         Write-Log -Message "Creating DeploymentType Folder(s)" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Creating DeploymentType Folder(s)' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Creating DeploymentType Folder(s)' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
         ForEach ($DeploymentType in $deploymentTypes_Array) {
 
@@ -420,9 +438,9 @@ function New-Win32App {
         Write-Log -Message "Creating Content Folder(s)" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Creating Content Folder(s)' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Creating Content Folder(s)' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
         ForEach ($DeploymentType in $deploymentTypes_Array) {
 
@@ -446,9 +464,9 @@ function New-Win32App {
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Log -Message "Content Evaluation" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Content Evaluation' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Content Evaluation' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
 
         If ($DownloadContent) {
@@ -476,9 +494,9 @@ function New-Win32App {
         Write-Log -Message "Creating .IntuneWin File(s)" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Creating .IntuneWin File(s)' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Creating .IntuneWin File(s)' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
 
         #Get Application and Deployment Type Details and Files
         ForEach ($Application in $applications_Array) {
@@ -487,10 +505,10 @@ function New-Win32App {
             Write-Log -Message "There are a total of $($Application.Application_TotalDeploymentTypes) Deployment Types for this Application:" -Log "Main.log"
             Write-Log -Message "--------------------------------------------" -Log "Main.log"
             Write-Host ''
-            Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+            Write-Host '--------------------------------------------' -ForegroundColor Gray
             Write-Host """$($Application.Application_Name)""" -ForegroundColor Green
             Write-Host "There are a total of $($Application.Application_TotalDeploymentTypes) Deployment Types for this Application:"
-            Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+            Write-Host '--------------------------------------------' -ForegroundColor Gray
             Write-Host ''
 
             ForEach ($Deployment in $deploymentTypes_Array | Where-Object { $_.Application_LogicalName -eq $Application.Application_LogicalName }) {
@@ -498,9 +516,9 @@ function New-Win32App {
                 Write-Log -Message "--------------------------------------------" -Log "Main.log" 
                 Write-Log -Message "$($Deployment.DeploymentType_Name)" -Log "Main.log"
                 Write-Log -Message "--------------------------------------------" -Log "Main.log"
-                Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+                Write-Host '--------------------------------------------' -ForegroundColor Gray
                 Write-Host """$($Deployment.DeploymentType_Name)""" -ForegroundColor Green
-                Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+                Write-Host '--------------------------------------------' -ForegroundColor Gray
                 Write-Host ''
 
                 #Grab install command executable or script
@@ -558,9 +576,9 @@ function New-Win32App {
         Write-Log -Message "Creating Win32 Apps" -Log "Main.log"
         Write-Log -Message "--------------------------------------------" -Log "Main.log"
         Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
-        Write-Host 'Creating Win32 Apps' -ForegroundColor DarkGray
-        Write-Host '--------------------------------------------' -ForegroundColor DarkGray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
+        Write-Host 'Creating Win32 Apps' -ForegroundColor Gray
+        Write-Host '--------------------------------------------' -ForegroundColor Gray
         Write-Host ''
         #####----------------------IN DEVELOPMENT----------------------#####
     }
