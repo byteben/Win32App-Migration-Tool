@@ -62,6 +62,7 @@ function Get-AppInfo {
             $applicationObject = [PSCustomObject]@{}
 
             # Add application details to PSCustomObject
+            $applicationObject | Add-Member NoteProperty -Name Id -Value $application.Id
             $applicationObject | Add-Member NoteProperty -Name LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
             $applicationObject | Add-Member NoteProperty -Name Name -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
             $applicationObject | Add-Member NoteProperty -Name Description -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
@@ -70,7 +71,8 @@ function Get-AppInfo {
             $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id
             $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
                 
-            Write-Log -Message ("LogicalName = '{0}', Name = '{1}',Description = '{2}', Pblisher = '{3}', Version = '{4}', IconId = '{5}', TotalDeploymentTypes = '{6}'" -f `
+            Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Pblisher = '{4}', Version = '{5}', IconId = '{6}', TotalDeploymentTypes = '{7}'" -f `
+                    $application.Id, `
                     $xmlContent.AppMgmtDigest.Application.LogicalName, `
                     $xmlContent.AppMgmtDigest.Application.title.'#text', `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description, `

@@ -301,9 +301,10 @@ function New-Win32App {
     Write-Host "Calling 'Get-AppInfo' function to grab deployment type details" -ForegroundColor Cyan
 
     $app_Array = Get-AppInfo -ApplicationName $applicationName
-    $deploymentTypes_Array = $app_Array[0]
-    $applications_Array = $app_Array[1]
-    $content_Array = $app_Array[2]
+    $deployments = foreach ($app in $app_Array) {
+        Get-DeploymentTypeInfo -ApplicationId $app.Id
+        write-host $deployments
+    }
 
     # Export $DeploymentTypes to CSV for reference
     Try {
