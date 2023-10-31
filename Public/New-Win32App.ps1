@@ -99,7 +99,6 @@ This is the working folder for the Win32AppMigration Tool. Care should be given 
 -ContentPrepTool
 -Details
 -Logos
--Logs
 -Win32Apps
 
 .PARAMETER PackageApps
@@ -190,7 +189,7 @@ function New-Win32App {
         if (-not (Test-Path -Path $folder)) {
             Write-Log -Message ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -LogId $LogId
             Write-Host ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -ForegroundColor Cyan
-            New-Item -Path $workingFolder_Root -ItemType Directory -Force -ErrorAction Stop | Out-Null
+            New-Item -Path $folder -ItemType Directory -Force -ErrorAction Stop | Out-Null
         }
         else {
             Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folder) -LogId $LogId -Severity 2

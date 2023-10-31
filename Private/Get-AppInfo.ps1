@@ -32,78 +32,82 @@ function Get-AppInfo {
         # Count the number of applications to process
         $applicationCount = $ApplicationName | Measure-Object | Select-Object -ExpandProperty Count
 
+        # Create a counter
+        $i = 0
+    
         # Iterate through each application and get the details
+        foreach ($application in $applicationName) {
 
-        for ($i = 1; $i -le $applicationCount; $i++) {
+            # Increment counter
+            $i++
+
             Write-Log -Message ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -LogId $LogId
             Write-Host ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -ForegroundColor Green
         
-            foreach ($application in $applicationName) {
 
-                # Grab the SDMPackgeXML which contains the application details
-                Write-Log -Message ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId
-                Write-Host ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -ForegroundColor Cyan
-                $xmlPackage = Get-CMApplication -Id $application.Id | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
+            # Grab the SDMPackgeXML which contains the application details
+            Write-Log -Message ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId
+            Write-Host ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -ForegroundColor Cyan
+            $xmlPackage = Get-CMApplication -Id $application.Id | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
         
-                # Prepare xml from SDMPackageXML
-                $xmlContent = [xml]($xmlPackage)
+            # Prepare xml from SDMPackageXML
+            $xmlContent = [xml]($xmlPackage)
 
-                # Get the total number of deployment types for the application
-                $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-                Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
+            # Get the total number of deployment types for the application
+            $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
+            Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
+            Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -ForegroundColor Cyan
 
-                # Create a new custom hashtable to store application details
-                $applicationObject = [PSCustomObject]@{}
+            # Create a new custom hashtable to store application details
+            $applicationObject = [PSCustomObject]@{}
 
-                # Add application details to PSCustomObject
-                $applicationObject | Add-Member NoteProperty -Name LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
-                $applicationObject | Add-Member NoteProperty -Name Name -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
-                $applicationObject | Add-Member NoteProperty -Name Description -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
-                $applicationObject | Add-Member NoteProperty -Name Publisher -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
-                $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
-                $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id
-                $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
+            # Add application details to PSCustomObject
+            $applicationObject | Add-Member NoteProperty -Name LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
+            $applicationObject | Add-Member NoteProperty -Name Name -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
+            $applicationObject | Add-Member NoteProperty -Name Description -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
+            $applicationObject | Add-Member NoteProperty -Name Publisher -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
+            $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
+            $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id
+            $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
                 
-                Write-Log -Message ("LogicalName = '{0}', Name = '{1}',Description = '{2}', Pblisher = '{3}', Version = '{4}', IconId = '{5}', TotalDeploymentTypes = '{6}'" -f `
-                        $xmlContent.AppMgmtDigest.Application.LogicalName, `
-                        $xmlContent.AppMgmtDigest.Application.title.'#text', `
-                        $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description, `
-                        $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher, `
-                        $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version, `
-                        $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id, `
-                        $totalDeploymentTypes) -LogId $LogId
+            Write-Log -Message ("LogicalName = '{0}', Name = '{1}',Description = '{2}', Pblisher = '{3}', Version = '{4}', IconId = '{5}', TotalDeploymentTypes = '{6}'" -f `
+                    $xmlContent.AppMgmtDigest.Application.LogicalName, `
+                    $xmlContent.AppMgmtDigest.Application.title.'#text', `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id, `
+                    $totalDeploymentTypes) -LogId $LogId
 
-                # If we have the logo, add the path
-                if (-not ($null -eq $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id) ) {
-                    try {
-                        $logoPath = (Join-Path -Path $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id -ChildPath "Logo.png")
+            # If we have the logo, add the path
+            if (-not ($null -eq $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id) ) {
+                try {
+                    $logoPath = (Join-Path -Path $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id -ChildPath "Logo.png")
 
-                        if (Test-Path -Path $logoPath) {
-                            Write-Log -Message ("Application_IconPath is '{0}'" -f ("$WorkingFolder\Logos\$logoPath")) -LogId $LogId
-                            $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value "$WorkingFolder\Logos\$logoPath"
-                        }
-                        else {
-                            Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
-                            $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null
-                        }
+                    if (Test-Path -Path $logoPath) {
+                        Write-Log -Message ("Application_IconPath is '{0}'" -f ("$WorkingFolder\Logos\$logoPath")) -LogId $LogId
+                        $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value "$WorkingFolder\Logos\$logoPath"
                     }
-                    catch {
+                    else {
                         Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
                         $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null
                     }
                 }
-                else {
+                catch {
                     Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
-                    $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null  
+                    $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null
                 }
-
-                # Output the application object
-                Write-Host $applicationObject
-
-                # Add the application object to the array
-                $applicationTypes += $applicationObject
-
             }
+            else {
+                Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
+                $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null  
+            }
+
+            # Output the application object
+            Write-Host $applicationObject
+
+            # Add the application object to the array
+            $applicationTypes += $applicationObject
         }
         Return $applicationTypes
     }
