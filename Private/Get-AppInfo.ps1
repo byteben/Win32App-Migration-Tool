@@ -67,17 +67,25 @@ function Get-AppInfo {
             $applicationObject | Add-Member NoteProperty -Name Description -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
             $applicationObject | Add-Member NoteProperty -Name Publisher -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
             $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
+            $applicationObject | Add-Member NoteProperty -Name ReleaseDate -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate
             $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id
+            $applicationObject | Add-Member NoteProperty -Name InfoUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl
+            $applicationObject | Add-Member NoteProperty -Name Tags -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag
+
+
             $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
                 
-            Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Pblisher = '{4}', Version = '{5}', IconId = '{6}', TotalDeploymentTypes = '{7}'" -f `
+            Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', IconId = '{7}', InfoUrl = '{8}', Tags = '{9}', TotalDeploymentTypes = '{7}'" -f `
                     $application.Id, `
                     $xmlContent.AppMgmtDigest.Application.LogicalName, `
                     $xmlContent.AppMgmtDigest.Application.title.'#text', `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl, `
+                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag, `
                     $totalDeploymentTypes) -LogId $LogId
 
             # If we have the logo, add the path
