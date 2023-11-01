@@ -320,7 +320,11 @@ function New-Win32App {
     Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
     Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
         
-    $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { Get-ContentFiles }
+    $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
+
+
+
+    }
     #endregion
 
 

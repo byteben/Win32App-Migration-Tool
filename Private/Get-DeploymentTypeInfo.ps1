@@ -18,7 +18,7 @@ function Get-DeploymentTypeInfo {
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The name of the application(s) to get information for')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The id of the application(s) to get information for')]
         [String]$ApplicationId
     )
     begin {
@@ -37,10 +37,12 @@ function Get-DeploymentTypeInfo {
         # Prepare xml from SDMPackageXML
         $xmlContent = [xml]($xmlPackage)
 
+        # Get application name
+
         # Get the total number of deployment types for the application
         $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-        Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
-        Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -ForegroundColor Cyan
+        Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $ApplicationId, $totalDeploymentTypes) -LogId $LogId
+        Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $ApplicationId, $totalDeploymentTypes) -ForegroundColor Cyan
 
         if ($totalDeploymentTypes -ge 0) {
 
@@ -52,6 +54,7 @@ function Get-DeploymentTypeInfo {
 
                 # Add deployment type details to the PSCustomObject
                 $deploymentObject | Add-Member NoteProperty -Name Application_Id -Value $ApplicationId
+                $deploymentObject | Add-Member NoteProperty -Name ApplicationName -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
                 $deploymentObject | Add-Member NoteProperty -Name Application_LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
                 $deploymentObject | Add-Member NoteProperty -Name LogicalName -Value $Object.LogicalName
                 $deploymentObject | Add-Member NoteProperty -Name Name -Value $Object.Title.InnerText
@@ -65,9 +68,10 @@ function Get-DeploymentTypeInfo {
                 $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
                 $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime
                 
-                Write-Log -Message ("Application_LogicalName = '{0}', LogicalName = '{1}', Name = '{2}', Technology = '{3}', ExecutionContext = '{4}', InstallContext = '{5}', `
-                 InstallCommandLine = '{6}', UninstallSetting = '{7}', UninstallContent = '{8}', UninstallCommandLine = '{9}', ExecuteTime = '{10}', MaxExecuteTime = '{11}'" -f `
+                Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', `
+                 InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}'" -f `
                         $ApplicationId, `
+                        $xmlContent.AppMgmtDigest.Application.title.'#text', `
                         $xmlContent.AppMgmtDigest.Application.LogicalName, `
                         $object.LogicalName, `
                         $object.Title.InnerText, `
@@ -82,7 +86,7 @@ function Get-DeploymentTypeInfo {
                         $object.Installer.CustomData.MaxExecuteTime) -LogId $LogId
 
                 # Output the deployment type object
-                Write-Host "`n$deploymentObject" -ForegroundColor Green
+                Write-Host "`n$deploymentObject`n" -ForegroundColor Green
 
                 # Add the deployment type object to the array
                 $deploymentTypes += $deploymentObject          

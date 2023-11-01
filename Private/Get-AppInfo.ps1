@@ -105,7 +105,7 @@ function Get-AppInfo {
             }
 
             # Output the application object
-            Write-Host "`n$applicationObject" -ForegroundColor Green
+            Write-Host "`n$applicationObject`n" -ForegroundColor Green
 
             # Add the application object to the array
             $applicationTypes += $applicationObject
