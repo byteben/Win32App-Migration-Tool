@@ -47,6 +47,16 @@ function Get-DeploymentTypeInfo {
             # If there are deployment types, iterate through each deployment type and collect the details
             foreach ($object in $xmlContent.AppMgmtDigest.DeploymentType) {
 
+                # Handle multiple objects if content is an array
+                if ($object.Installer.Contents.Content.Location.Count -gt 1) {
+                    $installLocation = $object.Installer.Contents.Content.Location[0]
+                    $uninstallLocation = $object.Installer.Contents.Content.Location[1]
+                }
+                else {
+                    $installLocation = $object.Installer.Contents.Content.Location
+                    $uninstallLocation = $object.Installer.Contents.Content.Location
+                }
+
                 # Create a new custom hashtable to store Deployment type details
                 $deploymentObject = [PSCustomObject]@{}
 
@@ -58,10 +68,10 @@ function Get-DeploymentTypeInfo {
                 $deploymentObject | Add-Member NoteProperty -Name Name -Value $Object.Title.InnerText
                 $deploymentObject | Add-Member NoteProperty -Name Technology -Value $Object.Installer.Technology
                 $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $Object.Installer.ExecutionContext
-                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $Object.Installer.Contents.Content.Location[0]
+                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $installLocation 
                 $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $Object.Installer.CustomData.InstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $Object.Installer.CustomData.UnInstallSetting
-                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $Object.Installer.Contents.Content.Location[1]
+                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $uninstallLocation
                 $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $Object.Installer.CustomData.UninstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
                 $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime
@@ -75,10 +85,10 @@ function Get-DeploymentTypeInfo {
                         $object.Title.InnerText, `
                         $object.Installer.Technology, `
                         $object.Installer.ExecutionContext, `
-                        $Object.Installer.Contents.Content.Location[0], `
+                        $installLocation, `
                         $object.Installer.CustomData.InstallCommandLine, `
                         $object.Installer.CustomData.UnInstallSetting, `
-                        $Object.Installer.Contents.Content.Location[1], `
+                        $uninstallLocation, `
                         $object.Installer.CustomData.UninstallCommandLine, `
                         $object.Installer.CustomData.ExecuteTime, `
                         $object.Installer.CustomData.MaxExecuteTime) -LogId $LogId

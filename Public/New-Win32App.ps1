@@ -311,7 +311,6 @@ function New-Win32App {
     Write-Host "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -ForegroundColor Cyan
     
     $deploymentTypes_Array = foreach ($app in $app_Array) { Get-DeploymentTypeInfo -ApplicationId $app.Id }
-    $deploymentTypes_Array | Sort-Object -Property Application_Name, DeploymentType_Name
     #endregion
 
     #region Get_DeploymentType_Content
@@ -333,6 +332,7 @@ function New-Win32App {
             if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
             if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
             $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
+            $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
             $paramsToPassContent.Add('DeploymentTypeLogicalName', $deploymentType.LogicalName)
             $paramsToPassContent.Add('DeploymentTypeName', $deploymentType.Name)
     
