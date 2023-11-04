@@ -37,8 +37,6 @@ function Get-DeploymentTypeInfo {
         # Prepare xml from SDMPackageXML
         $xmlContent = [xml]($xmlPackage)
 
-        # Get application name
-
         # Get the total number of deployment types for the application
         $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
         Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $ApplicationId, $totalDeploymentTypes) -LogId $LogId

@@ -21,10 +21,16 @@ function Get-ContentFiles {
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The source folder to copy content from')]
-        [string]$Source,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'The destination folder to copy content to')]
-        [string]$Destination
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'Content path for intent to install')]
+        [string]$InstallContent,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 1, HelpMessage = 'Content path for intent to uninstall')]
+        [string]$UninstallContent,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The id of the application for the deployment type to get content for')]
+        [string]$ApplicationId,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The logical name of the deployment type to get content for')]
+        [string]$DeploymentTypeLogicalName,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'The name of the deployment type to get content for')]
+        [string]$DeploymentTypeName
     )
 
     Write-Log -Message "Function: Get-ContentFiles was called" -LogId $LogId

@@ -247,27 +247,27 @@ function New-Win32App {
     New-VerboseRegion -Message 'Filtering application results' -ForegroundColor 'Gray'
 
     # Build a hash table of switch parameters to pass to the Get-AppList function
-    $paramsToPass = @{}
+    $paramsToPassApp = @{}
     if ($ExcludePMPC) {
-        $paramsToPass.Add('ExcludePMPC', $true) 
+        $paramsToPassApp.Add('ExcludePMPC', $true) 
         Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId -Severity 2
         Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -ForegroundColor Cyan
     }
     if ($ExcludeFilter) {
-        $paramsToPass.Add('ExcludeFilter', $ExcludeFilter) 
-        Write-Log -Message ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2
-        Write-Host ("The ExcludeFilter parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Cyan
+        $paramsToPassApp.Add('ExcludeFilter', $ExcludeFilter) 
+        Write-Log -Message ("The 'ExcludeFilter' parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2
+        Write-Host ("The 'ExcludeFilter' parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Cyan
     }
     if ($NoOGV) {
-        $paramsToPass.Add('NoOGV', $true) 
-        Write-Log -Message 'The NoOgv parameter was passed. Suppressing Out-GridView' -LogId $LogId -Severity 2   
-        Write-Host 'The NoOgv parameter was passed. Suppressing Out-GridView' -ForegroundColor Cyan
+        $paramsToPassApp.Add('NoOGV', $true) 
+        Write-Log -Message "The 'NoOgv' parameter was passed. Suppressing Out-GridView" -LogId $LogId -Severity 2   
+        Write-Host "The 'NoOgv' parameter was passed. Suppressing Out-GridView" -ForegroundColor Cyan
     }
 
     Write-Log -Message ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -LogId $LogId
     Write-Host ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -ForegroundColor Cyan
 
-    $applicationName = Get-AppList -AppName $AppName @paramsToPass
+    $applicationName = Get-AppList -AppName $AppName @paramsToPassApp
  
     # ApplicationName(s) returned from the Get-AppList function
     if ($applicationName) {
@@ -311,22 +311,45 @@ function New-Win32App {
     Write-Host "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -ForegroundColor Cyan
     
     $deploymentTypes_Array = foreach ($app in $app_Array) { Get-DeploymentTypeInfo -ApplicationId $app.Id }
+    $deploymentTypes_Array | Sort-Object -Property Application_Name, DeploymentType_Name
     #endregion
 
     #region Get_DeploymentType_Content
     New-VerboseRegion -Message 'Getting deployment type content' -ForegroundColor 'Gray'
 
-    # Calling function to grab deployment type Content
-    Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
-    Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
-        
-    $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
-
-
-
+    if ($DownloadContent) {
+        Write-Log -Message "The 'DownloadContent' parameter was passed. Will attempt to get content from content source" -LogId $LogId -Severity 2
+        Write-Host "`nThe 'DownloadContent' parameter was passed. Will attempt to get content from content source" -ForegroundColor Cyan
+    
+        # Calling function to grab deployment type content information
+        Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
+        Write-Host "`nCalling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
+            
+        $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
+    
+            # Build or reset a hash table of switch parameters to pass to the Get-ContentFiles function
+            $paramsToPassContent = @{}
+    
+            if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
+            if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
+            $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
+            $paramsToPassContent.Add('DeploymentTypeLogicalName', $deploymentType.LogicalName)
+            $paramsToPassContent.Add('DeploymentTypeName', $deploymentType.Name)
+    
+            # If we have content, call the Get-ContentFiles function
+            if ($deploymentType.InstallContent -or $deploymentType.UninstallContent) { Get-ContentFiles @paramsToPassContent }
+        }
+    } 
+    else {
+        Write-Log -Message "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -LogId $LogId -Severity 2
+        Write-Host "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -ForegroundColor Cyan
     }
+   
     #endregion
 
+
+    break
+    #endregion
 
     # Export $DeploymentTypes to CSV for reference
     Try {
