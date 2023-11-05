@@ -338,6 +338,8 @@ function New-Win32App {
 
     # If $DownloadContent was passed, download content to the working folder too
     if ($DownloadContent) {
+        New-VerboseRegion -Message 'Copying content files' -ForegroundColor 'Gray'
+
         foreach ($content in $content_Array) {
             Get-ContentFiles -Source $content.Install_Source -Destination $content.Install_Destination
             Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination

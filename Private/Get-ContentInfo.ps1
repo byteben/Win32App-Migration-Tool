@@ -52,11 +52,12 @@ function Get-ContentInfo {
         $invalidChars = '[<>:"/\\|\?\*]'
         
         # Sanitize the folder names
-        $ApplicationName, $DeploymentTypeName | ForEach-Object {$_ = ($_ -replace $invalidChars, '_').TrimEnd('.', ' ')}
+        $ApplicationNameSanitized = ($ApplicationName -replace $invalidChars, '_').TrimEnd('.', ' ')
+        $DeploymentTypeNameSanitized = ($DeploymentTypeName -replace $invalidChars, '_').TrimEnd('.', ' ')
 
         # Content folder(s) to copy to
-        $destinationInstallFolder = ("{0}\{1}\Install" -f $ApplicationName, $DeploymentTypeName)
-        $destinationUninstallFolder = ("{0}\{1}\Uninstall" -f $ApplicationName, $DeploymentTypeName)
+        $destinationInstallFolder = ("{0}\{1}\Install" -f $ApplicationNameSanitized, $DeploymentTypeNameSanitized)
+        $destinationUninstallFolder = ("{0}\{1}\Uninstall" -f $ApplicationNameSanitized, $DeploymentTypeNameSanitized)
         
         # Build final folder name strings
         $destinationInstallFolder = Join-Path -Path "$workingFolder_Root\Content" -ChildPath $destinationInstallFolder
