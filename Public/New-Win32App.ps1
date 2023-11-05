@@ -318,11 +318,11 @@ function New-Win32App {
 
     if ($DownloadContent) {
         Write-Log -Message "The 'DownloadContent' parameter was passed. Will attempt to get content from content source" -LogId $LogId -Severity 2
-        Write-Host "`nThe 'DownloadContent' parameter was passed. Will attempt to get content from content source" -ForegroundColor Cyan
+        Write-Host "The 'DownloadContent' parameter was passed. Will attempt to get content from content source" -ForegroundColor Cyan
     
         # Calling function to grab deployment type content information
         Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
-        Write-Host "`nCalling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
+        Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
             
         $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
     
@@ -344,40 +344,27 @@ function New-Win32App {
         Write-Log -Message "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -LogId $LogId -Severity 2
         Write-Host "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -ForegroundColor Cyan
     }
-   
     #endregion
+    
+    #region Exporting_Csv data
+    # Export $DeploymentTypes to CSV for reference
+    New-VerboseRegion -Message 'Exporting collected data to Csv' -ForegroundColor 'Gray'
+    $detailsFolder = (Join-Path -Path $workingFolder_Root -ChildPath 'Details')
 
+    Write-Log -Message ("Destination folder will be '{0}\Details" -f $workingFolder_Root) -LogId $LogId -Severity 2
+    Write-Host ("Destination folder will be '{0}\Details" -f $workingFolder_Root) -ForegroundColor Cyan
+
+    # Export application information to CSV for reference
+    Export-CsvDetails -Name 'Applications' -Data $app_Array -Path $detailsFolder
+
+    # Export deployment type information to CSV for reference
+    Export-CsvDetails -Name 'DeploymentTypes' -Data $deploymentTypes_Array -Path $detailsFolder
+
+    # Export content information to CSV for reference
+    Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
+    #endRegion
 
     break
-    #endregion
-
-    # Export $DeploymentTypes to CSV for reference
-    Try {
-        $deploymentTypes_Array | Export-Csv "$workingFolder_Root\Detail\DeploymentTypes.csv" -Encoding UTF8 -NoTypeInformation -Force 
-        Write-Log -Message ("`$deploymentTypes_Array is located at '{0}\DeploymentTypes.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
-    }
-    Catch {
-        Write-Log -Message 'Error: Could not Export DeploymentTypes.csv. Do you have it open?' -LogId $LogId -Severity 3
-        Write-Warning -Message 'Error: Could not Export DeploymentTypes.csv. Do you have it open?'
-    }
-    Try {
-        $applications_Array | Export-Csv "$workingFolder_Root\Detail\Applications.csv" -Encoding UTF8 -NoTypeInformation -Force
-        Write-Log -Message ("`$applications_Array is located at '{0}\Applications.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
-    }
-    Catch {
-        Write-Log -Message 'Error: Could not Export Applications.csv. Do you have it open?' -LogId $LogId -Severity 3
-        Write-Warning -Message 'Error: Could not Export Applications.csv. Do you have it open?'
-    }
-    Try {
-        $content_Array | Export-Csv "$workingFolder_Root\Detail\Content.csv" -Encoding UTF8 -NoTypeInformation -Force
-        Write-Log -Message ("`$content_Array is located at '{0}\Applications.csv'" -f "$workingFolder_Root\Detail") -LogId $LogId
-    }
-    Catch {
-        Write-Log -Message 'Error: Could not Export Content.csv. Do you have it open?' -LogId $LogId -Severity 3
-        Write-Warning -Message 'Error: Could not Export Content.csv. Do you have it open?'
-    }
-    Write-Host ("Details of the selected Applications and Deployment Types can be found at '{0}'" -f "$workingFolder_Root\Detail") -ForegroundColor Magenta
-    #endRegion
 
     #Region Exporting_Logos
     If ($ExportLogo) {

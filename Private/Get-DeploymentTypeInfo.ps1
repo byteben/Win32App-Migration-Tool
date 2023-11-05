@@ -22,12 +22,11 @@ function Get-DeploymentTypeInfo {
         [String]$ApplicationId
     )
     begin {
-        Write-Log -Message "Function: Get-DeploymentTypeInfo was called" -LogId $LogId
-    }
-    process {
 
         # Create an empty array to store the deployment type information
         $deploymentTypes = @()
+    }
+    process {
 
         # Grab the SDMPackgeXML which contains the application and deployment type details
         Write-Log -Message ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -LogId $LogId
@@ -39,8 +38,8 @@ function Get-DeploymentTypeInfo {
 
         # Get the total number of deployment types for the application
         $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-        Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $ApplicationId, $totalDeploymentTypes) -LogId $LogId
-        Write-Host ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $ApplicationId, $totalDeploymentTypes) -ForegroundColor Cyan
+        Write-Log -Message ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -LogId $LogId
+        Write-Host ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -ForegroundColor Cyan
 
         if ($totalDeploymentTypes -ge 0) {
 

@@ -48,16 +48,30 @@ function Get-ContentFiles {
     )
 
     begin {
-        Write-Log -Message "Function: Get-ContentFiles was called" -LogId $LogId
 
         # Content folder(s) to copy to
-        $destinationInstallFolder = $workingFolder_Root + "\" + $ApplicationName + "\" + $DeploymentTypeLogicalName + "\" + $DeploymentTypeName + "\Install"
-        $destinationUninstallFolder = $workingFolder_Root + "\" + $ApplicationName + "\" + $DeploymentTypeLogicalName + "\" + $DeploymentTypeName + "\Uninstall"
+        $destinationInstallFolder = ("{0}\{1}\Install" -f $ApplicationName, $DeploymentTypeName)
+        $destinationUninstallFolder = ("{0}\{1}\Uninstall" -f $ApplicationName, $DeploymentTypeName)
+
+        # Characters that are not allowed in Windows folder names
+        $invalidChars = '[<>:"/\\|\?\*]'
+
+        # Sanitize the folder names
+        $destinationInstallFolder = $destinationInstallFolder -replace $invalidChars, '_'
+        $destinationUninstallFolder = $destinationUninstallFolder -replace $invalidChars, '_'
+
+        # Trim any trailing period or space
+        $destinationInstallFolder = $destinationInstallFolder.TrimEnd('.', ' ')
+        $destinationUninstallFolder = $destinationUninstallFolder.TrimEnd('.', ' ')
+
+        # Build final folder name strings
+        $destinationInstallFolder = Join-Path -Path $workingFolder_Root -ChildPath $destinationInstallFolder
+        $destinationUninstallFolder = Join-Path -Path $workingFolder_Root -ChildPath $destinationUninstallFolder
     }
     process {
 
-        Write-Log -Message ("Getting content details for '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId
-        Write-Host ("Getting content details for '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -ForegroundColor Cyan
+        Write-Log -Message ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId
+        Write-Host ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -ForegroundColor Cyan
 
         # Create a new custom hashtable to store content details
         $contentObject = [PSCustomObject]@{}

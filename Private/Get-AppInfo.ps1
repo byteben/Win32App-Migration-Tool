@@ -22,10 +22,7 @@ function Get-AppInfo {
         [object[]]$ApplicationName
     )
     begin {
-        Write-Log -Message "Function: Get-AppInfo was called" -LogId $LogId
-    }
-    process {
-
+        
         # Create an array for the display application information
         $applicationTypes = @()
 
@@ -34,6 +31,8 @@ function Get-AppInfo {
 
         # Create a counter
         $i = 0
+    }
+    process {
     
         # Iterate through each application and get the details
         foreach ($application in $applicationName) {
