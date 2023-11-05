@@ -315,35 +315,35 @@ function New-Win32App {
 
     #region Get_DeploymentType_Content
     New-VerboseRegion -Message 'Getting deployment type content' -ForegroundColor 'Gray'
-
-    if ($DownloadContent) {
-        Write-Log -Message "The 'DownloadContent' parameter was passed. Will attempt to get content from content source" -LogId $LogId -Severity 2
-        Write-Host "The 'DownloadContent' parameter was passed. Will attempt to get content from content source" -ForegroundColor Cyan
-    
-        # Calling function to grab deployment type content information
-        Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
-        Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
+  
+    # Calling function to grab deployment type content information
+    Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
+    Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
             
-        $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
+    $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
     
-            # Build or reset a hash table of switch parameters to pass to the Get-ContentFiles function
-            $paramsToPassContent = @{}
+        # Build or reset a hash table of switch parameters to pass to the Get-ContentFiles function
+        $paramsToPassContent = @{}
     
-            if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
-            if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
-            $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
-            $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
-            $paramsToPassContent.Add('DeploymentTypeLogicalName', $deploymentType.LogicalName)
-            $paramsToPassContent.Add('DeploymentTypeName', $deploymentType.Name)
+        if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
+        if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
+        $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
+        $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
+        $paramsToPassContent.Add('DeploymentTypeLogicalName', $deploymentType.LogicalName)
+        $paramsToPassContent.Add('DeploymentTypeName', $deploymentType.Name)
     
-            # If we have content, call the Get-ContentFiles function
-            if ($deploymentType.InstallContent -or $deploymentType.UninstallContent) { Get-ContentFiles @paramsToPassContent }
-        }
-    } 
-    else {
-        Write-Log -Message "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -LogId $LogId -Severity 2
-        Write-Host "The 'DownloadContent' parameter was not passed. Will not attempt to get content from content source" -ForegroundColor Cyan
+        # If we have content, call the Get-ContentInfo function
+        if ($deploymentType.InstallContent -or $deploymentType.UninstallContent) { Get-ContentInfo @paramsToPassContent }
     }
+
+    # If $DownloadContent was passed, download content to the working folder too
+    if ($DownloadContent) {
+        foreach ($content in $content_Array) {
+            Get-ContentFiles -Source $content.Install_Source -Destination $content.Install_Destination
+            Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination
+        }  
+    }
+
     #endregion
     
     #region Exporting_Csv data
