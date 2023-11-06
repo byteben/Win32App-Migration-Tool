@@ -53,73 +53,66 @@ function Get-ContentFiles {
         Write-Log -Message ("Attempting to copy content from '{0}' to '{1}'" -f $Source, $Destination) -LogId $LogId
         Write-Host ("Attempting to copy content from '{0}' to '{1}'" -f $Source, $Destination) -ForegroundColor Cyan
 
-        # Build Robocopy parameters
-        $uniLog = Join-Path -Path $workingFolder_Root -ChildPath "Logs\Main.log"
-
-        # Pad path names because Robocopy requires space at the end of the path
-        $SourcePadded = "`"" + $Source + " `""
-        $DestinationPadded = "`"" + $Destination + " `""
+        # Sanitize UNC paths
+        $sourceUNC = "FileSystem::$($sourceSanitised)"
+        $destinationUNC = "FileSystem::$($destinationSanitised)"      
 
         try {
-            Write-Log -Message ("Invoking robocopy.exe '{0}' '{1}' /MIR /E /Z /R:5 /W:1 /NDL /NJH /NJS /NC /NS /NP /V /TEE  /UNILOG+:'{2}'" -f $Source, $Destination, $uniLog) -LogId $LogId 
-            Write-Host ("Invoking robocopy.exe '{0}' '{1}' /MIR /E /Z /R:5 /W:1 /NDL /NJH /NJS /NC /NS /NP /V /TEE  /UNILOG+:'{2}'" -f $Source, $Destination, $uniLog) -ForegroundColor Cyan
-        
-            $args = @(
-                $SourcePadded,
-                $DestinationPadded,
-                '/MIR',
-                '/E',
-                '/Z',
-                '/R:5',
-                '/W:1',
-                '/NDL',
-                '/NJH',
-                '/NJS',
-                '/NC',
-                '/NS',
-                '/NP',
-                '/V',
-                '/TEE',
-                "/UNILOG+:""$($uniLog)"""
-            )
+            # List files to copy
+            Write-Log -Message 'Files to copy are:' -LogId $LogId
+            Write-Host 'Files to copy are:' -ForegroundColor Cyan
+            Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop | Select-Object -ExpandProperty FullName | foreach-object { Write-Log -Message ("'{0}'" -f $_) -LogId $LogId; Write-Host ("'{0}'" -f $_) -ForegroundColor Cyan }
 
-            # Invoke robocopy.exe
-            Start-Process Robocopy.exe -ArgumentList $args -Wait -NoNewWindow -PassThru 
-        }
-        catch {
-            Write-Log -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $Source, $Destination) -LogId $LogId -Severity 3
-            Write-Warning -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $Source, $Destination)
-        }
+            # Copy files from source to destination
+            Copy-Item -Path "$sourceUNC\*" -Destination $destinationUNC -Recurse -Force -ErrorAction Stop
 
-        # Compare the source and destination folders to ensure the copy was successful
-        # Get the list of files from both directories
-        $sourceUNC = "FileSystem::$($Source)"
-        $destinationUNC = "FileSystem::$($Destination)"
+            # Compare the source and destination folders to ensure the copy was successful
+            try {
+                $sourceCompare = Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop
+                $destinationCompare = Get-ChildItem -Path $destinationUNC -Recurse -ErrorAction Stop
 
-        try {
-            $sourceCompare = Get-ChildItem -LiteralPath $sourceUNC -Recurse
-            $destinationCompare = Get-ChildItem -LiteralPath $destinationUNC -Recurse
+                # Compare the file hashes
+                $compareResult = Compare-Object -ReferenceObject $sourceCompare -DifferenceObject $destinationCompare
 
-            # Compare the file hashes
-            $compareResult = Compare-Object -ReferenceObject $sourceCompare -DifferenceObject $destinationCompare
+                try {
+                    # Filter out the differences
+                    $differences = $compareResult | Where-Object { $_.SideIndicator -eq '<=' -or $_.SideIndicator -eq '=>' }
 
-            # Display the results
-            if ($compareResult) {
-                # Files are different
-                Write-Log -Message 'Error: the files in the destination do not match the files in the source after the copy' -LogId $LogId -Severity 3
-                Write-Log -Message ("'{0}'" -f $compareResult) -LogId $LogId -Severity 3
-                Write-Warning -Message ("Error: Could not transfer content from '{0}' to '{1}'" -f $Source, $Destination)
-                Write-Warning -Message ("'{0}'" -f $compareResult)
+                    if ($differences) {
+
+                        # Files are different
+                        Write-Log -Message 'The files in the destination do not match the files in the source after the copy' -LogId $LogId -Severity 3
+                        Write-Warning -Message 'The files in the destination do not match the files in the source after the copy'
+
+                        foreach ($difference in $differences) {
+                            $side = if ($difference.SideIndicator -eq '<=') { "found in source, not in destination" } else { "found in destination, not in source" }
+                            Write-Log -Message ("'{0}' {1}" -f $difference.InputObject, $side) -LogId $LogId -Severity 3
+                            Write-Warning -Message ("'{0}' {1}" -f $difference.InputObject, $side)
+                        }
+                        Get-ScriptEnd -ErrorMessage $_.Exception.Message
+                    }
+                    else {
+                        # Files are the same
+                        Write-Log -Message 'File check pass. Copy was succesful' -LogId $LogId
+                        Write-Host 'File check pass. Copy was succesful' -ForegroundColor Green
+                    }
+                }
+                catch {
+                    Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
+                    Write-Warning -Message 'Could not compare the source and destination folders'
+                    Get-ScriptEnd -ErrorMessage $_.Exception.Message
+                }
             }
-            else {
-                # Files are the same
-                Write-Log -Message 'File check pass. Copy was succesful' -LogId $LogId
-                Write-Host 'File check pass. Copy was succesful' -ForegroundColor Green
+            catch {
+                Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
+                Write-Warning -Message 'Could not compare the source and destination folders'
+                Get-ScriptEnd -ErrorMessage $_.Exception.Message
             }
         }
         catch {
-            Write-Log -Message 'Error: Could not compare the source and destination folders' -LogId $LogId -Severity 3
-            Write-Warning -Message 'Error: Could not compare the source and destination folders'
+            Write-Log -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised) -LogId $LogId -Severity 3
+            Write-Warning -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised)
+            Get-ScriptEnd -ErrorMessage $_.Exception.Message
         }
     }
 }

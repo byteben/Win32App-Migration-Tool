@@ -67,10 +67,10 @@ function Get-DeploymentTypeInfo {
                 $deploymentObject | Add-Member NoteProperty -Name Name -Value $Object.Title.InnerText
                 $deploymentObject | Add-Member NoteProperty -Name Technology -Value $Object.Installer.Technology
                 $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $Object.Installer.ExecutionContext
-                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $installLocation 
+                $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $installLocation.TrimEnd('\') 
                 $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $Object.Installer.CustomData.InstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $Object.Installer.CustomData.UnInstallSetting
-                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $uninstallLocation
+                $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $uninstallLocation.TrimEnd('\') 
                 $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $Object.Installer.CustomData.UninstallCommandLine
                 $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
                 $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime

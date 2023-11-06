@@ -187,12 +187,10 @@ function New-Win32App {
 
     foreach ($folder in $workingFolder_Root, "$workingFolder_Root\Logs") {
         if (-not (Test-Path -Path $folder)) {
-            Write-Log -Message ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -LogId $LogId
             Write-Host ("Working folder root does not exist at '{0}'. Creating environemnt..." -f $folder) -ForegroundColor Cyan
             New-Item -Path $folder -ItemType Directory -Force -ErrorAction Stop | Out-Null
         }
         else {
-            Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folder) -LogId $LogId -Severity 2
             Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folder) -ForegroundColor Yellow
         }
     }
@@ -280,17 +278,11 @@ function New-Win32App {
         }
     }
     else {
-        if ($applicationName) { 
-            Write-Log -Message ("AppName '{0}' could not be found or no selection was made." -f $AppName) -LogId $LogId -Severity 3
-            Write-Warning -Message ("AppName '{0}' could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -f $ApplicationName)
-        }
-        else {
-            Write-Log -Message 'The Out-GrideView was closed. Cannot continue' -Log $LogId -Severity 3
-            Write-Warning -Message 'The Out-GrideView was closed. Cannot continue. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *'
-        }
+        Write-Log -Message ("There were no applications found that match the crieria '{0}' or the Out-GrideView was closed with no selection made. Cannot continue" -f $AppName) -LogId $LogId -Severity 3
+        Write-Warning -Message ("There were no applications found that match the crieria '{0}' or the Out-GrideView was closed with no selection made. Cannot continue" -f $AppName)
         Get-ScriptEnd
-        break
     }
+        
     #endRegion
 
     #region Get_App_Details
