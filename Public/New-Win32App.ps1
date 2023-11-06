@@ -1,15 +1,11 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   12/03/2022
+Updated on:   06/11/2023
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
-The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.
-
-Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32APp Migration Tool is designed to do that for you. To date, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also collecting the logo for the application.
-
-The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)
+The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
 
 .Description
 **Version 1.103.12.01 - 12/03/2022 - BETA**  
@@ -89,17 +85,12 @@ Specify the Sitecode you wish to connect to
 .PARAMETER ProviderMachineName
 Specify the Site Server to connect to
 
-.PARAMETER ExportLogo
-When passed, the Application logo is decoded from base64 and saved to the Logos folder
+.PARAMETER ExportIcon
+When passed, the Application icon is decoded from base64 and saved to the Logos folder
 
 .PARAMETER WorkingFolder
-This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-
-
--Content
--ContentPrepTool
--Details
--Logos
--Win32Apps
+This is the working folder for the Win32AppMigration Tool. 
+Note: Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably
 
 .PARAMETER PackageApps
 Pass this parameter to package selected apps in the .intunewin format
@@ -158,8 +149,8 @@ function New-Win32App {
         [String]$AppName,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"')]
         [Switch]$DownloadContent,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application logo is decoded from base64 and saved to the Logos folder')]
-        [Switch]$ExportLogo,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application icon is decoded from base64 and saved to the Logos folder')]
+        [Switch]$ExportIcon,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
         [String]$workingFolder = "C:\Win32AppMigrationTool",
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
@@ -215,8 +206,8 @@ function New-Win32App {
 
     #region Create_Folders
     Write-Host "Creating additionl folders..." -ForegroundColor Cyan
-    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
-    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Logos', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
+    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
+    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
     #endRegion
 
     #region Get_Content_Tool
@@ -306,7 +297,7 @@ function New-Win32App {
     #endregion
 
     #region Get_DeploymentType_Content
-    New-VerboseRegion -Message 'Getting deployment type content' -ForegroundColor 'Gray'
+    New-VerboseRegion -Message 'Getting deployment type content information' -ForegroundColor 'Gray'
   
     # Calling function to grab deployment type content information
     Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
@@ -329,7 +320,7 @@ function New-Win32App {
         if ($deploymentType.InstallContent -or $deploymentType.UninstallContent) { Get-ContentInfo @paramsToPassContent }
     }
 
-    # If $DownloadContent was passed, download content to the working folder too
+    # If $DownloadContent was passed, download content to the working folder
     if ($DownloadContent) {
         New-VerboseRegion -Message 'Copying content files' -ForegroundColor 'Gray'
 
@@ -338,11 +329,10 @@ function New-Win32App {
 
             # If the uninstall content is different to the install content, copy that too
             if ($content.Uninstall_Setting -eq 'Different') {
-                Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination
+                Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination -Flags 'UninstallDifferent'
             }
         }  
     }
-
     #endregion
     
     #region Exporting_Csv data
@@ -361,31 +351,26 @@ function New-Win32App {
 
     # Export content information to CSV for reference
     Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
-    #endRegion
+    #endregion
 
-    break
+    #region Exporting_Logos
 
-    #Region Exporting_Logos
-    If ($ExportLogo) {
+    # Export icon(s) for the applications
+    New-VerboseRegion -Message 'Exporting icon(s)' -ForegroundColor 'Gray'
+    if ($ExportIcon) {
+        foreach ($applicationIcon in $app_Array) {
+            Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
+            Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
 
-        #Call function to export logo for application
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Exporting Logo(s)..." -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Host ''
-        Write-Host '--------------------------------------------' -ForegroundColor Gray
-        Write-Host 'Exporting Logo(s)...' -ForegroundColor Gray
-        Write-Host '--------------------------------------------' -ForegroundColor Gray
-        Write-Host ''
-
-        ForEach ($Application in $applications_Array) {
-            Write-Log -Message "`$IconId = $($Application.Application_IconId)" -Log "Main.log"
-            $IconId = $Application.Application_IconId
-            Write-Log -Message "Export-Logo -IconId $($IconId) -AppName $($Application.Application_LogicalName)" -Log "Main.log"
-            Export-Logo -IconId $IconId -AppName $Application.Application_Name
+            Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
         }
     }
-    #EndRegion Exporting_Logos
+    else {
+        Write-Log -Message "The 'ExportIcon' parameter was not passed. Skipping icon export" -LogId $LogId -Severity 2
+        Write-Host "The 'ExportIcon' parameter was not passed. Skipping icon export" -ForegroundColor Yellow
+    }
+    #endregion
+    break
 
     #Region Package_Apps
     #If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files

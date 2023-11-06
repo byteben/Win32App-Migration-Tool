@@ -22,7 +22,7 @@ function Get-AppInfo {
         [object[]]$ApplicationName
     )
     begin {
-        
+
         # Create an array for the display application information
         $applicationTypes = @()
 
@@ -67,14 +67,23 @@ function Get-AppInfo {
             $applicationObject | Add-Member NoteProperty -Name Publisher -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
             $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
             $applicationObject | Add-Member NoteProperty -Name ReleaseDate -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate
-            $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id
             $applicationObject | Add-Member NoteProperty -Name InfoUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl
             $applicationObject | Add-Member NoteProperty -Name Tags -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag
-
-
             $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
+            $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Resources.Icon.Id
+
+            # If we have the logo, add the path
+            if (-not ($null -eq $xmlContent.AppMgmtDigest.Resources.Icon.Id) ) {
+                $iconFileName = $xmlContent.AppMgmtDigest.Resources.Icon.Id + '.png'
+                $iconPath = (Join-Path -Path "$workingFolder_Root\Icons" -ChildPath $iconFileName)
+                Write-Log -Message ("Application icon path is '{0}'" -f $iconPath) -LogId $LogId
+                $applicationObject | Add-Member NoteProperty -Name IconPath -Value $iconPath
+            }
+
+            # Add IconData to last column for easy reading
+            $applicationObject | Add-Member NoteProperty -Name IconData -Value $xmlContent.AppMgmtDigest.Resources.Icon.Data
                 
-            Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', IconId = '{7}', InfoUrl = '{8}', Tags = '{9}', TotalDeploymentTypes = '{7}'" -f `
+            Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', InfoUrl = '{7}', Tags = '{8}', TotalDeploymentTypes = '{9}', IconId = '{10}', IconPath = '{11}', IconData '{12}'" -f `
                     $application.Id, `
                     $xmlContent.AppMgmtDigest.Application.LogicalName, `
                     $xmlContent.AppMgmtDigest.Application.title.'#text', `
@@ -82,37 +91,16 @@ function Get-AppInfo {
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate, `
-                    $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl, `
                     $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag, `
-                    $totalDeploymentTypes) -LogId $LogId
+                    $totalDeploymentTypes, `
+                    $xmlContent.AppMgmtDigest.Resources.Icon.Id, `
+                    $iconPath, `
+                    $xmlContent.AppMgmtDigest.Resources.Icon.Data) -LogId $LogId
 
-            # If we have the logo, add the path
-            if (-not ($null -eq $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id) ) {
-                try {
-                    $logoPath = (Join-Path -Path $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Icon.Id -ChildPath "Logo.png")
-
-                    if (Test-Path -Path $logoPath) {
-                        Write-Log -Message ("Application_IconPath is '{0}'" -f ("$WorkingFolder\Logos\$logoPath")) -LogId $LogId
-                        $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value "$WorkingFolder\Logos\$logoPath"
-                    }
-                    else {
-                        Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
-                        $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null
-                    }
-                }
-                catch {
-                    Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
-                    $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null
-                }
-            }
-            else {
-                Write-Log -Message "Application_IconPath -Value `$null" -LogId $LogId
-                $applicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $null  
-            }
-
-            # Output the application object
-            Write-Host "`n$applicationObject`n" -ForegroundColor Green
+            # Output the application object but substitue the base64 icon data for readability
+            $applicationObjectOutput = $applicationObject | Select-Object -Property Id, LogicalName, Name, Description, Publisher, Version, ReleaseDate, InfoUrl, Tags, TotalDeploymentTypes, IconId, IconPath
+            Write-Host "`n$applicationObjectOutput`n" -ForegroundColor Green
 
             # Add the application object to the array
             $applicationTypes += $applicationObject
