@@ -44,7 +44,9 @@ function Get-ContentInfo {
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 4, HelpMessage = 'The logical name of the deployment type to get content for')]
         [string]$DeploymentTypeLogicalName,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The name of the deployment type to get content for')]
-        [string]$DeploymentTypeName
+        [string]$DeploymentTypeName,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or differet?')]
+        [string]$UninstallSetting
     )
     begin {
 
@@ -77,16 +79,18 @@ function Get-ContentInfo {
         $contentObject | Add-Member NoteProperty -Name DeploymentType_LogicalName -Value $DeploymentTypeLogicalName
         $contentObject | Add-Member NoteProperty -Name DeploymentType_Name -Value $DeploymentTypeName
         $contentObject | Add-Member NoteProperty -Name Install_Source -Value $InstallContent
+        $contentObject | Add-Member NoteProperty -Name Uninstall_Setting -Value $UninstallSetting
         $contentObject | Add-Member NoteProperty -Name Uninstall_Source -Value $UninstallContent
         $contentObject | Add-Member NoteProperty -Name Install_Destination -Value $destinationInstallFolder
         $contentObject | Add-Member NoteProperty -Name Uninstall_Destination -Value $destinationUninstallFolder
 
-        Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', DeploymentType_LogicalName = '{2}', DeploymentType_Name = '{3}', Install_Source = '{4}', Uninstall_Source = '{5}', Install_Destination = '{6}', Uninstall_Destination = '{7}'" -f `
+        Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', DeploymentType_LogicalName = '{2}', DeploymentType_Name = '{3}', Install_Source = '{4}', Uninstall_Setting = '{5}', Uninstall_Source = '{6}', Install_Destination = '{7}', Uninstall_Destination = '{8}'" -f `
                 $ApplicationId, `
                 $ApplicationName, `
                 $DeploymentTypeLogicalName, `
                 $DeploymentTypeName, `
                 $InstallContent, `
+                $UninstallSetting, `
                 $UninstallContent, `
                 $destinationInstallFolder, `
                 $destinationUninstallFolder) -LogId $LogId

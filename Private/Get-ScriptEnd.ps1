@@ -11,7 +11,8 @@ Function to exit script
 The component (script name) passed as LogID to the 'Write-Log' function. 
 This parameter is built from the line number of the call from the function up the
 
-
+.PARAMETER ErrorMessage
+The error message passed to the 'Get-ScriptEnd' function
 #>
 function Get-ScriptEnd {
     [CmdletBinding()]

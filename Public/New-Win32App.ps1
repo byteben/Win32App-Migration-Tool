@@ -318,6 +318,7 @@ function New-Win32App {
         $paramsToPassContent = @{}
     
         if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
+        $paramsToPassContent.Add('UninstallSetting', $deploymentType.UninstallSetting)
         if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
         $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
         $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
@@ -334,7 +335,11 @@ function New-Win32App {
 
         foreach ($content in $content_Array) {
             Get-ContentFiles -Source $content.Install_Source -Destination $content.Install_Destination
-            Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination
+
+            # If the uninstall content is different to the install content, copy that too
+            if ($content.Uninstall_Setting -eq 'Different') {
+                Get-ContentFiles -Source $content.Uninstall_Source -Destination $content.Uninstall_Destination
+            }
         }  
     }
 

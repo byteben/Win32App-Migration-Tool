@@ -14,7 +14,7 @@ This parameter is built from the line number of the call from the function up th
 .PARAMETER Source
 Source path for content to be copied from
 
-.PARAMETER UninstallContent
+.PARAMETER Destination
 Destination path for content to be copied to
 #>
 function Get-ContentFiles {
@@ -53,15 +53,15 @@ function Get-ContentFiles {
         Write-Log -Message ("Attempting to copy content from '{0}' to '{1}'" -f $Source, $Destination) -LogId $LogId
         Write-Host ("Attempting to copy content from '{0}' to '{1}'" -f $Source, $Destination) -ForegroundColor Cyan
 
-        # Sanitize UNC paths
-        $sourceUNC = "FileSystem::$($sourceSanitised)"
-        $destinationUNC = "FileSystem::$($destinationSanitised)"      
+        # Convert UNC paths to FileSystem paths
+        $sourceUNC = "FileSystem::$($Source)"
+        $destinationUNC = "FileSystem::$($Destination)"      
 
         try {
             # List files to copy
             Write-Log -Message 'Files to copy are:' -LogId $LogId
             Write-Host 'Files to copy are:' -ForegroundColor Cyan
-            Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop | Select-Object -ExpandProperty FullName | foreach-object { Write-Log -Message ("'{0}'" -f $_) -LogId $LogId; Write-Host ("'{0}'" -f $_) -ForegroundColor Cyan }
+            Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop | Select-Object -ExpandProperty FullName | foreach-object { Write-Log -Message ("'{0}'" -f $_) -LogId $LogId; Write-Host ("'{0}'" -f $_) }
 
             # Copy files from source to destination
             Copy-Item -Path "$sourceUNC\*" -Destination $destinationUNC -Recurse -Force -ErrorAction Stop
