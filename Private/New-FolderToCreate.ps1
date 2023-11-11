@@ -7,6 +7,10 @@ Filename:     New-FolderToCreate.ps1
 .Description
 Function to create a folder
 
+.PARAMETER LogId
+The component (script name) passed as LogID to the 'Write-Log' function. 
+This parameter is built from the line number of the call from the function up the pipeline
+
 .PARAMETER Root
 The root folder to create the folder(s) in
 
@@ -30,7 +34,7 @@ function New-FolderToCreate {
         # Create Folders
         $folderToCreate = Join-Path -Path $Root -ChildPath $folder
         
-        If (!(Test-Path -Path $folderToCreate)) {
+        if (-not (Test-Path -Path $folderToCreate)) {
             Write-Host ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
             try {
                 New-Item -Path $folderToCreate -ItemType Directory -Force -ErrorAction Stop | Out-Null

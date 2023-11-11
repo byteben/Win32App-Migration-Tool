@@ -315,7 +315,8 @@ function New-Win32App {
         $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
         $paramsToPassContent.Add('DeploymentTypeLogicalName', $deploymentType.LogicalName)
         $paramsToPassContent.Add('DeploymentTypeName', $deploymentType.Name)
-    
+        $paramsToPassContent.Add('InstallCommandLine', $deploymentType.InstallCommandLine)
+
         # If we have content, call the Get-ContentInfo function
         if ($deploymentType.InstallContent -or $deploymentType.UninstallContent) { Get-ContentInfo @paramsToPassContent }
     }
@@ -380,29 +381,26 @@ function New-Win32App {
     #endregion
 
     #region Package_Apps
-    # If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files
-    New-VerboseRegion -Message 'Creating folders(s) for intunewin files' -ForegroundColor 'Gray'
-
     if ($PackageApps) {
 
-        # Creating folders for IntuneWin files
+        # If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files
         Write-Log -Message "The 'PackageApps' Parameter passed" -LogId $LogId
+        New-VerboseRegion -Message 'Creating intunewin file(s)' -ForegroundColor 'Gray'
 
-        foreach ($deploymentTypeWin in $deploymentTypes_Array) {
-            $intuneWinPath = Join-Path -Path 'Win32Apps' -ChildPath (Join-Path -Path $deploymentTypeWin.ApplicationName -ChildPath $deploymentTypeWin.Name)
+        foreach ($content in $content_Array) {
 
-            if (-not (Test-Path -Path (Join-Path -Path $workingFolder_Root -ChildPath $intuneWinPath) ) ) {
-                New-FolderToCreate -Root $WorkingFolder_Root -FolderNames $intuneWinPath
-            }
-break
+            Write-Log -Message ("Working on application '{0}'..." -f $content.Application_Name) -LogId $LogId
+            Write-Host ("`nWorking on application '{0}'..." -f $content.Application_Name) -ForegroundColor Cyan
+
+            # Create the Win32app folder for the .intunewin files
+            New-FolderToCreate -Root "$workingFolder_Root\Win32Apps" -FolderNames $content.Win32app_Destination
+        
             # Create intunewin files
-            New-VerboseRegion -Message 'Creating intunewin files' -ForegroundColor 'Gray'
-            Write-Log -Message ("Creating intunewin file for '{0}'" -f $deploymentTypeWin.Name) -LogId $LogId
-            Write-Host ("Creating intunewin file for '{0}'" -f $deploymentTypeWin.Name) -ForegroundColor Cyan
+            Write-Log -Message ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name) -LogId $LogId
+            Write-Host ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name)  -ForegroundColor Cyan
             
-            New-IntuneWin -ContentFolder $ContentFolder -OutputFolder (Join-Path -Path $workingFolder_Root -ChildPath $intuneWinPath) -SetupFile $SetupFile
+            New-IntuneWin -ContentFolder $content.Install_Destination -OutputFolder (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination) -SetupFile $content.Install_CommandLine
         }
-
     }
     else {
         Write-Log -Message "The 'PackageApps' parameter was not passed. Intunewin files will not be created" -LogId $LogId -Severity 2

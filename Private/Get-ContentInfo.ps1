@@ -28,6 +28,12 @@ The logical name of the deployment type to get content for
 
 .PARAMETER DeploymentTypeName
 The name of the deployment type to get content for
+
+.PARAMETER UninstallSetting
+Is uninstall content same as install or differet?
+
+.PARAMETER InstallCommandLine
+Command line used to install the deployment type
 #>
 function Get-ContentInfo {
     param (
@@ -46,7 +52,9 @@ function Get-ContentInfo {
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The name of the deployment type to get content for')]
         [string]$DeploymentTypeName,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or differet?')]
-        [string]$UninstallSetting
+        [string]$UninstallSetting,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 7, HelpMessage = 'Command line used to install the deployment type')]
+        [string]$InstallCommandLine
     )
     begin {
 
@@ -58,7 +66,7 @@ function Get-ContentInfo {
         $DeploymentTypeNameSanitized = ($DeploymentTypeName -replace $invalidChars, '_').TrimEnd('.', ' ')
 
         # Content folder(s) to copy to
-        $destinationInstallFolder = ("{0}\{1}\Install" -f $ApplicationNameSanitized, $DeploymentTypeNameSanitized)
+        $destinationInstallFolder = ("{0}\{1}" -f $ApplicationNameSanitized, $DeploymentTypeNameSanitized)
         $destinationUninstallFolder = ("{0}\{1}\Uninstall" -f $ApplicationNameSanitized, $DeploymentTypeNameSanitized)
         
         # Build final folder name strings
@@ -83,8 +91,10 @@ function Get-ContentInfo {
         $contentObject | Add-Member NoteProperty -Name Uninstall_Source -Value $UninstallContent
         $contentObject | Add-Member NoteProperty -Name Install_Destination -Value $destinationInstallFolder
         $contentObject | Add-Member NoteProperty -Name Uninstall_Destination -Value $destinationUninstallFolder
+        $contentObject | Add-Member NoteProperty -Name Install_CommandLine -Value $InstallCommandLine
+        $contentObject | Add-Member NoteProperty -Name Win32app_Destination -Value "$ApplicationNameSanitized\$DeploymentTypeNameSanitized"
 
-        Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', DeploymentType_LogicalName = '{2}', DeploymentType_Name = '{3}', Install_Source = '{4}', Uninstall_Setting = '{5}', Uninstall_Source = '{6}', Install_Destination = '{7}', Uninstall_Destination = '{8}'" -f `
+        Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', DeploymentType_LogicalName = '{2}', DeploymentType_Name = '{3}', Install_Source = '{4}', Uninstall_Setting = '{5}', Uninstall_Source = '{6}', Install_Destination = '{7}', Uninstall_Destination = '{8}', Win32app_Destinaton = '{9}'" -f `
                 $ApplicationId, `
                 $ApplicationName, `
                 $DeploymentTypeLogicalName, `
@@ -93,7 +103,8 @@ function Get-ContentInfo {
                 $UninstallSetting, `
                 $UninstallContent, `
                 $destinationInstallFolder, `
-                $destinationUninstallFolder) -LogId $LogId
+                $destinationUninstallFolder, `
+                $Win32app_Destination) -LogId $LogId
 
         # Output the deployment type object
         Write-Host "`n$contentObject`n" -ForegroundColor Green
