@@ -102,13 +102,16 @@ Pass this parameter to create the Win32apps in Intune
 Pass this parameter to reset the log file
 
 .PARAMETER ExcludePMPC
-Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function
+Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function
 
 .PARAMETER ExcludeFilter
-Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"
+Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"
 
 .PARAMETER Win32ContentPrepToolUri
 URI for Win32 Content Prep Tool
+
+.PARAMETER OverrideIntuneWin32FileName
+Override intunewin filename. Default is the name calcualted from the install command line. You only need to pass the file name, not the extension
 
 .EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
@@ -133,6 +136,9 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 .EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"
+
+.EXAMPLE
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application"
 #>
 function New-Win32App {
 
@@ -142,31 +148,33 @@ function New-Win32App {
         [string]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
         [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
-        [String]$SiteCode,
+        [string]$SiteCode,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'Server name that has an SMS Provider site system role')]
-        [String]$ProviderMachineName,  
+        [string]$ProviderMachineName,  
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The name of the application to search for. Accepts wildcards *')]
-        [String]$AppName,
+        [string]$AppName,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"')]
         [Switch]$DownloadContent,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application icon is decoded from base64 and saved to the Logos folder')]
         [Switch]$ExportIcon,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
-        [String]$workingFolder = "C:\Win32AppMigrationTool",
+        [string]$workingFolder = "C:\Win32AppMigrationTool",
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
         [Switch]$PackageApps,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
         [Switch]$CreateApps,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
         [Switch]$ResetLog,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"')]
-        [String]$ExcludeFilter,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"')]
+        [string]$ExcludeFilter,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
         [Switch]$NoOgv,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = 'URI for Win32 Content Prep Tool')]
-        [String]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
+        [string]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe',
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Override intunewin filename. Default is the name calcualted from the install command line')]
+        [string]$OverrideIntuneWin32FileName
     )
 
     # Create global variable(s) 
@@ -399,7 +407,15 @@ function New-Win32App {
             Write-Log -Message ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name) -LogId $LogId
             Write-Host ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name)  -ForegroundColor Cyan
             
-            New-IntuneWin -ContentFolder $content.Install_Destination -OutputFolder (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination) -SetupFile $content.Install_CommandLine
+            # Build parameters to splat at the New-IntuneWin function
+            $paramsToPassIntuneWin = @{}
+            $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Destination)
+            $paramsToPassIntuneWin.Add('OutputFolder', (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination))
+            $paramsToPassIntuneWin.Add('SetupFile', $content.Install_CommandLine)
+            if ($OverrideIntuneWin32FileName) { $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) }
+
+            # Create the .intunewin file
+            New-IntuneWin @paramsToPassIntuneWin
         }
     }
     else {

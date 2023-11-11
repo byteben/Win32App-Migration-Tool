@@ -99,7 +99,6 @@ function Get-ContentFiles {
                             Write-Log -Message ("'{0}' {1}" -f $difference.InputObject, $side) -LogId $LogId -Severity 3
                             Write-Warning -Message ("'{0}' {1}" -f $difference.InputObject, $side)
                         }
-                        Get-ScriptEnd -ErrorMessage $_.Exception.Message
                     }
                     else {
                         # Files are the same
@@ -110,19 +109,16 @@ function Get-ContentFiles {
                 catch {
                     Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
                     Write-Warning -Message 'Could not compare the source and destination folders'
-                    Get-ScriptEnd -ErrorMessage $_.Exception.Message
                 }
             }
             catch {
                 Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
                 Write-Warning -Message 'Could not compare the source and destination folders'
-                Get-ScriptEnd -ErrorMessage $_.Exception.Message
             }
         }
         catch {
             Write-Log -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised) -LogId $LogId -Severity 3
             Write-Warning -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised)
-            Get-ScriptEnd -ErrorMessage $_.Exception.Message
         }
     }
 }
