@@ -8,7 +8,7 @@ Filename:     New-Win32App.ps1
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
 
 .Description
-**Version 2.0.11.12 BETA**  
+**Version 2.0.12 BETA**  
 
 .PARAMETER LogId
 The component (script name) passed as LogID to the 'Write-Log' function.
