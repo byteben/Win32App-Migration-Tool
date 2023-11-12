@@ -9,12 +9,12 @@ Win32App Packaging Tool Function Import
 #>
 
 
-$functionsToImport = $[PSCustomObject]@ {
-    PublicFunctions = @(Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue)
-    PrivateFunctions = @(Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue)
-}
 
-foreach ($function in @($functionsToImport.PublicFunctions + $functionsToImport.PrivateFunctions)) {
+$publicFunctions = Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue
+$privateFunctions = Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue
+
+
+foreach ($function in @($publicFunctions + $privateFunctions)) {
     try {
         . $function.FullName
     }
