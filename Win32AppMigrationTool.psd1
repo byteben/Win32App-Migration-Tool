@@ -4,7 +4,7 @@
     RootModule        = 'Win32AppMigrationTool.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '2.0.14'
+    ModuleVersion     = '2.0.15'
    
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -89,7 +89,7 @@
             # Tags applied to this module. These help with module discovery in online galleries.
             Tags = @('Win32AppMigrationTool', 'New-Win32App', 'Intune', 'Migrate')
 
-            Prerelease = 'beta'
+            #Prerelease = 'beta'
 
             # A URL to the license for this module.
             # LicenseUri = ''
