@@ -7,22 +7,15 @@ Filename:     Win32AppMigrationTool.psm1
 .Description
 Win32App Packaging Tool Function Import
 #>
-[CmdletBinding()]
-Param()
-Process {
-    # Locate all the public and private function specific files
-    $PublicFunctions = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Public") -Filter "*.ps1" -ErrorAction SilentlyContinue
-    $PrivateFunctions = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Private") -Filter "*.ps1" -ErrorAction SilentlyContinue
+$PublicFunctions = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue )
+$PrivateFunctions = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue )
 
-    # Dot source the function files
-    foreach ($FunctionFile in @($PublicFunctions + $PrivateFunctions)) {
-        try {
-            . $FunctionFile.FullName -ErrorAction Stop
-        }
-        catch [System.Exception] {
-            Write-Error -Message "Failed to import function '$($FunctionFile.FullName)' with error: $($_.Exception.Message)"
-        }
+foreach ($GetFunction in @($PublicFunctions + $PrivateFunctions)) {
+    Try {
+        . $GetFunction.FullName
     }
-
-    Export-ModuleMember -Function $PublicFunctions.BaseName -Alias *
+    Catch {
+        Write-Host "Failed to import function $($GetFunction.FullName)" -ForegroundColor Red
+        Write-Host "$_" -ForegroundColor Yellow
+    }
 }
