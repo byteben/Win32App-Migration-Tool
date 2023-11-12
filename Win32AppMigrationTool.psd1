@@ -4,7 +4,7 @@
     RootModule        = 'Win32AppMigrationTool.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '2.0.12'
+    ModuleVersion     = '2.0.13'
    
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -61,7 +61,7 @@
     # NestedModules = @()
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = 'New-Win32App'
+    FunctionsToExport = @('New-Win32App')
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport   = @()
@@ -104,7 +104,7 @@
             # ReleaseNotes = ''
 
             # External dependent modules of this module
-            ExternalModuleDependencies = '$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1'
+            # ExternalModuleDependencies = '$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1'
 
         } # End of PSData hashtable
 

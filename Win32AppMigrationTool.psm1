@@ -1,24 +1,24 @@
 <#
 .Synopsis
-Created on:   27/10/2023
+Created on:   12/11/2023
 Created by:   Ben Whitmore
 Filename:     Win32AppMigrationTool.psm1
 
 .Description
 Win32App Packaging Tool Function Import
 #>
+[CmdletBinding()]
+Param()
+Process {
+    $pub = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Public") -Filter "*.ps1" -ErrorAction SilentlyContinue
+    $priv = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Private") -Filter "*.ps1" -ErrorAction SilentlyContinue
 
-
-
-$publicFunctions = Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue
-$privateFunctions = Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue
-
-
-foreach ($function in @($publicFunctions + $privateFunctions)) {
-    try {
-        . $function.FullName
-    }
-    Catch {
-        Write-Warning -Message ("Failed to import function '{0}'. {1}" -f $function.FullName, $_.Exception.Message)
+    foreach ($func in @($pub + $priv)) {
+        try {
+            . $func.FullName -ErrorAction Stop
+        }
+        catch [System.Exception] {
+            Write-Error -Message "Failed to import the function '$($func.FullName)' with error: $($_.Exception.Message)"
+        }
     }
 }
