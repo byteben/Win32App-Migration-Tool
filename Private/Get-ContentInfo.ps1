@@ -109,6 +109,6 @@ function Get-ContentInfo {
         # Output the deployment type object
         Write-Host "`n$contentObject`n" -ForegroundColor Green
 
-        Return $contentObject
+        return $contentObject
     }
 }

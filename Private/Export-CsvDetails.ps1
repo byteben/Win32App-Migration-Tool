@@ -84,6 +84,8 @@ function Export-CsvDetails {
             catch {
                 Write-Log -Message ("Failed to export '{0}' information to '{1}'" -f $Type, $Path) -LogId $LogId -Severity 3
                 Write-Host ("Failed to export '{0}' information to '{1}'" -f $Type, $Path) -ForegroundColor Red
+                Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+                throw
             }
         }
     }

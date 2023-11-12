@@ -27,7 +27,6 @@ function New-VerboseRegion {
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 1, HelpMessage = 'The colour of the message to write')]
         [String]$ForegroundColor = 'White'
     )
-
     Write-Log -Message "--------------------------------------------"
     Write-Log -Message ("{0}..." -f $Message )
     Write-Log -Message "--------------------------------------------"

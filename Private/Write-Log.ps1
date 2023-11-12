@@ -80,6 +80,7 @@ function Write-Log {
             }
             catch {
                 Write-Error -Message ("Unable to wipe log file. Error message: {0}" -f $_.Exception.Message)
+                throw
             }
         }
             
@@ -97,11 +98,13 @@ function Write-Log {
                 }
                 catch {
                     Write-Error -Message ("Unable to append log entry to '{0}' file. Error message: {1}" -f $logToWrite, $_.Exception.Message)
+                    throw
                 }
             }
         }
         catch [System.Exception] {
             Write-Warning -Message ("Unable to append log entry to '{0}' file" -f $logToWrite)
+            throw
         }
     }
 }

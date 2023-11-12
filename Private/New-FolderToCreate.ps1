@@ -26,29 +26,34 @@ function New-FolderToCreate {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 1, HelpMessage = 'The folder(s) to create')]
         [String[]]$FolderNames
     )
+    begin {
     
-    Write-Log -Message 'Function: New-FolderToCreate was called'
+        Write-Log -Message 'Function: New-FolderToCreate was called'
+    }
+    process {
+        foreach ($folder in $FolderNames) {
 
-    foreach ($folder in $FolderNames) {
-
-        # Create Folders
-        $folderToCreate = Join-Path -Path $Root -ChildPath $folder
+            # Create Folders
+            $folderToCreate = Join-Path -Path $Root -ChildPath $folder
         
-        if (-not (Test-Path -Path $folderToCreate)) {
-            Write-Host ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
-            try {
-                New-Item -Path $folderToCreate -ItemType Directory -Force -ErrorAction Stop | Out-Null
-                Write-Log -Message ("Folder '{0}' was created succesfully" -f $folderToCreate)
-                Write-Host ("Folder '{0}' created succesfully" -f $folderToCreate) -ForegroundColor Green
+            if (-not (Test-Path -Path $folderToCreate)) {
+                Write-Host ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
+
+                try {
+                    New-Item -Path $folderToCreate -ItemType Directory -Force -ErrorAction Stop | Out-Null
+                    Write-Log -Message ("Folder '{0}' was created succesfully" -f $folderToCreate)
+                    Write-Host ("Folder '{0}' created succesfully" -f $folderToCreate) -ForegroundColor Green
+                }
+                catch {
+                    Write-Log -Message ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
+                    Write-Warning -Message ("Couldn't create '{0}' folder" -f $folderToCreate)
+                    Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+                }
             }
-            catch {
-                Write-Log -Message ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
-                Write-Warning -Message ("Couldn't create '{0}' folder" -f $folderToCreate)
+            else {
+                Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -Severity 2
+                Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
             }
-        }
-        else {
-            Write-Log -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -Severity 2
-            Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
         }
     }
 } 

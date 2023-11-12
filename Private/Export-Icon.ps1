@@ -54,9 +54,11 @@ function Export-Icon {
                 }
             }
         }
-        Catch {
+        catch {
             Write-Log -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos") -LogId $LogId -Severity 3
-            Write-Warning -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos") 
+            Write-Warning -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos")
+            Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            throw
         }
     }
 }

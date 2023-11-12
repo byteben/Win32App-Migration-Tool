@@ -50,15 +50,16 @@ function Connect-SiteServer {
         catch {
             Write-Log -Message "Warning: Could not import the ConfigurationManager.psd1 Module"
             Write-Warning "Warning: Could not import the 'ConfigurationManager.psd1' module"
-            break
-        }
+            Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+    }
 
         # Check the SMS Provider is valid
         if ( -not ( $ProviderMachineName -eq (Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Root ) ) {
             Write-Log -Message ("Could not connect to the Provider '{0}'" -f $ProviderMachineName) -Severity 3
             Write-Warning ("Could not connect to the Provider '{0}' `nDid you specify the correct Site System?" -f $ProviderMachineName)
-            Get-ScriptEnd
-            break
+            Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
         }
         else {
             Write-Log -Message ("Connected to provider {0} at site '{1}'" -f $ProviderMachineName, $SiteCode )
@@ -70,8 +71,8 @@ function Connect-SiteServer {
             if (!($SiteCode -eq ( Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Name) ) {
                 Write-Log -Message ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'" -f $SiteCode, $ProviderMachineName) -Severity 3
                 Write-Warning ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'. Did you specify the correct Site Code?" -f $SiteCode, $ProviderMachineName)
-                Get-ScriptEnd
-                break
+                Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+
             }
             else {
                 Write-Log -Message ("Connected to PSDrive '{0}'" -f $SiteCode)
@@ -82,7 +83,7 @@ function Connect-SiteServer {
         catch {
             Write-Log -Message ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode) -Severity 3
             Write-Warning ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode)
-            break
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
         }
     }
 }

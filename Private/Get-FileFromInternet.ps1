@@ -49,6 +49,7 @@ function Get-FileFromInternet {
             $statusCode = $_.Exception.Response.StatusCode.Value__
             Write-Log -Message ("It looks like the Uri '{0}' is invalid. Error '{1}" -f $Uri, $statusCode) -LogId $LogId -Severity 3
             Write-Warning -Message ("It looks like the Uri '{0}' is invalid. Error '{1}'" -f $Uri, $statusCode)
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
         }
 
         # If the URL is valid, attempt to download the file otherwise break and warn
@@ -66,21 +67,19 @@ function Get-FileFromInternet {
                 else {
                     Write-Log -Message ("The download was interrupted or an error occured moving the file to '{0}'" -f $Uri) -LogId $LogId -Severity 3
                     Write-Warning -Message ("The download was interrupted or an error occured moving the file to '{0}'" -f $Uri)
-                    break
+                    Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
                 }
             }
             catch {
                 Write-Log -Message ("Error downloading file '{0}'" -f $Uri) -LogId $LogId -Severity 3
-                Write-Log -Message ("{0}" -f $_) -LogId $LogId -Severity 3
                 Write-Warning -Message ("Error downloading file '{0}'" -f $Uri)
-                Write-Warning -Message ("{0}" -f $_) -Severity 3
-                break
+                Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
             }
         }
         else {
             Write-Log -Message ("URL Does not exists or the website is down. Status Code '{0}'" -f $statusCode) -LogId $LogId -Severity 3
             Write-Warning -Message ("URL Does not exists or the website is down. Status Code '{0}'" -f $statusCode)
-            break
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
         }
     }
 }

@@ -42,7 +42,7 @@ function Get-ContentFiles {
                 
         # Create destination folders if they don't exist
         Write-Log -Message ("Attempting to create the destination folder '{0}'" -f $Destination) -LogId $LogId
-        Write-Host ("{0}Attempting to create the destination folder '{1}'" -f $(if ($flags -ne 'UninstallDifferent') {"`n"}), $Destination) -ForegroundColor Cyan
+        Write-Host ("{0}Attempting to create the destination folder '{1}'" -f $(if ($flags -ne 'UninstallDifferent') { "`n" }), $Destination) -ForegroundColor Cyan
 
         if (-not (Test-Path -Path $Destination) ) {
             try {
@@ -53,6 +53,7 @@ function Get-ContentFiles {
             catch {
                 Write-Log -Message ("Error: Could not create the destination folder '{0}'" -f $Destination) -LogId $LogId -Severity 3
                 Write-Warning -Message ("Error: Could not create the destination folder '{0}'" -f $Destination)
+                Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
                 throw
             }
         }
@@ -65,21 +66,53 @@ function Get-ContentFiles {
 
         # Convert UNC paths to FileSystem paths
         $sourceUNC = "FileSystem::$($Source)"
-        $destinationUNC = "FileSystem::$($Destination)"      
 
         try {
             # List files to copy
-            Write-Log -Message 'The source files to copy are:' -LogId $LogId
-            Write-Host 'The source files to copy are:' -ForegroundColor Cyan
-            Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop | Select-Object -ExpandProperty FullName | foreach-object { Write-Log -Message ("'{0}'" -f $_) -LogId $LogId; Write-Host ("'{0}'" -f $_) }
+            $filesToCopy = Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop 
+            $filesToCopy | Select-Object -ExpandProperty FullName | foreach-object { Write-Log -Message ("'{0}'" -f $_) -LogId $LogId }
+            Write-Log -Message ("There are '{0}' items to copy" -f $filesToCopy.Count) -LogId $LogId
+            Write-Host ("There are '{0}' items to copy" -f $filesToCopy.Count) -ForegroundColor Cyan
 
-            # Copy files from source to destination
-            Copy-Item -Path "$sourceUNC\*" -Destination $destinationUNC -Recurse -Force -ErrorAction Stop
+            # Initialize a counter
+            $fileCount = 0
 
-            # Compare the source and destination folders to ensure the copy was successful
+            # Copy items and track progress
+            foreach ($file in $filesToCopy) {
+                $sourceFile = "FileSystem::$($file.FullName)"
+                $relativePath = $file.FullName.Substring($source.Length)
+
+                # Construct the destination path
+                $destinationFile = Join-Path -Path $Destination -ChildPath $relativePath
+
+                # Copy the item
+                try {
+                    Write-Log -Message ("Copying '{0}' to '{1}'" -f $sourceFile, $destinationFile) -LogId $LogId
+                    Write-Host ("Copying '{0}' to '{1}'" -f $file.Name, $destinationFile) -ForegroundColor White
+                    Copy-Item -Path $sourceFile -Destination $destinationFile -Force
+
+                    # Increment the counter
+                    $fileCount++
+
+                    # Calculate and display progress as a percentage
+                    $progressPercentage = ($fileCount / ($filesToCopy).Count) * 100
+                    Write-Progress -PercentComplete $progressPercentage -Activity 'Copying Files' -Status $file.FullName -CurrentOperation "Progress: $progressPercentage%"
+                }
+                catch {
+                    Write-Log -Message ("Error: Could not copy '{0}' to '{1}'" -f $sourceFile, $destinationFile) -LogId $LogId -Severity 3
+                    Write-Warning -Message ("Error: Could not copy '{0}' to '{1}'" -f $sourceFile, $destinationFile)
+                    Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+                    throw
+                }
+            }
+
+            # Remove the progress bar once the copying is complete
+            Write-Progress -Completed -Activity 'File copy completed'
+            
             try {
+                # Compare the source and destination folders to ensure the copy was successful
                 $sourceCompare = Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop
-                $destinationCompare = Get-ChildItem -Path $destinationUNC -Recurse -ErrorAction Stop
+                $destinationCompare = Get-ChildItem -Path $Destination -Recurse -ErrorAction Stop
 
                 # Compare the file hashes
                 $compareResult = Compare-Object -ReferenceObject $sourceCompare -DifferenceObject $destinationCompare
@@ -90,35 +123,39 @@ function Get-ContentFiles {
 
                     if ($differences) {
 
-                        # Files are different
-                        Write-Log -Message 'The files in the destination do not match the files in the source after the copy' -LogId $LogId -Severity 3
-                        Write-Warning -Message 'The files in the destination do not match the files in the source after the copy'
-
+                        # Files are different but this is OK if the uninstall content has been copied. Check if we have all the source files in the destination folder
                         foreach ($difference in $differences) {
-                            $side = if ($difference.SideIndicator -eq '<=') { "found in source, not in destination" } else { "found in destination, not in source" }
-                            Write-Log -Message ("'{0}' {1}" -f $difference.InputObject, $side) -LogId $LogId -Severity 3
-                            Write-Warning -Message ("'{0}' {1}" -f $difference.InputObject, $side)
+                            if ($difference.SideIndicator -eq '<=') { 
+                                Write-Log -Message ("'{0}' found in the source folder, but not in the destination folder" -f $difference.InputObject) -LogId $LogId -Severity 3
+                                Write-Warning -Message ("'{0}' found in the source folder, but not in the destination folder" -f $difference.InputObject)
+                            }
                         }
                     }
                     else {
                         # Files are the same
-                        Write-Log -Message 'File check pass. All files were verified in the destination folder. Copy was successful' -LogId $LogId
-                        Write-Host 'File check pass. All files were verified in the destination folder. Copy was successful' -ForegroundColor Green
+                        Write-Log -Message 'All files were verified in the destination folder. Copy was successful' -LogId $LogId
+                        Write-Host 'All files were verified in the destination folder. Copy was successful' -ForegroundColor Green
                     }
                 }
                 catch {
                     Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
                     Write-Warning -Message 'Could not compare the source and destination folders'
+                    Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+                    Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message    
                 }
             }
             catch {
                 Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
                 Write-Warning -Message 'Could not compare the source and destination folders'
+                Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+                Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
             }
         }
         catch {
             Write-Log -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised) -LogId $LogId -Severity 3
             Write-Warning -Message ("Could not transfer content from '{0}' to '{1}'" -f $sourceSanitised, $destinationSanitised)
+            Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
         }
     }
 }
