@@ -4,7 +4,7 @@
     RootModule        = 'Win32AppMigrationTool.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '2.0.0'
+    ModuleVersion     = '2.0.11.12'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
