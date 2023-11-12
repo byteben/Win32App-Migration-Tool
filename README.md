@@ -1,22 +1,18 @@
 # Win32App Migration Tool
  
- ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_0.jpg)  
-  ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_6.jpg) 
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_10.jpg)  
    
 ## Synopsis  
   
-The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.  
+The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.  
+Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you. 
   
-Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you. Currently, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also exporting the logo for the selected Application(s).  
+**Blog Post** https://msendpointmgr.com/2021/03/27/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/
   
-** The Win32App Migration Tool is still in BETA so I would welcome any feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)**  
-  
-**Blog Post** https://byteben.com/bb/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/  
-  
-  ## Development Roadmap 
-After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.  
-  
- ![alt text](https://byteben.com/bb/Downloads/GitHub/win32approadmap.jpg)  
+  ## Development Status
+  **STATUS: BETA**  
+  The Win32App Migration Tool is still in BETA. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
+  After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.  
   
 ## Requirements  
 
@@ -27,11 +23,15 @@ After the BETA has been tested succesfully, the next stage of the project will b
 - **PowerShell 5.1**  
 - **Internet Access** to download the Win32 Content Prep Tool 
   
-## Getting Started  
+## Quick Start  
   
   **1. Install-Module Win32AppMigrationTool**  
   **2. New-Win32App**  -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
-  **3. Use Information from the CSVs to build a Win32App in Intune**  
+  **3. Use Information from the CSVs to build a Win32App in Intune** 
+
+  ```
+  New-Win32App [-SiteCode] <String> [[-ProviderMachineName] <String>] [[-AppName] <String[]>]
+  ```
     
 The current release of the Win32 App Migration Tool will do the following:-  
   
@@ -41,19 +41,8 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
 - Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)  
 - Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>  
-- Export Application Logo(s) to %WorkingDirectory%\Logos  
+- Export Application icons(s) to %WorkingDirectory%\Icons  
 - Log events to %WorkingDirectory%\Logs\Main.log  
-   
-## Supported Install Commands  
-  
-The Win32App Migration Tool will automatically detect the deployment technology based on the program install command for the Deployment Type. The following installers are supported:-  
-  
-- PowerShell Scripts  
-- .EXE  
-- .MSI  
-- .CMD  
-- .BAT  
-- .VBS  
   
 ## Important Information    
    
@@ -62,83 +51,269 @@ _**// Please use the tool with caution and test in your lab (dont be the guy or 
 ## Troubleshooting  
   
 Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output of the solution  
-Get-Help New-Win32App  
  
 ## Parameters  
-  
-**.Parameter AppName**
+
+### -SiteCode
+The Site Code of the ConfigMgr Site. he Site Code must be only 3 alphanumeric characters
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+Validate Pattern: ^[a-zA-Z0-9]{3}$')]
+```
+
+### -ProviderMachineName
+Server name that has an SMS Provider site system role
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter AppName
 Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
-  
-**.Parameter SiteCode**
-Specify the Sitecode you wish to connect to
 
-**.Parameter ProviderMachineName**
-Specify the Site Server to connect to
+```yaml
+Type: String
+Parameter Sets: (All)
 
-**.Parameter ExportLogo**
-When passed, the Application logo is decoded from base64 and saved to the "Logos" folder
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
 
-**.Parameter DownloadContent**
-When passed, the source content will be download to the local "Content" folder
+### -Parameter WorkingFolder
+The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably
 
-**.Parameter WorkingFolder**
-This is the working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably. The Following folders are created in this directory:-
-  
--Content  
--ContentPrepTool  
--Details  
--Logos  
--Logs  
--Win32Apps  
-  
-**.Parameter PackageApps**  
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: 3
+Default value: C:\Win32AppMigrationTool
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter ExcludeFilter
+Pass this parameter to exclude specific apps from the results. Accepts wildcards e.g. "Microsoft*"'
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: 4
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Parameter Win32ContentPrepToolUri
+URI for Win32 Content Prep Tool
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: 5
+Default value: https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter OverrideIntuneWin32FileName
+Override intunewin filename. Default is the name calcualted from the install command line
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: 6
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter DownloadContent
+DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter ExportIcon
+When passed, the Application icon is decoded from base64 and saved to the '$WorkingFolder\Icons' folder
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter PackageApps
 Pass this parameter to package selected apps in the .intunewin format
 
-**.Parameter CreateApps**  
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter CreateApps
 Pass this parameter to create the Win32apps in Intune
 
-**.Parameter ResetLog**  
-Pass this parameter to reset the log file  
-  
-**.Parameter NoOGV**  
-Pass this parameter supress the Out-GridView to select Applications. You can still pass wildcards to the -AppName parameter 
-  
-**.Parameter ExcludePMPC**  
-Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". String can be modified in Get-AppList Function  
-  
-**.Parameter ExcludeFilter**  
-Pass this parameter to exclude specific apps from the results. String value that accepts wildcards e.g. "Microsoft*"  
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter ResetLog
+Pass this parameter to reset the log file
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter ExcludePMP
+Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter NoOgv
+When passed, the Out-Gridview is suppressed and the value entered for $AppName will be searched using Get-CMApplication -Fast
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter NoOgv
+When passed, the Out-Gridview is suppressed and the value entered for $AppName will be searched using Get-CMApplication -Fast
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
   
 ## Examples  
   
-**.Example**  
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
-  
-**.Example**  
+  ```
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV  
-  
-**.Example**  
+  ```
+  ``` 
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
-  
-**.Example**  
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"  
+  ```
+  ``` 
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" 
+  ``` 
   
 ## Version History  
+  
+**Version 2.0.17 - 12/11/2023 - BETA**  
+  
+✅ Faster code  
+✅ Complete refactor of code  
+✅ Better error handling  
+✅ Improved file structure so its easier to find app content 
+✅ Retain CSV data each run  
+✅ Option to rename intunewin to a custom name  
+✅ We now track uninstall content if its different from the install content  
+✅ Compare files on copy to ensure we grab all the correct source content  
+✅ Progress on file copy (useful for when dealing with larger files)  
+✅ Reduce the number of times we call Get-CMApplication to speed run-time  
+✅ Application, Deployment Type and Content details stored in different arrays. We call them multiple times and its quicker to split this out  
+✅ Improved Logging - we now support log entry that is compatible with cmtrace  
+✅ Single instance storage of icons  
+✅ Win32ContentPrep tool is always re-downloaded at run-time if the packageapps parameter is passed  
+✅ Added option to exclude specific apps using a filter  
   
 **Version 1.103.12.01 - 12/03/2022 - BETA**  
 - Added UTF8 Encoding for CSV Exports https://github.com/byteben/Win32App-Migration-Tool/issues/6  
@@ -201,39 +376,3 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 **Version 1.0 - 14/03/2021 - DEV**  
 - DEV Release    
-
-## Bugs  
-  
-- Git Issue "Package Multiple sources #4" STATUS: Investigating logic issue when uninstall content path differs from install path
-  
-## Planned Improvements  
-  
-- ~~Option to build .Intunewin files without downloading the Deployment Type content locally~~ Requires V1.8.29.1+
-- Gather Requirements, Detection Rules and Supercedence for Applications and Deployment Types
-- Create the Win32app in Intune 
-- ConfigMgr Console Extension (Thanks @TheNotoriousDRR)  
-- ~~Add to PSGallery~~  
-- ~~Add support for .VBS~~   
-- ~~Convert to a Module~~  
-  
-## Screenshots  
-  
-**Application Selection**   
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_1.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_0.jpg)  
-  
-**Create Application Folders**  
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_2.jpg)  
-  
-**Create Deployment Folders**  
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_3.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_3.jpg)  
-  
-**Create Content Folders**  
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_4.jpg)  
-
-**Create .Intunewin Files**  
-https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_5.jpg  
-![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_6.jpg) 
