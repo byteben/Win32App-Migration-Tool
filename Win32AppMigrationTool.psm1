@@ -1,14 +1,12 @@
 <#
 .Synopsis
-Created on:   29/08/2021
-Updated on:   12/03/2022
+Created on:   12/11/2023
 Created by:   Ben Whitmore
 Filename:     Win32AppMigrationTool.psm1
 
 .Description
 Win32App Packaging Tool Function Import
 #>
-
 $PublicFunctions = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -Recurse -ErrorAction SilentlyContinue )
 $PrivateFunctions = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -Recurse -ErrorAction SilentlyContinue )
 
