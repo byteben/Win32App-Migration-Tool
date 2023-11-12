@@ -5,7 +5,7 @@
 
     # Version number of this module.
     ModuleVersion     = '2.0.11.12'
-
+   
     # Supported PSEditions
     # CompatiblePSEditions = @()
 
@@ -88,6 +88,8 @@
 
             # Tags applied to this module. These help with module discovery in online galleries.
             Tags = @('Win32AppMigrationTool', 'New-Win32App', 'Intune', 'Migrate')
+
+            Prerelease = 'beta'
 
             # A URL to the license for this module.
             # LicenseUri = ''
