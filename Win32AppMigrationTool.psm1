@@ -16,9 +16,9 @@ $functionsToImport = $[PSCustomObject]@ {
 
 foreach ($function in @($functionsToImport.PublicFunctions + $functionsToImport.PrivateFunctions)) {
     try {
-        . $GetFunction.FullName
+        . $function.FullName
     }
     Catch {
-        Write-Warning -Message ("Failed to import function '{0}'. {1}" -f $GetFunction.FullName, $_.Exception.Message)
+        Write-Warning -Message ("Failed to import function '{0}'. {1}" -f $function.FullName, $_.Exception.Message)
     }
 }
