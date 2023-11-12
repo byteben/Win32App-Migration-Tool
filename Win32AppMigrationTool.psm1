@@ -10,15 +10,19 @@ Win32App Packaging Tool Function Import
 [CmdletBinding()]
 Param()
 Process {
-    $pub = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Public") -Filter "*.ps1" -ErrorAction SilentlyContinue
-    $priv = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Private") -Filter "*.ps1" -ErrorAction SilentlyContinue
+    # Locate all the public and private function specific files
+    $PublicFunctions = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Public") -Filter "*.ps1" -ErrorAction SilentlyContinue
+    $PrivateFunctions = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Private") -Filter "*.ps1" -ErrorAction SilentlyContinue
 
-    foreach ($func in @($pub + $priv)) {
+    # Dot source the function files
+    foreach ($FunctionFile in @($PublicFunctions + $PrivateFunctions)) {
         try {
-            . $func.FullName -ErrorAction Stop
+            . $FunctionFile.FullName -ErrorAction Stop
         }
         catch [System.Exception] {
-            Write-Error -Message "Failed to import the function '$($func.FullName)' with error: $($_.Exception.Message)"
+            Write-Error -Message "Failed to import function '$($FunctionFile.FullName)' with error: $($_.Exception.Message)"
         }
     }
+
+    Export-ModuleMember -Function $PublicFunctions.BaseName -Alias *
 }
