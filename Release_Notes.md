@@ -5,7 +5,7 @@
 ✅ Faster code  
 ✅ Complete refactor of code  
 ✅ Better error handling  
-✅ Improved file structure so its easier to find app content
+✅ Improved file structure so its easier to find app content  
 ✅ Retain CSV data each run  
 ✅ Option to rename intunewin to a custom name  
 ✅ We now track uninstall content if its different from the install content  
