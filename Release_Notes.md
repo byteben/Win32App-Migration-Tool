@@ -2,9 +2,9 @@
 
 ## 2.0.18 - BETA - 25/11/2023
   
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/7
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/4 
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/13
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/7  
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/4  
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/13  
 
 ## 2.0.17 - BETA - 12/11/2023
   
