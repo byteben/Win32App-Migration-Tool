@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   11/11/2023
+Updated on:   16/12/2023
 Created by:   Ben Whitmore
 Filename:     Get-InstallCommand.ps1
 
@@ -24,7 +25,7 @@ function Get-InstallCommand {
         [string]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0, HelpMessage = 'The setup file to be used for packaging. Normally the .msi, .exe or .ps1 file used to install the application')]
         [string]$InstallTech,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = 'The setup file to be used for packaging. Normally the .msi, .exe or .ps1 file used to install the application')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 1, HelpMessage = 'The setup file to be used for packaging. Normally the .msi, .exe or .ps1 file used to install the application')]
         [string]$SetupFile
 
     )
@@ -37,9 +38,9 @@ function Get-InstallCommand {
 
         # Build the command to be used with the Win32 Content Prep Tool
         $right = ($SetupFile -split "$InstallTech")[0]
-        $right = ($right -Split " ")[-1]
-        $filename = $right.TrimStart("\", ".", "`"")
-        $command = $filename + $InstallTech
+        $rightMod = ($right -split '["'']')[-1]
+        $fileName = $rightMod.TrimStart("\", ".", "`"", "'", " ")
+        $command = $fileName + $InstallTech
 
         # Verbose and log the result
         Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -LogId $LogId
