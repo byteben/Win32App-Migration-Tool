@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
+Update on:    16/12/2023
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -76,9 +77,10 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $Object.Installer.CustomData.UninstallCommandLine
                     $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
                     $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime
-                
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $Object.Installer.DetectAction.Provider
+
                     Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', `
-                 InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}'" -f `
+                 InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}'" -f `
                             $ApplicationId, `
                             $xmlContent.AppMgmtDigest.Application.title.'#text', `
                             $xmlContent.AppMgmtDigest.Application.LogicalName, `
@@ -92,7 +94,8 @@ function Get-DeploymentTypeInfo {
                             $uninstallLocation, `
                             $object.Installer.CustomData.UninstallCommandLine, `
                             $object.Installer.CustomData.ExecuteTime, `
-                            $object.Installer.CustomData.MaxExecuteTime) -LogId $LogId
+                            $object.Installer.CustomData.MaxExecuteTime, `
+                            $object.Installer.DetectAction.Provider) -LogId $LogId
 
                     # Output the deployment type object
                     Write-Host "`n$deploymentObject`n" -ForegroundColor Green

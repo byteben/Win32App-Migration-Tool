@@ -305,7 +305,9 @@ function New-Win32App {
     Export-CsvDetails -Name 'DeploymentTypes' -Data $deploymentTypes_Array -Path $detailsFolder
 
     # Export content information to CSV for reference
-    Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
+    if ($DownloadContent) {
+        Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
+    }
     #endregion
 
     #region Exporting_Logos
@@ -357,7 +359,7 @@ function New-Win32App {
             else {
                 $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Source)
             }
-            
+
             $paramsToPassIntuneWin.Add('OutputFolder', (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination))
             $paramsToPassIntuneWin.Add('SetupFile', $content.Install_CommandLine)
 
