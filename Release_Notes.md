@@ -1,8 +1,9 @@
 # Win32App Migration Tool - Release Notes
 
 ## 2.0.19 - BETA - 16/12/2023
-  
+
 ✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/11
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/12
 
 ## 2.0.18 - BETA - 25/11/2023
   

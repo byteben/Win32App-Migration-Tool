@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   12/11/2023
+Updated on:   16/12/2023
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -349,10 +349,21 @@ function New-Win32App {
             
             # Build parameters to splat at the New-IntuneWin function
             $paramsToPassIntuneWin = @{}
-            $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Destination)
+
+            # If DownloadContent switch is not passed we will use content from the Configmgr source folder
+            if ($DownloadContent) {
+                $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Destination)
+            }
+            else {
+                $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Source)
+            }
+            
             $paramsToPassIntuneWin.Add('OutputFolder', (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination))
             $paramsToPassIntuneWin.Add('SetupFile', $content.Install_CommandLine)
-            if ($OverrideIntuneWin32FileName) { $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) }
+
+            if ($OverrideIntuneWin32FileName) { 
+                $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) 
+            }
 
             # Create the .intunewin file
             New-IntuneWin @paramsToPassIntuneWin
