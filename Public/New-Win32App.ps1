@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   16/12/2023
+Updated on:   13/01/2024
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -154,8 +154,8 @@ function New-Win32App {
 
     #region Create_Folders
     Write-Host "Creating additionl folders..." -ForegroundColor Cyan
-    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
-    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
+    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods','Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
+    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods','Details', 'Win32Apps')
     #endRegion
 
     #region Get_Content_Tool

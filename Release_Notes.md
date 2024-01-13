@@ -1,5 +1,11 @@
 # Win32App Migration Tool - Release Notes
 
+## 2.0.20 - BETA - 13/01/2024
+
+✅ Export Detection Method to file in the working folder 'DetectionMethods' folder
+✅ Export Detection Method supporting information to Details\DeploymentTypes.csv
+✅ Fix an incorrectly passed parameter for Get-ScriptEnd in Get-DeploymentTypeInfo.ps1
+
 ## 2.0.19 - BETA - 16/12/2023
 
 ✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/11

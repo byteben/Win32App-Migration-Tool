@@ -26,6 +26,10 @@ function Get-DeploymentTypeInfo {
 
         # Create an empty array to store the deployment type information
         $deploymentTypes = @()
+
+        # Characters that are not allowed in Windows folder names
+        $invalidChars = '[<>:"/\\|\?\*]'
+        
     }
     process {
 
@@ -59,6 +63,19 @@ function Get-DeploymentTypeInfo {
                         $uninstallLocation = $object.Installer.Contents.Content.Location
                     }
 
+                    # Sanitize the folder names
+                    $applicationNameSanitized = ($xmlContent.AppMgmtDigest.Application.title.'#text' -replace $invalidChars, '_').TrimEnd('.', ' ')
+                    $deploymentTypeNameSanitized = ($object.Title.InnerText -replace $invalidChars, '_').TrimEnd('.', ' ')
+
+                    # Detection Methods child folder path
+                    $detectionMethodsFolderPath = ("{0}\{1}" -f $applicationNameSanitized, $deploymentTypeNameSanitized)
+
+                    # Build final folder name strings
+                    $detectionMethodsFolder = Join-Path -Path "$workingFolder_Root\DetectionMethods" -ChildPath $detectionMethodsFolderPath
+
+                    # Create the Detection Methods folder
+                    New-FolderToCreate -Root "$workingFolder_Root\DetectionMethods" -FolderNames $detectionMethodsFolderPath
+
                     # Create a new custom hashtable to store Deployment type details
                     $deploymentObject = [PSCustomObject]@{}
 
@@ -66,21 +83,51 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name Application_Id -Value $ApplicationId
                     $deploymentObject | Add-Member NoteProperty -Name ApplicationName -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
                     $deploymentObject | Add-Member NoteProperty -Name Application_LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
-                    $deploymentObject | Add-Member NoteProperty -Name LogicalName -Value $Object.LogicalName
-                    $deploymentObject | Add-Member NoteProperty -Name Name -Value $Object.Title.InnerText
-                    $deploymentObject | Add-Member NoteProperty -Name Technology -Value $Object.Installer.Technology
-                    $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $Object.Installer.ExecutionContext
+                    $deploymentObject | Add-Member NoteProperty -Name LogicalName -Value $object.LogicalName
+                    $deploymentObject | Add-Member NoteProperty -Name Name -Value $object.Title.InnerText
+                    $deploymentObject | Add-Member NoteProperty -Name Technology -Value $object.Installer.Technology
+                    $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $object.Installer.ExecutionContext
                     $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $installLocation.TrimEnd('\') 
-                    $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $Object.Installer.CustomData.InstallCommandLine
-                    $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $Object.Installer.CustomData.UnInstallSetting
+                    $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $object.Installer.CustomData.InstallCommandLine
+                    $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $object.Installer.CustomData.UnInstallSetting
                     $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $uninstallLocation.TrimEnd('\') 
-                    $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $Object.Installer.CustomData.UninstallCommandLine
-                    $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $Object.Installer.CustomData.ExecuteTime
-                    $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $Object.Installer.CustomData.MaxExecuteTime
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $Object.Installer.DetectAction.Provider
+                    $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $object.Installer.CustomData.UninstallCommandLine
+                    $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $object.Installer.CustomData.ExecuteTime
+                    $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $object.Installer.CustomData.MaxExecuteTime
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $object.Installer.DetectAction.Provider
+                    
+                    # Add detection method details to the PSCustomObject
+                    Switch ($object.Installer.DetectAction.Provider) {
 
-                    Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', `
-                 InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}'" -f `
+                        'Script' {
+                            $detectionTypeScriptBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptBody' }).InnerText
+                            $detectionTypeScriptRunAs32Bit = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'RunAs32Bit' }).InnerText
+                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
+                            $detectionTypeScriptType = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptType' }).InnerText
+
+                            # Write the detection method to file
+                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionScript.xml'
+                            $detectionTypeScriptBody| Out-File -FilePath $detectionMethodFile -Force
+                        }
+                        'Local' {
+                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
+                            $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
+
+                            # Write the detection method to file
+                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
+                            $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force
+                        }
+                    }
+
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptRunAs32Bit -Value $detectionTypeScriptRunAs32Bit
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptType -Value $detectionTypeScriptType
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeExecutionContext -Value $detectionTypeExecutionContext
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodFile -Value $detectionMethodFile
+
+                    Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', `
+                    Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', `
+                    UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}', DetectionTypeScriptRunAs32Bit = '{15}', `
+                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodFile = '{18}'" -f `
                             $ApplicationId, `
                             $xmlContent.AppMgmtDigest.Application.title.'#text', `
                             $xmlContent.AppMgmtDigest.Application.LogicalName, `
@@ -95,7 +142,11 @@ function Get-DeploymentTypeInfo {
                             $object.Installer.CustomData.UninstallCommandLine, `
                             $object.Installer.CustomData.ExecuteTime, `
                             $object.Installer.CustomData.MaxExecuteTime, `
-                            $object.Installer.DetectAction.Provider) -LogId $LogId
+                            $object.Installer.DetectAction.Provider, `
+                            $detectionTypeScriptRunAs32Bit, `
+                            $detectionTypeScriptType, `
+                            $detectionTypeExecutionContext, `
+                            $detectionMethodFile) -LogId $LogId
 
                     # Output the deployment type object
                     Write-Host "`n$deploymentObject`n" -ForegroundColor Green
@@ -115,7 +166,7 @@ function Get-DeploymentTypeInfo {
         catch {
             Write-Log -Message ("Could not get deployment type information for application Id '{0}'" -f $ApplicationId) -LogId $LogId -Severity 3
             Write-Warning -Message ("Could not get deployment type information for application id '{0}'" -f $ApplicationId)
-            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+            Get-ScriptEnd -LogId $LogId -ErrorMessage $_.Exception.Message
         }
     }
 }
