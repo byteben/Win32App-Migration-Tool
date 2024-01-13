@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    16/12/2023
+Update on:    13/01/2024
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
