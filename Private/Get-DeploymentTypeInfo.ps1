@@ -76,6 +76,14 @@ function Get-DeploymentTypeInfo {
                     # Create the Detection Methods folder
                     New-FolderToCreate -Root "$workingFolder_Root\DetectionMethods" -FolderNames $detectionMethodsFolderPath
 
+                    # Remove existing files from the Detection Methods folder to avoid ambiguity on import
+                    $existingFiles = [System.IO.Directory]::GetFiles($detectionMethodsFolder)
+                    
+                    foreach ($file in $existingFiles) {
+                        Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId
+                        [System.IO.File]::Delete($file) 
+                    }
+
                     # Create a new custom hashtable to store Deployment type details
                     $deploymentObject = [PSCustomObject]@{}
 
@@ -107,7 +115,7 @@ function Get-DeploymentTypeInfo {
 
                             # Write the detection method to file
                             $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionScript.xml'
-                            $detectionTypeScriptBody| Out-File -FilePath $detectionMethodFile -Force
+                            $detectionTypeScriptBody | Out-File -FilePath $detectionMethodFile -Force
                         }
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
