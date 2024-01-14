@@ -103,9 +103,8 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $object.Installer.CustomData.ExecuteTime
                     $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $object.Installer.CustomData.MaxExecuteTime
                     $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $object.Installer.DetectAction.Provider
-                    
-                    # Add detection method details to the PSCustomObject
 
+                    # Switch on the detection method and save to file
                     Switch ($object.Installer.DetectAction.Provider) {
 
                         'Script' {
@@ -113,12 +112,12 @@ function Get-DeploymentTypeInfo {
                             $detectionTypeScriptRunAs32Bit = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'RunAs32Bit' }).InnerText
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeScriptType = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptType' }).InnerText
-
+        
                             # ScriptType
                             # 0 = PowerShell
                             # 1 = VBScript
                             # 2 = JavaScript
-
+        
                             Switch ($detectionTypeScriptType) {
                                 '0' {
                                     $detectionTypeScriptFileExtension = '.ps1'
@@ -130,23 +129,32 @@ function Get-DeploymentTypeInfo {
                                     $detectionTypeScriptFileExtension = '.js'
                                 }
                             }
-
+        
                             # Extract only the encoded base64 script from the script body
                             $pattern = '# ENCODEDSCRIPT # Begin Configuration Manager encoded script block #\s*(.*?)\s*# ENCODEDSCRIPT# End Configuration Manager encoded script block'
                             $match = [regex]::Match($detectionTypeScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-
+        
                             if ($match.Success) {
                                 $extractedContent = $match.Groups[1].Value
-                                $base64String = $extractedContent.Trim()
 
                                 # Decode the Base64 string
-                                $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64String))
-                            
+                                $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($extractedContent))
+                                 
+                                # We need to trim the script to honor digital signatures
+                                # Split the original string into lines
+                                $lines = $scriptContent -split "`r`n"
+
+                                # Remove the last line because the xml adds padding before the encoded string
+                                $lines = $lines[0..($lines.Count - 2)]
+
+                                # Join the lines back into a single string
+                                $finalScriptContent = $lines -join "`r`n"
+                                    
                                 # Write the detection method to a file
                                 $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
-                            
+                                    
                                 try {
-                                    $scriptContent | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+                                    $finalScriptContent | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                                     Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
                                     Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
                                 }
@@ -163,13 +171,23 @@ function Get-DeploymentTypeInfo {
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
-
+        
                             # Write the detection method to file
                             $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
-                            $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+
+                            try {
+                                $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+                                Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                            }
+                            catch {
+                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                            }
                         }
                     }
-
+                    
+                    # Add detection method details to the PSCustomObject
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptRunAs32Bit -Value $detectionTypeScriptRunAs32Bit
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptType -Value $detectionTypeScriptType
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeExecutionContext -Value $detectionTypeExecutionContext
