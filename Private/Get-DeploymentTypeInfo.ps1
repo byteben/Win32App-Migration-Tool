@@ -105,6 +105,7 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $object.Installer.DetectAction.Provider
                     
                     # Add detection method details to the PSCustomObject
+
                     Switch ($object.Installer.DetectAction.Provider) {
 
                         'Script' {
@@ -113,9 +114,26 @@ function Get-DeploymentTypeInfo {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeScriptType = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptType' }).InnerText
 
+                            # ScriptType
+                            # 0 = PowerShell
+                            # 1 = VBScript
+                            # 2 = JavaScript
+
+                            Switch ($detectionTypeScriptType) {
+                                '0' {
+                                    $detectionTypeScriptFileExtension = '.ps1'
+                                }
+                                '1' {
+                                    $detectionTypeScriptFileExtension = '.vbs'
+                                }
+                                '2' {
+                                    $detectionTypeScriptFileExtension = '.js'
+                                }
+                            }
+
                             # Write the detection method to file
-                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionScript.xml'
-                            $detectionTypeScriptBody | Out-File -FilePath $detectionMethodFile -Force
+                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
+                            $detectionTypeScriptBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                         }
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
@@ -123,7 +141,7 @@ function Get-DeploymentTypeInfo {
 
                             # Write the detection method to file
                             $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
-                            $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force
+                            $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                         }
                     }
 
