@@ -156,15 +156,15 @@ function Get-DeploymentTypeInfo {
                                 try {
                                     $finalScriptContent | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                                     Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                    Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                                    Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
                                 }
                                 catch {
-                                    Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                    Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 2
                                     Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
                                 }
                             }
                             else {
-                                Write-Log -Message ("Could not get ScriptBody encoded base64 value for deploymenttype '{0}'" -f $object.Title.InnerText)  -LogId $LogId
+                                Write-Log -Message ("Could not get ScriptBody encoded base64 value for deploymenttype '{0}'" -f $object.Title.InnerText) -LogId $LogId -Severity 2
                                 Write-Host ("Could not get ScriptBody encoded base64 value for deploymenttype '{0}'" -f $object.Title.InnerText) -ForegroundColor Yellow
                             }
                         }
@@ -178,10 +178,10 @@ function Get-DeploymentTypeInfo {
                             try {
                                 $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                                 Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                                Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
                             }
                             catch {
-                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 2
                                 Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
                             }
                         }
