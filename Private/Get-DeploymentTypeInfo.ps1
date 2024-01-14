@@ -131,9 +131,34 @@ function Get-DeploymentTypeInfo {
                                 }
                             }
 
-                            # Write the detection method to file
-                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
-                            $detectionTypeScriptBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+                            # Extract only the encoded base64 script from the script body
+                            $pattern = '# ENCODEDSCRIPT # Begin Configuration Manager encoded script block #\s*(.*?)\s*# ENCODEDSCRIPT# End Configuration Manager encoded script block'
+                            $match = [regex]::Match($detectionTypeScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+
+                            if ($match.Success) {
+                                $extractedContent = $match.Groups[1].Value
+                                $base64String = $extractedContent.Trim()
+
+                                # Decode the Base64 string
+                                $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64String))
+                            
+                                # Write the detection method to a file
+                                $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
+                            
+                                try {
+                                    $scriptContent | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+                                    Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                    Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                                }
+                                catch {
+                                    Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                    Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                                }
+                            }
+                            else {
+                                Write-Log -Message ("Could not get ScriptBody encoded base64 value for deploymenttype '{0}'" -f $object.Title.InnerText)  -LogId $LogId
+                                Write-Host ("Could not get ScriptBody encoded base64 value for deploymenttype '{0}'" -f $object.Title.InnerText) -ForegroundColor Yellow
+                            }
                         }
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
