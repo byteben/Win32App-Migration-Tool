@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
+Update on:    20/01/2024
 Created by:   Ben Whitmore
 Filename:     Get-AppInfo.ps1
 
@@ -83,7 +84,7 @@ function Get-AppInfo {
                 # Add IconData to last column for easy reading
                 $applicationObject | Add-Member NoteProperty -Name IconData -Value $xmlContent.AppMgmtDigest.Resources.Icon.Data
                 
-                Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', InfoUrl = '{7}', Tags = '{8}', TotalDeploymentTypes = '{9}', IconId = '{10}', IconPath = '{11}', IconData '{12}'" -f `
+                Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', InfoUrl = '{7}', Tags = '{8}', TotalDeploymentTypes = '{9}', IconId = '{10}', IconPath = '{11}'" -f `
                         $application.Id, `
                         $xmlContent.AppMgmtDigest.Application.LogicalName, `
                         $xmlContent.AppMgmtDigest.Application.title.'#text', `
@@ -95,8 +96,7 @@ function Get-AppInfo {
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag, `
                         $totalDeploymentTypes, `
                         $xmlContent.AppMgmtDigest.Resources.Icon.Id, `
-                        $iconPath, `
-                        $xmlContent.AppMgmtDigest.Resources.Icon.Data) -LogId $LogId
+                        $iconPath) -LogId $LogId
 
                 # Output the application object but substitue the base64 icon data for readability
                 $applicationObjectOutput = $applicationObject | Select-Object -Property Id, LogicalName, Name, Description, Publisher, Version, ReleaseDate, InfoUrl, Tags, TotalDeploymentTypes, IconId, IconPath
