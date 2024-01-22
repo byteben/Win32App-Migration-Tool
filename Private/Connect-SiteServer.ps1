@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   26/10/2023
+Updated on:   20/01/2024
 Created by:   Ben Whitmore
 Filename:     Connect-SiteServer.ps1
 
@@ -69,21 +70,21 @@ function Connect-SiteServer {
         # Connect to the site drive if it is not already present
         try {
             if (!($SiteCode -eq ( Get-PSDrive -ErrorAction SilentlyContinue | Where-Object { $_.Provider -like "*CMSite*" }).Name) ) {
-                Write-Log -Message ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'" -f $SiteCode, $ProviderMachineName) -Severity 3
+                Write-Log -Message ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'" -f $SiteCode, $ProviderMachineName) -LogId $LogId -Severity 3
                 Write-Warning ("No PSDrive found for '{0}' in PSProvider CMSite for Root '{1}'. Did you specify the correct Site Code?" -f $SiteCode, $ProviderMachineName)
                 Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
 
             }
             else {
-                Write-Log -Message ("Connected to PSDrive '{0}'" -f $SiteCode)
+                Write-Log -Message ("Connected to PSDrive '{0}'" -f $SiteCode) -LogId $LogId
                 Write-Host ("Connected to PSDrive '{0}'" -f $SiteCode) -ForegroundColor Green 
                 Set-Location "$($SiteCode):\"
             }
         }
         catch {
-            Write-Log -Message ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode) -Severity 3
+            Write-Log -Message ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode) -LogId $LogId -Severity 3
             Write-Warning ("Warning: Could not connect to the specified provider '{0}' at site '{1}'" -f $ProviderMachineName, $SiteCode)
-            Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+            Get-ScriptEnd -Message $_.Exception.Message -LogId $LogId 
         }
     }
 }

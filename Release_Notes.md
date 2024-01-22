@@ -6,6 +6,7 @@
 ✅ Export Detection Method supporting information to Details\DeploymentTypes.csv
 ✅ Fix an incorrectly passed parameter for Get-ScriptEnd in Get-DeploymentTypeInfo.ps1
 ✅ Fix a bug where base64 icon data causes cmtrace to not parse the log line correctly. We now omit icondata from being logged
+✅ New module Connect-Graph (in development)
 
 ## 2.0.19 - BETA - 16/12/2023
 
