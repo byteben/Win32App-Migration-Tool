@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   05/11/23
-Updated on:   16/12/23
+Updated on:   17/02/24
 Created by:   Ben Whitmore
 Filename:     Export-Csv.ps1
 
@@ -68,8 +68,8 @@ function Export-CsvDetails {
                 # Move the old CSV into the archive folder
                 Move-Item -Path $newPath -Destination $archivePath -Force
 
-                Write-Log -Message ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $pathRename, $date) -LogId $LogId
-                Write-Host ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $pathRename, $date) -ForegroundColor Green
+                Write-Log -Message ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $Name, $date) -LogId $LogId
+                Write-Host ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $Name, $date) -ForegroundColor Green
             }
             catch {
                 Write-Log -Message ("Failed to rollover '{0}'. Csv will be overwritten." -f $Path) -LogId $LogId -Severity 3

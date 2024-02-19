@@ -1,12 +1,14 @@
 # Win32App Migration Tool - Release Notes
 
-## 2.0.20 - BETA - 20/01/2024
+## 2.0.20 - BETA - 17/02/2024
 
 ✅ Export Detection Method to file in the working folder 'DetectionMethods' folder
 ✅ Export Detection Method supporting information to Details\DeploymentTypes.csv
 ✅ Fix an incorrectly passed parameter for Get-ScriptEnd in Get-DeploymentTypeInfo.ps1
 ✅ Fix a bug where base64 icon data causes cmtrace to not parse the log line correctly. We now omit icondata from being logged
+✅ Fix a bug where an incorrect parameter was passed when testing the SMS Provider connection
 ✅ New module Connect-Graph (in development)
+✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)
 
 ## 2.0.19 - BETA - 16/12/2023
 

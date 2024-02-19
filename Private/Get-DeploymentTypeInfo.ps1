@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    13/01/2024
+Update on:    17/02/2024
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -178,11 +178,24 @@ function Get-DeploymentTypeInfo {
                             try {
                                 $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
                                 Write-Log -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                Write-Host ("Detection method XML saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
+                                Write-Host ("`Detection method XML saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Cyan
                             }
                             catch {
                                 Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 2
                                 Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                            }
+
+                            # Attempt to extract the local detection methods from the XML. We will ignore any 'or' operators as these are not supported in Intune
+                            if (Test-Path -Path $detectionMethodFile) {
+                                $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
+                                Write-Log -Message 'Local Detection Methods extracted from XML' -LogId $LogId
+                                Write-Host "`nLocal Detection Methods extracted from XML" -ForegroundColor Cyan
+                                Write-Log -Message ("{0}" -f $localDetectionMethods) -LogId $LogId
+                                Write-Host ("{0}" -f $localDetectionMethods) -ForegroundColor Green
+                            }
+                            else {
+                                Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
+                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor red
                             }
                         }
                     }
@@ -218,7 +231,8 @@ function Get-DeploymentTypeInfo {
                             $detectionMethodFile) -LogId $LogId
 
                     # Output the deployment type object
-                    Write-Host "`n$deploymentObject`n" -ForegroundColor Green
+                    Write-Host "`nDeplopymentType Details extracted" -ForegroundColor Cyan
+                    Write-Host "$deploymentObject`n" -ForegroundColor Green
 
                     # Add the deployment type object to the array
                     $deploymentTypes += $deploymentObject          
