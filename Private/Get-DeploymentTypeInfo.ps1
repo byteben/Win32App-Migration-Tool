@@ -156,7 +156,7 @@ function Get-DeploymentTypeInfo {
                             }
                             else {
                                 
-                                # Join the lines back into a single string
+                                # No need to deal with encoding, just pass the script body to the final object for saving
                                 $finalScriptContent = $detectionTypeScriptBody
                             }
   
