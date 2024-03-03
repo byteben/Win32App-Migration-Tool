@@ -1,6 +1,6 @@
 # Win32App Migration Tool - Release Notes
 
-## 2.0.20 - BETA - 17/02/2024
+## 2.0.20 - BETA - 03/03/2024
 
 ✅ Export Detection Method to file in the working folder 'DetectionMethods' folder
 ✅ Export Detection Method supporting information to Details\DeploymentTypes.csv
@@ -11,6 +11,8 @@
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)
 ✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File
 ✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/17
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18
 
 ## 2.0.19 - BETA - 16/12/2023
 
