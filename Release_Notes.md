@@ -10,6 +10,7 @@
 ✅ New module Connect-Graph (in development)
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)
 ✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File
+✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected
 
 ## 2.0.19 - BETA - 16/12/2023
 

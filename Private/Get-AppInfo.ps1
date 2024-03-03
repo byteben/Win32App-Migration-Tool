@@ -32,6 +32,7 @@ function Get-AppInfo {
 
         # Create a counter
         $i = 0
+
     }
     process {
     
@@ -110,7 +111,7 @@ function Get-AppInfo {
                 Write-Warning -Message ("Could not get application information for '{0}'" -f $application.LocalizedDisplayName)
                 Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
             }
-            return $applicationTypes
         }
+        return $applicationTypes
     }
 }
