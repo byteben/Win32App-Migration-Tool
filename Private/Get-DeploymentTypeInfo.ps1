@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    17/02/2024
+Update on:    03/03/2024
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -29,6 +29,9 @@ function Get-DeploymentTypeInfo {
 
         # Characters that are not allowed in Windows folder names
         $invalidChars = '[<>:"/\\|\?\*]'
+
+        # Get UTF-8 encoding without BOM
+        $utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $false 
         
     }
     process {
@@ -107,6 +110,7 @@ function Get-DeploymentTypeInfo {
                     # Switch on the detection method and save to file
                     Switch ($object.Installer.DetectAction.Provider) {
 
+                        # If Detection Method is a 'Script'
                         'Script' {
                             $detectionTypeScriptBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptBody' }).InnerText
                             $detectionTypeScriptRunAs32Bit = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'RunAs32Bit' }).InnerText
@@ -132,42 +136,40 @@ function Get-DeploymentTypeInfo {
         
                             # Extract only the encoded base64 script from the script body
                             $pattern = '# ENCODEDSCRIPT # Begin Configuration Manager encoded script block #\s*(.*?)\s*# ENCODEDSCRIPT# End Configuration Manager encoded script block'
-                            $match = [regex]::Match($detectionTypeScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+                            $matchSigned = [regex]::Match($detectionTypeScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
         
-                            if ($match.Success) {
-                                $extractedContent = $match.Groups[1].Value
+                            if ($matchSigned.Success) {
+                                $extractedContent = $matchSigned.Groups[1].Value
 
                                 # Decode the Base64 string
                                 $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($extractedContent))
-                                 
-                                # We need to trim the script to honor digital signatures
-                                # Split the original string into lines
-                                $lines = $scriptContent -split "`r`n"
-
-                                # Remove the last line because the xml adds padding before the encoded string
-                                $lines = $lines[0..($lines.Count - 2)]
 
                                 # Join the lines back into a single string
-                                $finalScriptContent = $lines -join "`r`n"
-                                    
-                                # Write the detection method to a file
-                                $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
-                                    
-                                try {
-                                    $finalScriptContent | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
-                                    Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                    Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
-                                }
-                                catch {
-                                    Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 2
-                                    Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
-                                }
+                                $finalScriptContent = $scriptContent
                             }
                             else {
-                                Write-Log -Message ("Could not get ScriptBody encoded base64 value for deployment type '{0}'" -f $object.Title.InnerText) -LogId $LogId -Severity 2
-                                Write-Host ("Could not get ScriptBody encoded base64 value for deployment type '{0}'" -f $object.Title.InnerText) -ForegroundColor Yellow
+                                
+                                # Join the lines back into a single string
+                                $finalScriptContent = $detectionTypeScriptBody
+                            }
+  
+                            # Write the detection method to a file
+                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
+   
+                            try {
+
+                                # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead to write to file
+                                [System.IO.File]::WriteAllText($detectionMethodFile, $finalScriptContent, $utf8NoBomEncoding)
+                                Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
+                                Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
+                            }
+                            catch {
+                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
+                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Red
                             }
                         }
+
+                        # If Detection Method is File/Reg/MSICode
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
@@ -176,18 +178,19 @@ function Get-DeploymentTypeInfo {
                             $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
 
                             try {
-                                $detectionTypeMethodBody | Out-File -FilePath $detectionMethodFile -Force -Encoding UTF8
+                                # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
+                                [System.IO.File]::WriteAllText($detectionMethodFile, $detectionTypeMethodBody, $utf8NoBomEncoding)
                                 Write-Log -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
                                 Write-Host ("`Detection method XML saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Cyan
                             }
                             catch {
-                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 2
-                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Yellow
+                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
+                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Red
                             }
 
                             # Attempt to extract the local detection methods from the XML. We will ignore any 'or' operators as these are not supported in Intune
                             if (Test-Path -Path $detectionMethodFile) {
-                                $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
+                                $localDetectionMethods = Get-LocalDetectionMethods -LogId $LogId -XMLObject $detectionTypeMethodBody
                                 Write-Log -Message 'Local Detection Methods extracted from XML' -LogId $LogId
                                 Write-Host "`nLocal Detection Methods extracted from XML" -ForegroundColor Cyan
                                 Write-Log -Message ("{0}" -f $localDetectionMethods) -LogId $LogId
@@ -195,7 +198,7 @@ function Get-DeploymentTypeInfo {
                             }
                             else {
                                 Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor red
+                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor Red
                             }
                         }
                     }

@@ -9,6 +9,7 @@
 ✅ Fix a bug where an incorrect parameter was passed when testing the SMS Provider connection
 ✅ New module Connect-Graph (in development)
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)
+✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File
 
 ## 2.0.19 - BETA - 16/12/2023
 

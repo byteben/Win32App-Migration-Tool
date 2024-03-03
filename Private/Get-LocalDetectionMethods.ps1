@@ -73,6 +73,3 @@ function Get-DetectionMethod {
         return $settings
     }
 }
-# Extract the elements into a PowerShell object
-$detectionObject = Get-DetectionMethod -XmlObject $xmlObject
-$detectionObject
