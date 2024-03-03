@@ -144,8 +144,15 @@ function Get-DeploymentTypeInfo {
                                 # Decode the Base64 string
                                 $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($extractedContent))
 
+                                # We need to trim the script to honor digital signatures
+                                # Split the original string into lines
+                                $lines = $scriptContent -split "`n"
+
+                                # Remove the last line because the xml adds padding before the encoded string
+                                $lines = $lines[0..($lines.Count - 2)]
+
                                 # Join the lines back into a single string
-                                $finalScriptContent = $scriptContent
+                                $finalScriptContent = $lines -join "`n"
                             }
                             else {
                                 
