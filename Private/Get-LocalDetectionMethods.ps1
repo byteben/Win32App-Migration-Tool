@@ -34,7 +34,7 @@ function Get-DetectionMethod {
     process {
         # Create an empty array to store the settings
         $settings = @()
-        
+
         # Create a helper function to iterate through the XML nodes and find SettingReferences
         function Find-SettingReferences {
             param (

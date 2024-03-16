@@ -199,11 +199,22 @@ function Get-DeploymentTypeInfo {
 
                             # Attempt to extract the local detection methods from the XML. We will ignore any 'or' operators as these are not supported in Intune
                             if (Test-Path -Path $detectionMethodFile) {
-                                $localDetectionMethods = Get-LocalDetectionMethods -LogId $LogId -XMLObject $detectionTypeMethodBody
-                                Write-Log -Message 'Local Detection Methods extracted from XML' -LogId $LogId
-                                Write-Host "`nLocal Detection Methods extracted from XML" -ForegroundColor Cyan
-                                Write-Log -Message ("{0}" -f $localDetectionMethods) -LogId $LogId
-                                Write-Host ("{0}" -f $localDetectionMethods) -ForegroundColor Green
+                                $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
+                                
+                                if ($localDetectionMethods.Count -gt 0) {
+
+                                    Write-Log -Message 'Local Detection Methods extracted from XML' -LogId $LogId
+                                    Write-Host "`nLocal Detection Methods extracted from XML" -ForegroundColor Cyan
+
+                                    foreach ($method in $localDetectionMethods) {
+                                        Write-Log -Message ("{0}" -f $method) -LogId $LogId
+                                        Write-Host ("{0}" -f $method) -ForegroundColor Green
+                                    }
+                                }
+                                else {
+                                    Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
+                                    Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor Red
+                                }
                             }
                             else {
                                 Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
