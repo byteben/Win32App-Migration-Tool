@@ -2,24 +2,24 @@
 
 ## 2.0.20 - BETA - 03/03/2024
 
-✅ Export Detection Method to file in the working folder 'DetectionMethods' folder
-✅ Export Detection Method supporting information to Details\DeploymentTypes.csv
-✅ Fix an incorrectly passed parameter for Get-ScriptEnd in Get-DeploymentTypeInfo.ps1
-✅ Fix a bug where base64 icon data causes cmtrace to not parse the log line correctly. We now omit icondata from being logged
-✅ Fix a bug where an incorrect parameter was passed when testing the SMS Provider connection
-✅ New module Connect-Graph (in development)
-✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)
-✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File
-✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/17
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18
-✅ Updated Licence terms to MIT
-✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script
+✅ Export Detection Method to file in the working folder 'DetectionMethods' folder  
+✅ Export Detection Method supporting information to Details\DeploymentTypes.csv  
+✅ Fix an incorrectly passed parameter for Get-ScriptEnd in Get-DeploymentTypeInfo.ps1  
+✅ Fix a bug where base64 icon data causes cmtrace to not parse the log line correctly. We now omit icondata from being logged  
+✅ Fix a bug where an incorrect parameter was passed when testing the SMS Provider connection  
+✅ New module Connect-Graph (in development)  
+✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script (in development)  
+✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File  
+✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected  
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/17  
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18  
+✅ Updated Licence terms to MIT  
+✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script  
 
 ## 2.0.19 - BETA - 16/12/2023
 
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/11
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/12
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/11  
+✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/12  
 
 ## 2.0.18 - BETA - 25/11/2023
   
