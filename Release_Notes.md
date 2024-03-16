@@ -12,7 +12,7 @@
 ✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected  
 ✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/17  
 ✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18  
-✅ Updated Licence terms to GNU GENERAL PUBLIC LICENSE
+✅ Updated Licence terms to GNU GENERAL PUBLIC LICENSE  
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script  
 
 ## 2.0.19 - BETA - 16/12/2023
