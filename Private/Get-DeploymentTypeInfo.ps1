@@ -142,6 +142,8 @@ function Get-DeploymentTypeInfo {
                                 $extractedContent = $matchSigned.Groups[1].Value
 
                                 # Decode the Base64 string
+                                #$Encoding = [System.Text.Encoding]::GetEncoding('windows-1252')
+                                #$scriptContent = $Encoding.GetString([System.Convert]::FromBase64String($extractedContent))
                                 $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($extractedContent))
 
                                 # We need to trim the script to honor digital signatures

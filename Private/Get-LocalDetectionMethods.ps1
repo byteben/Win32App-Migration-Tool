@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/02/2024
-Update on:    17/02/2024
+Update on:    16/03/2024
 Created by:   Ben Whitmore
 Filename:     Get-LocalDetectionMethods.ps1
 
@@ -12,9 +12,10 @@ Function to get the local detection methods from the detection methods xml objec
 The component (script name) passed as LogID to the 'Write-Log' function. 
 This parameter is built from the line number of the call from the function up the
 
-.PARAMETER XMLContent
+.PARAMETER XMLObject
 The XML content object to extract the detection methods from
 #>
+
 function Get-DetectionMethod {
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
@@ -23,51 +24,97 @@ function Get-DetectionMethod {
         [object]$XMLObject
     )
     begin {
-
-        #  Load XML from a file or a variable
+        # Convert the XMLObject to an XML document
         [xml]$xmlDocument = $XMLObject
-        
+
+        # Create a namespace manager for the XML document
+        $namespaceManager = New-Object System.Xml.XmlNamespaceManager($xmlDocument.NameTable)
+        $namespaceManager.AddNamespace("def", "http://schemas.microsoft.com/SystemCenterConfigurationManager/2009/AppMgmtDigest")
     }
     process {
-
-        # Create an array to hold the settings objects
+        # Create an empty array to store the settings
         $settings = @()
+        
+        # Create a helper function to iterate through the XML nodes and find SettingReferences
+        function Find-SettingReferences {
+            param (
+                [System.Xml.XmlNode]$node,
+                [ref]$rules
+            )
 
-        # Extract SimpleSetting elements
-        $XmlDocument.EnhancedDetectionMethod.Settings.SimpleSetting | ForEach-Object {
-            $simpleSetting = @{
-                Type        = "SimpleSetting"
-                LogicalName = $_.LogicalName
-                DataType    = $_.DataType
-                Is64Bit     = $_.RegistryDiscoverySource.Is64Bit
-                Depth       = $_.RegistryDiscoverySource.Depth
-                Hive        = $_.RegistryDiscoverySource.Hive
-                Key         = $_.RegistryDiscoverySource.Key
-                ValueName   = $_.RegistryDiscoverySource.ValueName
+            # If the node is a SettingReference, add it to the rules
+            if ($node.Name -eq 'SettingReference') {
+                $logicalName = $node.SettingLogicalName
+                if ($logicalName) {
+                    if (-not $rules.Value.ContainsKey($logicalName)) {
+                        $rules.Value[$logicalName] = @()
+                    }
+                    $parentExpression = $node.ParentNode.ParentNode
+                    $ruleDetail = @{
+                        Operator         = $parentExpression.Operator
+                        ConstantValue    = $parentExpression.Operands.ConstantValue.Value
+                        ConstantDataType = $parentExpression.Operands.ConstantValue.DataType
+                    }
+                    $rules.Value[$logicalName] += $ruleDetail
+                }
             }
-            $settings += New-Object PSObject -Property $simpleSetting
+            # If the node is an Operands or Expression node, iterate through its child nodes to get SettingReferences
+            elseif ($node.Name -eq 'Operands' -or $node.Name -eq 'Expression') {
+                foreach ($childNode in $node.ChildNodes) {
+                    Find-SettingReferences -Node $childNode -Rules ([ref]$rules.Value)
+                }
+            }
         }
 
-        # Extract File elements
-        $XmlDocument.EnhancedDetectionMethod.Settings.File | ForEach-Object {
-            $file = @{
-                Type        = "File"
-                LogicalName = $_.LogicalName
-                Is64Bit     = $_.Is64Bit
-                Path        = $_.Path
-                Filter      = $_.Filter
-            }
-            $settings += New-Object PSObject -Property $file
-        }
+        # Pre-process rules to match settings
+        $rules = @{}
 
-        # Extract MSI elements
-        $XmlDocument.EnhancedDetectionMethod.Settings.MSI | ForEach-Object {
-            $msi = @{
-                Type        = "MSI"
-                LogicalName = $_.LogicalName
-                ProductCode = $_.ProductCode
+        # Find SettingReferences in the first level of the EnhancedDetectionMethod
+        $xmlDocument.EnhancedDetectionMethod.Rule.Expression.Operands.Expression | ForEach-Object {
+            Find-SettingReferences -Node $_ -Rules ([ref]$rules)
+        }
+        
+        # Create an array to store the settings
+        $settingsNodes = $xmlDocument.DocumentElement.SelectNodes("//def:Settings/*", $namespaceManager)
+        foreach ($node in $settingsNodes) {
+            $logicalName = $node.LogicalName
+
+            $setting = [PSCustomObject]@{
+                Type        = $node.LocalName
+                LogicalName = $logicalName
             }
-            $settings += New-Object PSObject -Property $msi
+            
+            # Populate specific properties based on the type of setting
+            switch ($node.LocalName) {
+                "SimpleSetting" {
+                    $setting | Add-Member -NotePropertyName "DataType" -NotePropertyValue $node.DataType
+                    $setting | Add-Member -NotePropertyName "Is64Bit" -NotePropertyValue $node.RegistryDiscoverySource.Is64Bit
+                    $setting | Add-Member -NotePropertyName "Depth" -NotePropertyValue $node.RegistryDiscoverySource.Depth
+                    $setting | Add-Member -NotePropertyName "Hive" -NotePropertyValue $node.RegistryDiscoverySource.Hive
+                    $setting | Add-Member -NotePropertyName "Key" -NotePropertyValue $node.RegistryDiscoverySource.Key
+                    $setting | Add-Member -NotePropertyName "ValueName" -NotePropertyValue $node.RegistryDiscoverySource.ValueName
+                }
+                "File" {
+                    $setting | Add-Member -NotePropertyName "Is64Bit" -NotePropertyValue $node.Is64Bit
+                    $setting | Add-Member -NotePropertyName "Path" -NotePropertyValue $node.Path
+                    $setting | Add-Member -NotePropertyName "Filter" -NotePropertyValue $node.Filter
+                }
+                "MSI" {
+                    $setting | Add-Member -NotePropertyName "ProductCode" -NotePropertyValue $node.ProductCode
+                }
+            }
+
+            # Dynamically add rules as additional properties
+            if ($rules.ContainsKey($logicalName)) {
+                foreach ($rule in $rules[$logicalName]) {
+                    $setting | Add-Member -NotePropertyName "Rules_Operator" -NotePropertyValue $rule.Operator
+                    $setting | Add-Member -NotePropertyName "Rules_ConstantValue" -NotePropertyValue $rule.ConstantValue
+                    $setting | Add-Member -NotePropertyName "Rules_ConstantDataType" -NotePropertyValue $rule.ConstantDataType
+                }
+            }
+            
+            # Add the setting to the settings array
+            $settings += $setting
         }
 
         return $settings
