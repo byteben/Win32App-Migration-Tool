@@ -74,7 +74,7 @@ function New-IntuneDetectionMethod {
                         return $processedObject
                     }
                     else {
-                        
+
                         # Return the object as is if it's not an array or a custom object
                         return $object  
                     }
@@ -98,7 +98,7 @@ function New-IntuneDetectionMethod {
                 [string]$detectionType,
                 [string]$detectionValue
             )
-
+            
             # Prepare 64bit check
             if ($is64Bit -eq 'true') {
                 $check32BitOn64System = [bool]$false
@@ -330,7 +330,7 @@ function New-IntuneDetectionMethod {
                                 $regPath = Join-Path -Path $setting.Hive -ChildPath $setting.Key -ErrorAction SilentlyContinue
 
                                 $jsonArray += Add-SimpleSetting `
-                                    -is64Bit $is64Bit `
+                                    -is64Bit $setting.is64Bit `
                                     -keyPath $regPath `
                                     -valueName $setting.ValueName `
                                     -operator $setting.Rules_Operator `
@@ -340,7 +340,7 @@ function New-IntuneDetectionMethod {
                             'File' {
 
                                 $jsonArray += Add-File `
-                                    -is64Bit $is64Bit `
+                                    -is64Bit $setting.is64Bit `
                                     -detectionType $setting.Rules_ConstantDataType `
                                     -detectionValue $setting.Rules_ConstantValue `
                                     -fileOrFolderName $setting.Filter `
