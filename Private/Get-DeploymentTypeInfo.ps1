@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    03/03/2024
+Update on:    23/03/2024
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -83,7 +83,7 @@ function Get-DeploymentTypeInfo {
                     $existingFiles = [System.IO.Directory]::GetFiles($detectionMethodsFolder)
                     
                     foreach ($file in $existingFiles) {
-                        Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId
+                        Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
                         [System.IO.File]::Delete($file) 
                     }
 
@@ -182,23 +182,25 @@ function Get-DeploymentTypeInfo {
                         'Local' {
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
-        
-                            # Write the detection method to file
-                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
+                            
+                            # Define the detection method Xml file path
+                            $detectionMethodXmlFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
+                        
+                            # Write the detection method to an Xml file
 
                             try {
                                 # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
-                                [System.IO.File]::WriteAllText($detectionMethodFile, $detectionTypeMethodBody, $utf8NoBomEncoding)
-                                Write-Log -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                Write-Host ("`Detection method XML saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Cyan
+                                [System.IO.File]::WriteAllText($detectionMethodXmlFile, $detectionTypeMethodBody, $utf8NoBomEncoding)
+                                Write-Log -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId
+                                Write-Host ("`Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -ForegroundColor Cyan
                             }
                             catch {
-                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Red
+                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
+                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodXmlFile) -ForegroundColor Red
                             }
 
                             # Attempt to extract the local detection methods from the XML. We will ignore any 'or' operators as these are not supported in Intune
-                            if (Test-Path -Path $detectionMethodFile) {
+                            if (Test-Path -Path $detectionMethodXmlFile) {
                                 $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
                                 
                                 if ($localDetectionMethods.Count -gt 0) {
@@ -210,15 +212,33 @@ function Get-DeploymentTypeInfo {
                                         Write-Log -Message ("{0}" -f $method) -LogId $LogId
                                         Write-Host ("{0}" -f $method) -ForegroundColor Green
                                     }
+                                    
+                                    # Export the detection method to a Json file
+                                    # Define the detection method Json file path
+                                    $detectionMethodJsonFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionMethod.json'
+
+                                    # Create a detection method json file
+                                    $detectionJson = New-IntuneDetectionMethod -LocalSettings $localDetectionMethods
+
+                                    try {
+                                        # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
+                                        [System.IO.File]::WriteAllText($detectionMethodJsonFile, $detectionJson, $utf8NoBomEncoding)
+                                        Write-Log -Message ("Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId
+                                        Write-Host ("`Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -ForegroundColor Cyan
+                                    }
+                                    catch {
+                                        Write-Log -Message ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -Severity 3
+                                        Write-Host ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -ForegroundColor Red
+                                    }
                                 }
                                 else {
-                                    Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                                    Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor Red
+                                    Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
+                                    Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -ForegroundColor Red
                                 }
                             }
                             else {
-                                Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodFile) -ForegroundColor Red
+                                Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
+                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -ForegroundColor Red
                             }
                         }
                     }
@@ -227,12 +247,13 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptRunAs32Bit -Value $detectionTypeScriptRunAs32Bit
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptType -Value $detectionTypeScriptType
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeExecutionContext -Value $detectionTypeExecutionContext
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodFile -Value $detectionMethodFile
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodXmlFile -Value $detectionMethodXmlFile
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodJsonFile -Value $detectionMethodJsonFile
 
                     Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', `
                     Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', `
                     UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}', DetectionTypeScriptRunAs32Bit = '{15}', `
-                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodFile = '{18}'" -f `
+                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodXmlFile = '{18}', DetectionMethodJsonFile = '{19}'" -f `
                             $ApplicationId, `
                             $xmlContent.AppMgmtDigest.Application.title.'#text', `
                             $xmlContent.AppMgmtDigest.Application.LogicalName, `
@@ -251,7 +272,8 @@ function Get-DeploymentTypeInfo {
                             $detectionTypeScriptRunAs32Bit, `
                             $detectionTypeScriptType, `
                             $detectionTypeExecutionContext, `
-                            $detectionMethodFile) -LogId $LogId
+                            $detectionMethodXmlFile, `
+                            $detectionMethodJsonFile) -LogId $LogId
 
                     # Output the deployment type object
                     Write-Host "`nDeplopymentType Details extracted" -ForegroundColor Cyan

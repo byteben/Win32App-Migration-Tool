@@ -31,17 +31,125 @@ function New-IntuneDetectionMethod {
     begin {
 
         # Helper functions to create the JSON objects
+        # Function to convert empty strings to $null in JSON
+        function ConvertTo-JsonWithEmptyStringsAsNulls {
+            param (
+                [Parameter(ValueFromPipeline = $true)]
+                [object]$inputObject,
+                [int]$depth = 2
+            )
+        
+            begin {
+                # Function to recursively process objects and arrays to convert empty strings to $null
+                function ProcessObject {
+                    param(
+                        $object
+                    )
+
+                    if ($object -is [array]) {
+                        $processedArray = @()
+
+                        # Recursively process each item in the array
+                        foreach ($item in $object) {
+                            $processedArray += ProcessObject -Object $item  
+                        }
+                        return $processedArray
+                    }
+                    elseif ($object -is [PSCustomObject]) {
+                        $processedObject = New-Object PSObject
+                        foreach ($prop in $object.PSObject.Properties) {
+                            $value = $prop.Value
+                            if ($value -is [string] -and $value -eq "") {
+
+                                # Convert empty strings to $null
+                                $value = $null  
+                            }
+                            elseif ($value -is [array] -or $value -is [PSCustomObject]) {
+
+                                # Recursively process nested objects or arrays
+                                $value = ProcessObject -object $value  
+                            }
+                            $processedObject | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $value
+                        }
+                        return $processedObject
+                    }
+                    else {
+                        
+                        # Return the object as is if it's not an array or a custom object
+                        return $object  
+                    }
+                }
+            }
+        
+            process {
+                $processedInput = ProcessObject -Object $inputObject
+                return $processedInput | ConvertTo-Json -Depth $Depth
+            }
+        }
+        
         # Registry detection method
         function Add-SimpleSetting {
             param(
-                [bool]$check32BitOn64System,
+                [string]$is64Bit,
                 [string]$keyPath,
                 [string]$valueName,
                 [string]$operator,
                 [string]$version,
+                [string]$detectionType,
                 [string]$detectionValue
-                
             )
+
+            # Prepare 64bit check
+            if ($is64Bit -eq 'true') {
+                $check32BitOn64System = [bool]$false
+            }
+            else {
+                $check32BitOn64System = [bool]$true
+            }
+
+            # Set the detection type
+            $detectionType = $detectionType.ToLower()
+
+            # Prepare operands for the Intune detection method
+            switch ($operator) {
+                'Equals' {
+                    $operator = 'equals'
+                }
+                'NotEquals' {
+                    $operator = 'notEquals'
+                }
+                'GreaterThan' {
+                    $operator = 'greaterThan'
+                }
+                'GreaterEquals' {
+                    $operator = 'greaterThanOrEqual'
+                }
+                'LessThan' {
+                    $operator = 'lessThan'
+                }
+                'LessEquals' {
+                    $operator = 'lessThanOrEqual'
+                }
+                'Match' {
+                    $operator = 'match'
+                }
+                'NotMatch' {
+                    $operator = 'notMatch'
+                }
+                'Contains' {
+                    $operator = 'contains'
+                }
+                'NotContains' {
+                    $operator = 'notContains'
+                }
+                'BeginsWith' {
+                    $operator = 'beginsWith'
+                }
+                'EndsWith' {
+                    $operator = 'endsWith'
+                }
+            }
+
             $object = [PSCustomObject]@{
                 '@odata.type'          = '#microsoft.graph.win32LobAppRegistryDetection'
                 'check32BitOn64System' = $check32BitOn64System
@@ -57,13 +165,72 @@ function New-IntuneDetectionMethod {
         # File or Folder detection method
         function Add-File {
             param(
-                [bool]$check32BitOn64System,
+                [string]$is64Bit,
                 [string]$detectionType,
                 [string]$detectionValue,
                 [string]$fileOrFolderName,
                 [string]$operator,
                 [string]$path
             )
+
+            # Prepare 64bit check
+            if ($is64Bit -eq 'true') {
+                $check32BitOn64System = [bool]$false
+            }
+            else {
+                $check32BitOn64System = [bool]$true
+            }
+
+            # Set the detection type
+            $detectionType = $detectionType.ToLower()
+
+            # Prepare operands for the Intune detection method
+            switch ($operator) {
+                'Equals' {
+                    $operator = 'equals'
+                }
+                'NotEquals' {
+                    $operator = 'notEquals'
+                }
+                'GreaterThan' {
+                    $operator = 'greaterThan'
+                }
+                'GreaterEquals' {
+                    $operator = 'greaterThanOrEqual'
+                }
+                'LessThan' {
+                    $operator = 'lessThan'
+                }
+                'LessEquals' {
+                    $operator = 'lessThanOrEqual'
+                }
+                'Match' {
+                    $operator = 'match'
+                }
+                'NotMatch' {
+                    $operator = 'notMatch'
+                }
+                'Contains' {
+                    $operator = 'contains'
+                }
+                'NotContains' {
+                    $operator = 'notContains'
+                }
+                'BeginsWith' {
+                    $operator = 'beginsWith'
+                }
+                'EndsWith' {
+                    $operator = 'endsWith'
+                }
+            }
+
+            # Check detection types
+            if ($operator -eq 'notEquals' -and $detectionValue -eq 0 -and $detectionType -eq 'int64') {
+                $operator = 'notConfigured'
+                $detectionType = 'exists'
+                $detectionValue = $null
+            }
+
             $object = [PSCustomObject]@{
                 '@odata.type'          = '#microsoft.graph.win32LobAppFileSystemDetection'
                 'check32BitOn64System' = $check32BitOn64System
@@ -84,6 +251,35 @@ function New-IntuneDetectionMethod {
                 [string]$productVersion,
                 [string]$productVersionOperator
             )
+
+            # Prepare operands for the Intune detection method
+            switch ($productVersionOperator) {
+                'Equals' {
+                    $productVersionOperator = 'equals'
+                }
+                'NotEquals' {
+                    $productVersionOperator = 'notEquals'
+                }
+                'GreaterThan' {
+                    $productVersionOperator = 'greaterThan'
+                }
+                'GreaterEquals' {
+                    $productVersionOperator = 'greaterThanOrEqual'
+                }
+                'LessThan' {
+                    $productVersionOperator = 'lessThan'
+                }
+                'LessEquals' {
+                    $productVersionOperator = 'lessThanOrEqual'
+                }
+            }
+
+            # Check if the product version is not configured
+            if ( -not $productVersion -and -not $productVersionOperator) {
+                $productVersion = $null
+                $productVersionOperator = 'notConfigured'
+            }
+
             $object = [PSCustomObject]@{
                 '@odata.type'            = '#microsoft.graph.win32LobAppProductCodeDetection'
                 'productCode'            = $productCode
@@ -133,48 +329,37 @@ function New-IntuneDetectionMethod {
                                 # Create the key path
                                 $regPath = Join-Path -Path $setting.Hive -ChildPath $setting.Key -ErrorAction SilentlyContinue
 
-                                # Create 64bit test
-                                if ($setting.Is64Bit -eq $true) {
-                                    $check32BitOn64System = [bool]$true
-                                }
-                                else {
-                                    $check32BitOn64System = [bool]$false
-                                }
-
-                                # Check detection type
-                                if ($setting.Rules_ConstantDataType -eq 'String') {
-                                    $detectionType = 'string'
-                                }
-                                elseif ($setting.Rules_ConstantDataType -like '*version') {
-                                    $detectionType = 'version'
-                                } 
-
                                 $jsonArray += Add-SimpleSetting `
-                                    -check32BitOn64System $check32BitOn64System `
+                                    -is64Bit $is64Bit `
                                     -keyPath $regPath `
                                     -valueName $setting.ValueName `
                                     -operator $setting.Rules_Operator `
-                                    -detectionType $detectionType `
-                                    -detectionValue $setting.Rules_ConstantValue `
-                            
+                                    -detectionType $setting.Rules_ConstantDataType `
+                                    -detectionValue $setting.Rules_ConstantValue
                             }
                             'File' {
-                                $jsonArray += Add-File -path $setting.Directory -fileName $setting.Name -is64Bit $setting.Is64Bit
+
+                                $jsonArray += Add-File `
+                                    -is64Bit $is64Bit `
+                                    -detectionType $setting.Rules_ConstantDataType `
+                                    -detectionValue $setting.Rules_ConstantValue `
+                                    -fileOrFolderName $setting.Filter `
+                                    -operator $setting.Rules_Operator `
+                                    -path $setting.Path
                             }
                             'MSI' {
-                                $jsonArray += Add-MSI -productCode $setting.ProductCode
+                                $jsonArray += Add-MSI `
+                                    -productCode $setting.ProductCode `
+                                    -ProductVersion $setting.Rules_ConstantValue `
+                                    -ProductVersionOperator $setting.Rules_Operator `
+                            
                             }
                         }
                     }
                 }
-
-                # $jsonArray += Add-SimpleSetting -keyPath "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Notepad++" -valueName "DisplayVersion" -operator "Equals" -detectionValue "8.4.9" -is64Bit $true
-                #$jsonArray += Add-File -path "C:\Windows" -fileName "Cheese.txt" -is64Bit $false
-                #$jsonArray += Add-File -path "C:\Windows" -fileName "Cheese2.txt" -is64Bit $false
-                #$jsonArray += Add-MSI -productCode "{00478901-CD97-4A20-8FF3-3276865A2B44}"
             
                 # Convert the array to JSON
-                $json = $jsonArray | ConvertTo-Json -Depth 10
+                $json = $jsonArray | ConvertTo-JsonWithEmptyStringsAsNulls -Depth 10
             
                 # Display or output the JSON
                 $json

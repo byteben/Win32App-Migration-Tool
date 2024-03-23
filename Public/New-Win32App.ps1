@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   13/01/2024
+Updated on:   23/03/2024
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -155,7 +155,7 @@ function New-Win32App {
     #region Create_Folders
     Write-Host "Creating additionl folders..." -ForegroundColor Cyan
     Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods','Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
-    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods','Details', 'Win32Apps')
+    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods', 'Details', 'Win32Apps')
     #endRegion
 
     #region Get_Content_Tool
@@ -318,10 +318,18 @@ function New-Win32App {
         Write-Log -Message "The 'ExportIcon' parameter passed" -LogId $LogId
 
         foreach ($applicationIcon in $app_Array) {
-            Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
-            Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
 
-            Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
+            if ([string]::IsNullOrWhiteSpace($applicationIcon.IconData)) {
+                Write-Log -Message ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -LogId $LogId -Severity 2
+                Write-Host ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -ForegroundColor Yellow
+            }
+            else {
+                Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
+                Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
+                
+                # Export the icon to disk
+                Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
+            }
         }
     }
     else {
