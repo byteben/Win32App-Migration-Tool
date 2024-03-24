@@ -32,59 +32,39 @@ function New-IntuneDetectionMethod {
 
         # Helper functions to create the JSON objects
         # Function to convert empty strings to $null in JSON
-        function ConvertTo-JsonWithEmptyStringsAsNulls {
+        function Convert-EmptyStringToNullInJson {
             param (
-                [Parameter(ValueFromPipeline = $true)]
-                [object]$inputObject,
-                [int]$depth = 2
+                [Parameter(Mandatory = $true)]
+                [string]$Json
             )
-        
-            begin {
-                # Function to recursively process objects and arrays to convert empty strings to $null
-                function ProcessObject {
-                    param(
-                        $object
-                    )
-
-                    if ($object -is [array]) {
-                        $processedArray = @()
-
-                        # Recursively process each item in the array
-                        foreach ($item in $object) {
-                            $processedArray += ProcessObject -Object $item  
-                        }
-                        return $processedArray
+            
+            # Convert the JSON to objects
+            $objects = $Json | ConvertFrom-Json
+            
+            function Update-Object {
+                param (
+                    $Object
+                )
+                
+                # Check key values for empty strings and convert to $null
+                foreach ($property in $Object.PSObject.Properties) {
+                    if ($property.Value -is [string] -and $property.Value -eq '') {
+                        $property.Value = $null
                     }
-                    elseif ($object -is [PSCustomObject]) {
-                        $processedObject = New-Object PSObject
-                        foreach ($prop in $object.PSObject.Properties) {
-                            $value = $prop.Value
-                            if ($value -is [string] -and $value -eq "") {
-
-                                # Convert empty strings to $null
-                                $value = $null  
-                            }
-                            elseif ($value -is [array] -or $value -is [PSCustomObject]) {
-
-                                # Recursively process nested objects or arrays
-                                $value = ProcessObject -object $value  
-                            }
-                            $processedObject | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $value
-                        }
-                        return $processedObject
-                    }
-                    else {
-
-                        # Return the object as is if it's not an array or a custom object
-                        return $object  
+                    elseif ($property.Value -is [PSCustomObject] -or $property.Value -is [array]) {
+                        Update-Object -Object $property.Value
                     }
                 }
             }
-        
-            process {
-                $processedInput = ProcessObject -Object $inputObject
-                return $processedInput | ConvertTo-Json -Depth $Depth
+            
+            # Process each object
+            foreach ($obj in $objects) {
+                Update-Object -Object $obj
             }
+            
+            # Return the new JSON
+            $newJson = $objects | ConvertTo-Json -Depth 5
+            return $newJson
         }
         
         # Registry detection method
@@ -351,18 +331,17 @@ function New-IntuneDetectionMethod {
                                 $jsonArray += Add-MSI `
                                     -productCode $setting.ProductCode `
                                     -ProductVersion $setting.Rules_ConstantValue `
-                                    -ProductVersionOperator $setting.Rules_Operator `
-                            
+                                    -ProductVersionOperator $setting.Rules_Operator
                             }
                         }
                     }
                 }
-            
+                
                 # Convert the array to JSON
-                $json = $jsonArray | ConvertTo-JsonWithEmptyStringsAsNulls -Depth 10
+                $json = $jsonArray | ConvertTo-Json -Depth 5
             
                 # Display or output the JSON
-                $json
+                Convert-EmptyStringToNullInJson -Json $json
             }
         }
         else {
