@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   21/10/2023
+Updated on:   24/04/2024
 Created by:   Ben Whitmore
 Filename:     Get-ScriptEnd.ps1
 
@@ -29,7 +30,7 @@ function Get-ScriptEnd {
         }
     } 
     end {
-        Set-Location -Path $ScriptRoot
+        Set-Location -Path $PSScriptRoot
         Write-Host ''
         Write-Log -Message "## The Win32AppMigrationTool Script has Finished ##" -LogId $LogId
         Write-Host '## The Win32AppMigrationTool Script has Finished ##'
