@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   12/11/2023
+Updated on:   23/03/2024
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -154,8 +154,8 @@ function New-Win32App {
 
     #region Create_Folders
     Write-Host "Creating additionl folders..." -ForegroundColor Cyan
-    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
-    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'Details', 'Win32Apps')
+    Write-Log -Message ("New-FolderToCreate -Root '{0}' -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods','Details', 'Win32Apps')" -f $workingFolder_Root) -LogId $LogId
+    New-FolderToCreate -Root $workingFolder_Root -FolderNames @('Icons', 'Content', 'ContentPrepTool', 'DetectionMethods', 'Details', 'Win32Apps')
     #endRegion
 
     #region Get_Content_Tool
@@ -305,7 +305,9 @@ function New-Win32App {
     Export-CsvDetails -Name 'DeploymentTypes' -Data $deploymentTypes_Array -Path $detailsFolder
 
     # Export content information to CSV for reference
-    Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
+    if ($DownloadContent) {
+        Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
+    }
     #endregion
 
     #region Exporting_Logos
@@ -316,10 +318,18 @@ function New-Win32App {
         Write-Log -Message "The 'ExportIcon' parameter passed" -LogId $LogId
 
         foreach ($applicationIcon in $app_Array) {
-            Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
-            Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
 
-            Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
+            if ([string]::IsNullOrWhiteSpace($applicationIcon.IconData)) {
+                Write-Log -Message ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -LogId $LogId -Severity 2
+                Write-Host ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -ForegroundColor Yellow
+            }
+            else {
+                Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
+                Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
+                
+                # Export the icon to disk
+                Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
+            }
         }
     }
     else {
@@ -349,10 +359,21 @@ function New-Win32App {
             
             # Build parameters to splat at the New-IntuneWin function
             $paramsToPassIntuneWin = @{}
-            $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Destination)
+
+            # If DownloadContent switch is not passed we will use content from the Configmgr source folder
+            if ($DownloadContent) {
+                $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Destination)
+            }
+            else {
+                $paramsToPassIntuneWin.Add('ContentFolder', $content.Install_Source)
+            }
+
             $paramsToPassIntuneWin.Add('OutputFolder', (Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination))
             $paramsToPassIntuneWin.Add('SetupFile', $content.Install_CommandLine)
-            if ($OverrideIntuneWin32FileName) { $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) }
+
+            if ($OverrideIntuneWin32FileName) { 
+                $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) 
+            }
 
             # Create the .intunewin file
             New-IntuneWin @paramsToPassIntuneWin

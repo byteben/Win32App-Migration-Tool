@@ -60,6 +60,9 @@ function New-IntuneWin {
         elseif ($SetupFile -match "\.bat") {
             $commandToUse = Get-InstallCommand -InstallTech '.bat' -SetupFile $SetupFile
         }
+        elseif ($SetupFile -match "\.js") {
+            $commandToUse = Get-InstallCommand -InstallTech '.js' -SetupFile $SetupFile
+        }
         else {
             # Handle the default case if none of the conditions match
             Write-Host "No matching extension found."
