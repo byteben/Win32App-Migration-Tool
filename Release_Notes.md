@@ -1,5 +1,9 @@
 # Win32App Migration Tool - Release Notes
 
+## 2.0.50 - BETA - 25/03/2024
+
+✅ New Branch for 2.0.50  
+
 ## 2.0.20 - BETA - 23/03/2024
 
 ✅ Export Detection Method to file in the working folder 'DetectionMethods' folder  
@@ -14,8 +18,8 @@
 ✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18  
 ✅ Updated Licence terms to GNU GENERAL PUBLIC LICENSE  
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script  
-✅ New module New-IntuneDetectionMethod to create json for detection methods
-✅ Fixed an issue where icon export was attempted even if the icon was not present
+✅ New module New-IntuneDetectionMethod to create json for detection methods  
+✅ Fixed an issue where icon export was attempted even if the icon was not present  
 
 ## 2.0.19 - BETA - 16/12/2023
 
