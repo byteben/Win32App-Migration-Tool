@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   11/11/2023
+Updated on:   28/03/2024
 Created by:   Ben Whitmore
 Filename:     New-IntuneWin.ps1
 
@@ -92,7 +93,7 @@ function New-IntuneWin {
         }
 
         # Check if the intunewin file was created
-        $fileToCheck = $commandToUse -replace '\..*', '.intunewin'
+        $fileToCheck = $commandToUse -replace '\.[^.]*$', '.intunewin'
 
         if (Test-Path -Path "$OutputFolder\$fileToCheck" ) {
             Write-Log -Message ("Successfully created intunewin file '{0}' at '{1}'" -f $fileToCheck, $OutputFolder) -LogId $LogId 
