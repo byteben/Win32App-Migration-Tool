@@ -1,9 +1,11 @@
 # Win32App Migration Tool - Release Notes
 
-## 2.0.50 - BETA - 25/03/2024
+## 2.0.50 - BETA - 03/04/2024
 
-✅ New Branch for 2.0.50
-✅ Fixed a regex bug  in New-IntuneWin.ps1 where the name of the .intunewin was not passed correctly if it contained multiple periods
+✅ New Branch for 2.0.50  
+✅ Fixed a regex bug  in New-IntuneWin.ps1 where the name of the .intunewin was not passed correctly if it contained multiple periods  
+✅ Renamed Connect-Graph module to Get-AuthToken. Using MSAL.PS so we can get the access token  
+✅ New Module Get-ClientCertificate to get the x509 blob from either the CurrentUser or LocalMachine for authentication  
 
 ## 2.0.20 - BETA - 23/03/2024
 
