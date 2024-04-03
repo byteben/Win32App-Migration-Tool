@@ -6,6 +6,7 @@
 ✅ Fixed a regex bug  in New-IntuneWin.ps1 where the name of the .intunewin was not passed correctly if it contained multiple periods  
 ✅ Renamed Connect-Graph module to Get-AuthToken. Using MSAL.PS so we can get the access token  
 ✅ New Module Get-ClientCertificate to get the x509 blob from either the CurrentUser or LocalMachine for authentication  
+✅ New Module Invoke-GraphRequest to make Graph API requests  
 
 ## 2.0.20 - BETA - 23/03/2024
 

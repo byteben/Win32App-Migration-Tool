@@ -3,7 +3,7 @@
 Created on:   22/01/2024
 Updated on:   24/03/2024
 Created by:   Ben Whitmore
-Credit To:    @NickolajA
+Credit:       @NickolajA
 Filename:     Get-AuthToken.ps1
 
 .Description

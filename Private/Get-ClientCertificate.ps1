@@ -18,7 +18,7 @@ function Get-ClientCertificate {
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'Thumbprint of the client certificate to get')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, HelpMessage = 'Thumbprint of the client certificate to get')]
         [string]$Thumbprint
     )
     
