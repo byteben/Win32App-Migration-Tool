@@ -75,8 +75,58 @@ function Invoke-GraphRequest {
             return $graphResult
         }
         catch [System.Exception] {
-            Write-Log -Message ("Error invoking Graph request. Error: '{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
-            Write-Error -Message ("Error invoking Graph request. Error: '{0}'" -f $_.Exception.Message)
+
+            # Capture current error
+            $ExceptionItem = $PSItem
+        
+            # Construct response error custom object for cross platform support
+            $ResponseBody = [PSCustomObject]@{
+                "ErrorMessage" = [string]::Empty
+                "ErrorCode"    = [string]::Empty
+            }
+        
+            # Read response error details differently depending PSVersion
+            switch ($PSVersionTable.PSVersion.Major) {
+                "5" {
+                    # Read the response stream
+                    $StreamReader = New-Object -TypeName "System.IO.StreamReader" -ArgumentList @($ExceptionItem.Exception.Response.GetResponseStream())
+                    $StreamReader.BaseStream.Position = 0
+                    $StreamReader.DiscardBufferedData()
+                    $ResponseReader = ($StreamReader.ReadToEnd() | ConvertFrom-Json)
+        
+                    # Set response error details
+                    $ResponseBody.ErrorMessage = $ResponseReader.error.message
+                    $ResponseBody.ErrorCode = $ResponseReader.error.code
+                }
+                default {
+                    $ErrorDetails = $ExceptionItem.ErrorDetails.Message | ConvertFrom-Json
+        
+                    # Set response error details
+                    $ResponseBody.ErrorMessage = $ErrorDetails.error.message
+                    $ResponseBody.ErrorCode = $ErrorDetails.error.code
+                }
+            }
+        
+            # Convert status code to integer for output
+            $HttpStatusCodeInteger = ([int][System.Net.HttpStatusCode]$ExceptionItem.Exception.Response.StatusCode)
+        
+            switch ($Method) {
+                "GET" {
+
+                    # Output warning message that the request failed with error message description from response stream
+                    Write-Log -Message ("Graph request failed with status code '{0}' '{1}'. Error details: '{2}' - '{3}'" -f $HttpStatusCodeInteger, $ExceptionItem.Exception.Response.StatusCode, $ResponseBody.ErrorCode, $ResponseBody.ErrorMessage) -LogId $LogId -Severity 3
+                    Write-Error -Message ("Graph request failed with status code '{0}' '{1}'. Error details: '{2}' - '{3}'" -f $HttpStatusCodeInteger, $ExceptionItem.Exception.Response.StatusCode, $ResponseBody.ErrorCode, $ResponseBody.ErrorMessage)
+                }
+                default {
+                    
+                    # Construct new custom error record
+                    $SystemException = New-Object -TypeName "System.Management.Automation.RuntimeException" -ArgumentList ("{0}: {1}" -f $ResponseBody.ErrorCode, $ResponseBody.ErrorMessage)
+                    $ErrorRecord = New-Object -TypeName "System.Management.Automation.ErrorRecord" -ArgumentList @($SystemException, $ErrorID, [System.Management.Automation.ErrorCategory]::NotImplemented, [string]::Empty)
+        
+                    # Throw a terminating custom error record
+                    $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+                }
+            }
         }
     }
 }
