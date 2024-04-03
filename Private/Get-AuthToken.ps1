@@ -29,7 +29,10 @@ Tenant Id or name to connect to. This parameter is mandatory for obtaining a tok
 Client Id (App Registration) to connect to. This parameter is mandatory for obtaining a token
 
 .PARAMETER ClientSecret
-Client Secret to connect to the app registration for when the intent is to use application authentication
+Client Secret for authentication
+
+.PARAMETER ClientCertificateThumbrint
+Client certificate thumbprint for authentication
 
 .PARAMETER RedirectUri
 RedirectUri to use for Client Id. If not specified, a default value is used based on the PowerShell version
@@ -56,8 +59,10 @@ function Get-AuthToken {
         [string]$TenantId,
         [Parameter(Mandatory = $true, ValuefromPipeline = $false, HelpMessage = 'Client Id (App Registration) to connect to')]
         [string]$ClientId,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Client secret for authentication')]
         [string]$ClientSecret,
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Client certificate thumbprint for authentication')]
+        [string]$ClientCertificateThumbprint,
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'If not specified, the default value is used for CurrentUser')]
         [string]$ModuleScope = 'CurrentUser',
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'RedirectUri to use for Client Id')]
@@ -158,9 +163,22 @@ function Get-AuthToken {
             'Scopes'      = $Scopes
         }
 
-        # Check if we are using device authentication
+        # Add autnehntication method to the token splat
         if ($PSBoundParameters.ContainsKey('ClientSecret')) {
             $tokenSplat.Add("ClientSecret", $(ConvertTo-SecureString $ClientSecret -AsPlainText -Force))
+        }
+        elseif ($PSBoundParameters.ContainsKey('ClientCertificateThumbprint')) {
+
+            # Get the client certificate from the certificate store
+            $ClientCertificate = Get-ClientCertificate -Thumbprint $ClientCertificateThumbprint
+            if (-not $ClientCertificate) {
+                Get-ScriptEnd -ErrorMessage ("Failed to get a client certificate with thumbprint: {0}" -f $ClientCertificateThumbprint) -LogId $LogId
+            }
+            else {
+                Write-Log -Message ("Successfully retrieved client certificate with thumbprint: {0}" -f $ClientCertificate.Thumbprint) -LogId $LogId
+                Write-Host ("Successfully retrieved client certificate with thumbprint: {0}" -f $ClientCertificate.Thumbprint) -ForegroundColor Green
+                $tokenSplat.Add("ClientCertificate", $ClientCertificate)
+            }
         }
         else {
             $tokenSplat.Add('DeviceCode', $true)
@@ -176,7 +194,12 @@ function Get-AuthToken {
             Write-Log -Message ("Attempting to connect. Token Splat: '{0}'" -f $tokenSplat ) -LogId $LogId
             Write-Host "Attempting to connect..." -ForegroundColor Cyan
             foreach ($key in $tokenSplat.Keys) {
-                Write-Host ("{0}: {1}" -f $key, $($tokenSplat[$key])) -ForegroundColor Cyan
+                if ($key -eq 'ClientCertificate') {
+                    Write-Host ("{0}: {1}" -f $key, $tokenSplat[$key].Subject) -ForegroundColor Cyan
+                }
+                else {
+                    Write-Host ("{0}: {1}" -f $key, $($tokenSplat[$key])) -ForegroundColor Cyan
+                }
             }
 
             $Global:token = Get-MsalToken @tokenSplat -Verbose
@@ -202,9 +225,7 @@ function Get-AuthToken {
                     "ExpiresOn"     = $token.ExpiresOn.UTCDateTime
                 }
                 Write-Log -Message 'Successfully created authentication header' -LogId $LogId
-                Write-Log -Message ("Authentication header expires on: {0}" -f $token.ExpiresOn) -LogId $LogId
-                Write-Host 'Successfully created authentication header' -ForegroundColor Green
-                Write-Host ("Authentication header expires on (UTC): {0}" -f $token.ExpiresOn.UtcDateTime) -ForegroundColor Green
+                Write-Host 'Successfully created authentication header' -ForegroundColor Green            
             }
             catch {
                 Write-Warning -Message ("'{0}'" -f $_.Exception.Message)
