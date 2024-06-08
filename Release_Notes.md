@@ -7,6 +7,8 @@
 ✅ Renamed Connect-Graph module to Get-AuthToken. Using MSAL.PS so we can get the access token  
 ✅ New Module Get-ClientCertificate to get the x509 blob from either the CurrentUser or LocalMachine for authentication  
 ✅ New Module Invoke-GraphRequest to make Graph API requests  
+✅ New Module New-FailedMigration to log failed migrations in a global array  
+✅ New Module Get-FailedMigration to check for failed migration reasons  
 
 ## 2.0.20 - BETA - 23/03/2024
 
