@@ -30,7 +30,15 @@ function Get-ScriptEnd {
         }
     } 
     end {
-        Set-Location -Path $PSScriptRoot
+        
+        if (Test-Path -Path $PSScriptRoot ) {
+            Set-Location -Path $PSScriptRoot
+        }
+        else {
+            Write-Log -Message "Failed to set location to $PSScriptRoot" -LogId $LogId -Severity 3
+            Write-Warning -Message "Failed to set location to $PSScriptRoot"
+        }
+
         Write-Host ''
         Write-Log -Message "## The Win32AppMigrationTool Script has Finished ##" -LogId $LogId
         Write-Host '## The Win32AppMigrationTool Script has Finished ##'

@@ -45,11 +45,11 @@ function Get-FailedMigrationEntry {
         [string]$Reason
     )
 
-    Begin {
+    begin {
         Write-Log -Message "Function: Get-FailedMigrationEntry was called" -LogId $LogId
     }
 
-    Process {
+    process {
         
         # Loop through the global array of failed migrations
         foreach ($failure in $global.failedMigrationArray) {

@@ -40,7 +40,7 @@ function Write-FailedMigrationEntry {
         [string]$Reason
     )
 
-    Begin {
+    begin {
         
         # Create a global array to store the failed migration entries
         if (-not $global:FailedMigrationArray) {
@@ -50,7 +50,7 @@ function Write-FailedMigrationEntry {
         Write-Log -Message "Function: Write-FailedMigrationEntry was called" -LogId $LogId
     }
 
-    Process {
+    process {
         $errorEntry = @{
             Application    = $Application
             DeploymentType = $DeploymentType

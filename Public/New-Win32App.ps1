@@ -53,6 +53,9 @@ URI for Win32 Content Prep Tool
 .PARAMETER OverrideIntuneWin32FileName
 Override intunewin filename. Default is the name calcualted from the install command line. You only need to pass the file name, not the extension
 
+.PARAMETER Win32AppNotes
+Notes field value to add to the Win32App JSON body
+
 .EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
@@ -79,13 +82,15 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 
 .EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application"
+
+.EXAMPLE
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -Win32AppNotes "Created by the Win32App Migration Tool"
+
 #>
 function New-Win32App {
 
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
-        [string]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
         [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
         [string]$SiteCode,
@@ -114,7 +119,11 @@ function New-Win32App {
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = 'URI for Win32 Content Prep Tool')]
         [string]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe',
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Override intunewin filename. Default is the name calcualted from the install command line')]
-        [string]$OverrideIntuneWin32FileName
+        [string]$OverrideIntuneWin32FileName,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = 'Notes field value to add to the Win32App JSON body')]
+        [string]$Win32AppNotes = "Created by the Win32App Migration Tool",
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
+        [string]$LogId = $($MyInvocation.MyCommand).Name
     )
 
     # Create global variable(s) 
@@ -384,6 +393,54 @@ function New-Win32App {
         Write-Host "The 'PackageApps' parameter was not passed. Intunewin files will not be created" -ForegroundColor Yellow
     }
     #endRegion
+
+    #region Create Intune Win32 app JSON body
+    if ($CreateApps -and $PackageApps) {
+
+        # If the $CreateApps parameter was passed. Start creating the Win32 apps in Intune
+        Write-Log -Message "The 'CreateApps' Parameter passed" -LogId $LogId
+        New-VerboseRegion -Message 'Creating Win32 app JSON body' -ForegroundColor 'Gray'
+
+        foreach ($app in $app_array) {
+        
+            foreach ($deploymentType in $deploymentTypes_Array | Where-Object { $_.Application_Logicalname -eq $app.LogicalName }){
+
+                foreach ($content in $content_Array | Where-Object { $_.DeploymentType_LogicalName -eq $deploymentType.LogicalName }) {
+
+                    Write-Log -Message ("Working on application '{0}'..." -f $app.Name) -LogId $LogId
+                    Write-Host ("`nWorking on application '{0}'..." -f $app.name) -ForegroundColor Cyan
+
+                    # Create the Win32app folder for the JSON files if it doesn't exist
+                    if (-not (Test-Path -Path "$workingFolder_Root\Win32Apps") ) {
+                        New-FolderToCreate -Root "$workingFolder_Root\Win32Apps" -FolderNames $content.Win32app_Destination
+                    }
+
+                    $PathforWin32AppBodyJSON = Join-Path -Path "$workingFolder_Root\Win32Apps" -ChildPath $content.Win32app_Destination
+
+                    # Create Win32 app body
+                    Write-Log -Message ("Creating Win32 app body for the deployment type '{0}' for app '{1}'" -f $deploymentType.Name, $deploymentType.ApplicationName) -LogId $LogId
+                    Write-Host ("Creating Win32 app body for the deployment type '{0}' for app '{1}'" -f $deploymentType.Name, $deploymentType.ApplicationName)  -ForegroundColor Cyan
+
+                    # Build parameters to splat at the New-IntuneWinFramework function
+                    $paramsToPassWin32App = @{}
+                    $paramsToPassWin32App.Add('Name', $app.Name)
+                    $paramsToPassWin32App.Add('Description', $app.Description)
+                    $paramsToPassWin32App.Add('Publisher', $app.Publisher)
+                    $paramsToPassWin32App.Add('InformationURL', $app.InfoURL)
+                    $paramsToPassWin32App.Add('PrivacyURL', $app.PrivacyURL)
+                    $paramsToPassWin32App.Add('Notes', $Win32AppNotes)
+                    $paramsToPassWin32App.Add('LargeIcon', $app.IconData)
+                    $paramsToPassWin32App.Add('Path', $PathforWin32AppBodyJSON)
+
+            
+                    # Create the JSON file
+                    New-IntuneWinFramework @paramsToPassWin32App
+                }
+            }
+        }
+    }
+
+    #endregion
 
     Get-ScriptEnd
 }

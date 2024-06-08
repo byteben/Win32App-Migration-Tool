@@ -30,7 +30,7 @@ The logical name of the deployment type to get content for
 The name of the deployment type to get content for
 
 .PARAMETER UninstallSetting
-Is uninstall content same as install or differet?
+Is uninstall content same as install or different?
 
 .PARAMETER InstallCommandLine
 Command line used to install the deployment type
@@ -51,7 +51,7 @@ function Get-ContentInfo {
         [string]$DeploymentTypeLogicalName,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The name of the deployment type to get content for')]
         [string]$DeploymentTypeName,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or differet?')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or different?')]
         [string]$UninstallSetting,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 7, HelpMessage = 'Command line used to install the deployment type')]
         [string]$InstallCommandLine

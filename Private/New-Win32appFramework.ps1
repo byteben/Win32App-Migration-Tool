@@ -35,9 +35,11 @@ The URL appears in the company portal
 .PARAMETER Notes
 Enter any notes that you want to associate with this app
 
-.PARAMETER Logo
-Upload an icon that's associated with the app. This icon is displayed with the app when 
-users browse through the company portal
+.PARAMETER LargeIcon
+The base64 value of the icon of the app
+
+.PARAMETER Path
+Path to the Win32apps folder
 
 #>
 function New-IntuneWinFramework {
@@ -54,22 +56,72 @@ function New-IntuneWinFramework {
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = "Enter the publisher name of the app")]
         [string]$Publisher,
     
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = "Enter the information URL of the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = "Enter the information URL of the app")]
         [string]$InformationURL,
     
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = "Enter the privacy URL of the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = "Enter the privacy URL of the app")]
         [string]$PrivacyURL,
     
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 9, HelpMessage = "Enter any notes associated with the app")]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = "Enter any notes associated with the app")]
         [string]$Notes,
     
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 10, HelpMessage = "Upload the logo of the app")]
-        [string]$Logo
-    )
-    begin {
-        Write-Log -Message "Function: New-Win32appFramework was called" -Log "Main.log"
-    }
-    process {
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = "The base64 value of the icon of the app")]
+        [string]$LargeIcon,
 
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = "Path to the Win32apps folder")]
+        [string]$Path
+    )
+
+    begin {
+
+        Write-Log -Message "Function: New-Win32appFramework was called" -LogId $LogId
+        Write-Log -Message ("Processing JSON body for '{0}'" -f $Name) -LogId $LogId
+        Write-Host ("Processing JSON body for '{0}'" -f $Name) -ForegroundColor Cyan
+    
+    }
+
+    process {
+            
+        $body = [ordered]@{
+            displayName           = $Name
+            description           = $Description
+            publisher             = $Publisher
+            informationUrl        = $InformationURL
+            privacyInformationUrl = $PrivacyURL
+            notes                 = $Notes
+            largeIcon                  = [ordered]@{
+                '@odata.type' = "#microsoft.graph.mimeContent"
+                type          = "image/png"
+                value         = $LargeIcon
+            }
+        } | ConvertTo-Json -Depth 5
+
+        # Remove existing JSON file from the Win32apps folder to avoid ambiguity on import
+        $existingFiles = [System.IO.Directory]::GetFiles($Path)
+        $fileNameToDelete = "Win32appBody.json"
+                    
+        foreach ($file in $existingFiles) {
+            if ([System.IO.Path]::GetFileName($file) -eq $fileNameToDelete) {
+
+                # Delete the existing file
+                Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
+                [System.IO.File]::Delete($file)        
+            }
+        }
+
+        # Write the JSON body to a file
+        $jsonFile = Join-Path -Path $Path -ChildPath "Win32appBody.json"
+        Write-Log -Message ("Writing JSON body to '{0}'" -f $jsonFile) -LogId $LogId
+        Write-Host ("Writing JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
+
+        try {
+            [System.IO.File]::WriteAllText($jsonFile, $body)
+            Write-Log -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId
+            Write-Host ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -ForegroundColor Green
+        }
+        catch {
+            Write-Log -Message ("Failed to write JSON body to '{0}'" -f $jsonFile) -LogId $LogId -Severity 3
+            Write-Host ("Failed to write JSON body to '{0}'" -f $jsonFile) -ForegroundColor Red
+        }
     }
 }

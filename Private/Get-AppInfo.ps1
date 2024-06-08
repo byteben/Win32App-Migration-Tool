@@ -70,7 +70,7 @@ function Get-AppInfo {
                 $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
                 $applicationObject | Add-Member NoteProperty -Name ReleaseDate -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate
                 $applicationObject | Add-Member NoteProperty -Name InfoUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl
-                $applicationObject | Add-Member NoteProperty -Name Tags -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag
+                $applicationObject | Add-Member NoteProperty -Name PrivacyUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.PrivacyUrl
                 $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
                 $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Resources.Icon.Id
 
