@@ -20,8 +20,8 @@
 ✅ New module Connect-Graph (in development)  
 ✅ Fixed an issue outputting Detection Method Scripts to file. We now use the .NET method which is much more reliable than Out-File  
 ✅ Fixed a bug where return $applicationTypes was not outside the ForEach loop and only returned a single application even if multiple were selected  
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/17  
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/18  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/17>  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/18>  
 ✅ Updated Licence terms to GNU GENERAL PUBLIC LICENSE  
 ✅ New module Get-LocalDetectionMethods to extract local detection methods (file/reg/msi) when detection is not a script  
 ✅ New module New-IntuneDetectionMethod to create json for detection methods  
@@ -29,14 +29,14 @@
 
 ## 2.0.19 - BETA - 16/12/2023
 
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/11  
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/12  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/11>  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/12>  
 
 ## 2.0.18 - BETA - 25/11/2023
   
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/7  
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/4  
-✅ Fixed https://github.com/byteben/Win32App-Migration-Tool/issues/13  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/7>  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/4>  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/13>  
 
 ## 2.0.17 - BETA - 12/11/2023
   
@@ -78,7 +78,7 @@
 ✅ Fixed a grammar issue when creating the Working Folders  
   
 ## 1.03.25.01 - BETA - 25/03/2021
- 
+
 ✅ Removed duplicate name in message for successful .intunewin creation  
 ✅ Added a new switch "-NoOGV" which will suppress the Out-Grid view. Thanks @philschwan  
 ✅ Fixed an issue where the -ResetLog parameter was not working  

@@ -119,7 +119,6 @@ function New-Win32App {
 
     # Create global variable(s) 
     $global:workingFolder_Root = $workingFolder
-    $global:FailedMigrationArray = @()
 
     #region Prepare_Workspace
     # Initialize folders to prepare workspace for logging
