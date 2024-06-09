@@ -30,13 +30,12 @@ function Get-ScriptEnd {
         }
     } 
     end {
-        
+
         if (Test-Path -Path $PSScriptRoot ) {
             Set-Location -Path $PSScriptRoot
         }
         else {
             Write-Log -Message "Failed to set location to $PSScriptRoot" -LogId $LogId -Severity 3
-            Write-Warning -Message "Failed to set location to $PSScriptRoot"
         }
 
         Write-Host ''

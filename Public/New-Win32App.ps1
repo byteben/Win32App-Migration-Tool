@@ -224,13 +224,13 @@ function New-Win32App {
 
             if (-not $global:authToken -and (-not $PSBoundParameters.ContainsKey('TenantId') -or -not $PSBoundParameters.ContainsKey('ClientId'))) {
                 Write-Log -Message "The 'CreateApps' parameter was passed. Please run Get-AuthToken to obtain an authentication token" -LogId $LogId
-                Write-Host "The 'CreateApps' parameter was passed. Please run Get-AuthToken to obtain an authentication token" -ForegroundColor Cyan
+                Write-Host "`nThe 'CreateApps' parameter was passed. Please run Get-AuthToken to obtain an authentication token" -ForegroundColor Cyan
                 break
             }
 
             if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
                 Write-Log -Message "The 'CreateApps' parameter was passed. Testing to see if we have a valid authentication token" -LogId $LogId
-                Write-Host "The 'CreateApps' parameter was passed. Testing to see if we have a valid authentication token" -ForegroundColor Cyan
+                Write-Host "`nThe 'CreateApps' parameter was passed. Testing to see if we have a valid authentication token" -ForegroundColor Cyan
 
                 Get-AuthToken -TenantId $TenantId -ClientId $ClientId
             }
@@ -467,14 +467,14 @@ function New-Win32App {
 
                         # Get the intunewin meta data
                         try {
-                            $setupFilePath = Get-ChildItem -Path $PathforWin32AppBodyJSON -Filter "*.intunewin" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+                            $intuneWinSetupFilePath = Get-ChildItem -Path $PathforWin32AppBodyJSON -Filter "*.intunewin" -Recurse | Select-Object -First 1 -ExpandProperty FullName
                             
-                            if ($setupFilePath) {
-                                Write-Log -Message ("Found the .intunewin file at '{0}'" -f $setupFilePath) -LogId $LogId
-                                Write-Host ("Found the .intunewin file at '{0}'" -f $setupFilePath) -ForegroundColor Cyan
+                            if ($intuneWinSetupFilePath) {
+                                Write-Log -Message ("Found the .intunewin file at '{0}'" -f $intuneWinSetupFilePath) -LogId $LogId
+                                Write-Host ("Found the .intunewin file at '{0}'" -f $intuneWinSetupFilePath) -ForegroundColor Cyan
 
                                 # Get the intunewin file information
-                                $intuneWinInfo = Get-IntuneWinInfo -SetupFile $setupFilePath
+                                $intuneWinInfo = Get-IntuneWinInfo -SetupFile $intuneWinSetupFilePath
                             }
                             else {
                                 Write-Log -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
@@ -553,9 +553,42 @@ function New-Win32App {
                         Write-Log -Message "Creating Win32 app in Intune" -LogId $LogId
                         Write-Host "Creating Win32 app in Intune" -ForegroundColor Cyan
             
-            
                         $response = Invoke-GraphRequest -Resource "deviceAppManagement/mobileApps" -Method Post -Body $newIntuneJson
-                        $response.id
+
+                        if ($response.id) {
+                            Write-Log -Message ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -LogId $LogId
+                            Write-Host ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -ForegroundColor Green
+
+                            # Create new content request for Win32app
+                            Write-Log -Message "Creating request for content version" -LogId $LogId
+                            Write-Host "Creating request for content version" -ForegroundColor Cyan
+                            $contentRequest = Invoke-GraphRequest -Resource ("deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions" -f $response.id) -Method Post -Body "{}"
+
+                            # Check content version request was successful
+                            if ($contentRequest.id) {
+                                Write-Log -Message ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. Content version requested is '{2}'" -f $app.Name, $deploymentType.Name, $contentRequest.id) -LogId $LogId
+                                Write-Host ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. Content version requested is '{2}'" -f $app.Name, $deploymentType.Name, $contentRequest.id) -ForegroundColor Green
+
+                                # Create the content request for the Win32 app
+                                # Get the encrypted size of the intunewin file
+                                $sizeEncrypted = (Get-Item -Path $intuneWinSetupFilePath).Length
+
+                                Write-Log -Message "Creating request for content" -LogId $LogId
+                                Write-Host "Creating request for content" -ForegroundColor Cyan
+                                $contentRequest = New-IntuneWinContentRequest -Win32AppId $response.id -ContentVersionNumber $contentRequest.id -Name intuneWinInfo.FileName -SizeUnencrypted $intuneWinInfo.UnencryptedContentSize -SizeEncrypted $sizeEncrypted
+
+                            }
+                            else {
+                                Write-Log -Message ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
+                                Write-Host ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
+                            
+                            }
+                        }
+                        else {
+                            Write-Log -Message ("Failed to create the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
+                            Write-Host ("Faield to create the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
+                        
+                        }
                     }
                     else {
                         Write-Log -Message ("Failed to create the JSON body for '{0}'" -f $app.Name) -LogId $LogId -Severity 3

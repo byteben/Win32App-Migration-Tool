@@ -67,11 +67,11 @@ function Get-IntuneWinInfo {
         # Add the required metadata to the array
         $intuneWinInfoArray['FileName'] = $xmlContent.ApplicationInfo.FileName
         $intuneWinInfoArray['SetupFile'] = $xmlContent.ApplicationInfo.SetupFile
+        $intuneWinInfoArray['UnencryptedContentSize'] = $xmlContent.ApplicationInfo.UnencryptedContentSize
 
         # Close the compressed content
         $compressedContent.Dispose()
 
         return $intuneWinInfoArray
-        write-host $intuneWinInfoArray
     }
 }

@@ -55,7 +55,7 @@ function Invoke-GraphRequest {
             # Build the Uri
             $graphUri = "$($GraphUrl)/$($Endpoint)/$($Resource)"
             Write-Log -Message ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -LogId $LogId
-            Write-Host ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -ForegroundColor Green
+            Write-Host ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -ForegroundColor Cyan
     
             # Call Graph API and get JSON response
             switch ($Method) {

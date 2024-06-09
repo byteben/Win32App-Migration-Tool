@@ -238,7 +238,7 @@ function New-IntuneWinFramework {
         # Write the JSON body to a file
         $jsonFile = Join-Path -Path $Path -ChildPath "Win32appBody.json"
         Write-Log -Message ("Writing JSON body to '{0}'" -f $jsonFile) -LogId $LogId
-        Write-Host ("Writing JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
+        Write-Host ("`nWriting JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
 
         try {
             [System.IO.File]::WriteAllText($jsonFile, $json)
