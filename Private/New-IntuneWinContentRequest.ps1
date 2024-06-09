@@ -68,7 +68,7 @@ function New-IntuneWinContentRequest {
         # Create the IntuneWinContentRequest Json
         $intuneWinContentRequest = [ordered]@{
             "@odata.type"   = "#microsoft.graph.mobileAppContentFile"               
-            "name"          = $FileName
+            "name"          = $Name
             "size"          = $SizeUnEncrypted
             "sizeEncrypted" = $SizeEncrypted
             "manifest"      = $Manifest

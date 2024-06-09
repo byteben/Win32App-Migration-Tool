@@ -575,7 +575,7 @@ function New-Win32App {
 
                                 Write-Log -Message "Creating request for content" -LogId $LogId
                                 Write-Host "Creating request for content" -ForegroundColor Cyan
-                                $contentRequest = New-IntuneWinContentRequest -Win32AppId $response.id -ContentVersionNumber $contentRequest.id -Name intuneWinInfo.FileName -SizeUnencrypted $intuneWinInfo.UnencryptedContentSize -SizeEncrypted $sizeEncrypted
+                                $contentRequest = New-IntuneWinContentRequest -Win32AppId $response.id -ContentVersionNumber $contentRequest.id -Name $intuneWinInfo.FileName -SizeUnencrypted $intuneWinInfo.UnencryptedContentSize -SizeEncrypted $sizeEncrypted
 
                             }
                             else {
