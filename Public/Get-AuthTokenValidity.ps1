@@ -38,7 +38,7 @@ function Get-AuthTokenValidity {
         $currentTime = [DateTime]::UtcNow
 
         Write-Log -Message ("The current token expires on: '{0}' (Utc)" -f $expiresOn) -LogId $LogId
-        Write-Host ("The current token expires on: '{0}' (Utc)" -f $expiresOn) -ForegroundColor Yellow
+        Write-Host ("The current token expires on: '{0}' (Utc)" -f $expiresOn) -ForegroundColor Green
     }
 
     process {
@@ -46,7 +46,7 @@ function Get-AuthTokenValidity {
         # Check if the token has expired
         if ($currentTime -gt $expiresOn) {
             Write-Log -Message "The token has expired. Need to renew token by using the Get-AuthToken module" -LogId $LogId -Severity 2
-            Write-Host "The token has expired. Need to renew token by using the Get-AuthToken module" -ForegroundColor Yellow
+            Write-Host "The token has expired. Need to renew token by using the Get-AuthToken module" -ForegroundColor Red
             return "Expired" | Out-Null
         }
         else {
@@ -55,14 +55,15 @@ function Get-AuthTokenValidity {
             $WarningThreshold = $CurrentTime.AddHours($WarningThresholdHours)
 
             if ($WarningThreshold -gt $ExpiresOn) {
-                Write-Log -Message ("The token is within '{0}' hour(s) of expiring." -f $WarningThresholdHours) -LogId $LogId
-                Write-Host ("The token is within '{0}' hour(s) of expiring." -f $WarningThresholdHours) -ForegroundColor Green
+                Write-Log -Message ("The token is within '{0}' hour(s) of expiring. Will renew" -f $WarningThresholdHours) -LogId $LogId
+                Write-Host ("The token is within '{0}' hour(s) of expiring. Wil renew" -f $WarningThresholdHours) -ForegroundColor Yellow
+                return "Expired" | Out-Null
             }
             else {
                 Write-Log -Message ("The token is valid and not within '{0}' hour(s) of expiring." -f $WarningThresholdHours) -LogId $LogId
                 Write-Host ("The token is valid and not within '{0}' hour(s) of expiring." -f $WarningThresholdHours) -ForegroundColor Green
+                return "Valid" | Out-Null
             }
-            return "Valid" | Out-Null
         }
     }
 }

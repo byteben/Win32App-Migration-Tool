@@ -204,6 +204,9 @@ function Get-AuthToken {
         # Check if we need to renew the token
         if ($PSBoundParameters["RefreshToken"] -or $RefreshToken) {
             $tokenSplat.Add("ForceRefresh", $true)
+
+            Write-Log -Message 'Forcing token refresh' -LogId $LogId
+            Write-Host 'Forcing token refresh' -ForegroundColor Cyan
         }
 
         # Attempt to obtain an access token

@@ -494,10 +494,13 @@ function New-Win32App {
 
                         # Build parameters to splat at the New-IntuneWinFramework function
 
+                        # Deal with empty values that are required
+                        $Description = if ($app.Description) { $app.Description } else { $app.Name }
+
                         # Body for the Win32 app
                         $paramsToPassWin32App = @{}
                         $paramsToPassWin32App.Add('Name', $app.Name)
-                        $paramsToPassWin32App.Add('Description', $app.Description)
+                        $paramsToPassWin32App.Add('Description', $Description)
                         $paramsToPassWin32App.Add('Publisher', $app.Publisher)
                         $paramsToPassWin32App.Add('InformationURL', $app.InfoURL)
                         $paramsToPassWin32App.Add('PrivacyURL', $app.PrivacyURL)
@@ -541,13 +544,28 @@ function New-Win32App {
                     }
 
                     # Create the JSON body file
-                    New-IntuneWinFramework @paramsToPassWin32App
+                    $newIntuneJson = New-IntuneWinFramework @paramsToPassWin32App
+                    
+                    if ($newIntuneJson) {
+                        New-VerboseRegion -Message 'Creating Win32 app in Intune' -ForegroundColor 'Gray'
             
-                }          
+                        # Create the Win32 app in Intune
+                        Write-Log -Message "Creating Win32 app in Intune" -LogId $LogId
+                        Write-Host "Creating Win32 app in Intune" -ForegroundColor Cyan
+            
+            
+                        $response = Invoke-GraphRequest -Resource "deviceAppManagement/mobileApps" -Method Post -Body $newIntuneJson
+                        $response.id
+                    }
+                    else {
+                        Write-Log -Message ("Failed to create the JSON body for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
+                        Write-Warning -Message ("Failed to create the JSON body for '{0}'" -f $app.Name)
+                    }          
+                }
             }
+
+            #endregion
+            Get-ScriptEnd
         }
-        
-        #endregion
-        Get-ScriptEnd
     }
 }

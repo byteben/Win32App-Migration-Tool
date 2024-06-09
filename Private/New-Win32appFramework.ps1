@@ -244,6 +244,8 @@ function New-IntuneWinFramework {
             [System.IO.File]::WriteAllText($jsonFile, $json)
             Write-Log -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId
             Write-Host ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -ForegroundColor Green
+
+            return $json
         }
         catch {
             Write-Log -Message ("Failed to write JSON body to '{0}'" -f $jsonFile) -LogId $LogId -Severity 3
