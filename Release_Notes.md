@@ -9,6 +9,9 @@
 ✅ New Module Invoke-GraphRequest to make Graph API requests  
 ✅ New Module New-FailedMigration to log failed migrations in a global array  
 ✅ New Module Get-FailedMigration to check for failed migration reasons  
+✅ New Module New-Win32AppFramework to create the body for requesting a Win32App  
+✅ New Module Get-NewIntuneWinContentRequest to create content for Win32app  
+✅ New Module Get-IntuneWinInfo to read metadata from an .intunewin file  
 
 ## 2.0.20 - BETA - 23/03/2024
 
