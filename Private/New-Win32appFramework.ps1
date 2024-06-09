@@ -41,35 +41,65 @@ The base64 value of the icon of the app
 .PARAMETER Path
 Path to the Win32apps folder
 
+.PARAMETER FileName
+The name of the Win32app filename value
+
+.PARAMETER InstallCommandLine
+The install command line for the app
+
+.PARAMETER UninstallCommandLine
+The uninstall command line for the app
+
+.PARAMETER DetectionMethodJson
+The JSON body for the detection method of the app
+
+.PARAMETER DetectionMethodScript
+The base64 value of the detection method script for the app
+
+.PARAMETER InstallExperience
+System or User
+
+.PARAMETER AllowAvailableUninstall
+When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal
+
 #>
 function New-IntuneWinFramework {
     param(
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the Write-Log function')]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = "Enter the unique app name as it appears in the company portal")]
         [string]$Name,
-    
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = "Enter the app description for the company portal")]
         [string]$Description,
-    
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = "Enter the publisher name of the app")]
         [string]$Publisher,
-    
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = "Enter the information URL of the app")]
         [string]$InformationURL,
-    
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = "Enter the privacy URL of the app")]
         [string]$PrivacyURL,
-    
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = "Enter any notes associated with the app")]
         [string]$Notes,
-    
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = "The base64 value of the icon of the app")]
         [string]$LargeIcon,
-
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = "Path to the Win32apps folder")]
-        [string]$Path
+        [string]$Path,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 9, HelpMessage = "The win32app filename value")]
+        [string]$FileName,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 10, HelpMessage = "The name of the setupfile")]
+        [string]$SetupFile,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 11, HelpMessage = "The install command line for the app")]
+        [string]$InstallCommandLine,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 12, HelpMessage = "The uninstall command line for the app")]
+        [string]$UninstallCommandLine,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = "The JSON body for the detection method of the app")]
+        [string]$DetectionMethodJson,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "The base64 value of the detection method script for the app")]
+        [string]$DetectionScript,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "System or User")]
+        [ValidateSet('System', 'User')]
+        [string]$InstallExperience,
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 14, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
+        [bool]$AllowAvailableUninstall
     )
 
     begin {
@@ -83,18 +113,114 @@ function New-IntuneWinFramework {
     process {
             
         $body = [ordered]@{
+            '@odata.type'         = "#microsoft.graph.win32LobApp"
             displayName           = $Name
             description           = $Description
             publisher             = $Publisher
             informationUrl        = $InformationURL
             privacyInformationUrl = $PrivacyURL
             notes                 = $Notes
-            largeIcon                  = [ordered]@{
+            largeIcon             = [ordered]@{
                 '@odata.type' = "#microsoft.graph.mimeContent"
                 type          = "image/png"
                 value         = $LargeIcon
             }
-        } | ConvertTo-Json -Depth 5
+            fileName              = $FileName
+            setupFilePath             = $SetupFile
+            installCommandLine    = $deploymentType.InstallCommandLine
+            uninstallCommandLine  = $deploymentType.UninstallCommandLine
+        }
+
+        # Detection method (rules) for the Win32 app
+        if ($PSBoundParameters.ContainsKey('DetectionMethodJson')) {
+
+            $jsonObject = $DetectionMethodJson | ConvertFrom-Json
+
+            # Transform the detection rules from the JSON object
+            $transformedRules = @()
+            
+            foreach ($rule in $jsonObject) {
+
+                # File system detection
+                if ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppFileSystemDetection") {
+
+                    $transformedRules += [ordered]@{
+                        '@odata.type'        = "microsoft.graph.win32LobAppFileSystemRule"
+                        ruleType             = 'detection'
+                        check32BitOn64System = $rule.check32BitOn64System
+                        operationType        = $rule.detectionType
+                        comparisonValue      = $rule.detectionVale
+                        fileOrFolderName     = $rule.fileOrFolderName
+                        operator             = $rule.operator
+                        path                 = $rule.path
+                    }
+                }
+
+                # Registry detection
+                elseif ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppRegistryDetection") {
+
+                    $transformedRules += [ordered]@{
+                        '@odata.type'        = "microsoft.graph.win32LobAppRegistryRule"
+                        ruleType             = 'detection'
+                        check32BitOn64System = $rule.check32BitOn64System
+                        operationType        = $rule.detectionType
+                        comparisonValue      = $rule.detectionValue
+                        keyPath              = $rule.keyPath
+                        operator             = $rule.operator
+                        valueName            = $rule.valueName
+                    }
+                }
+
+                # Product code detection
+                elseif ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppProductCodeRule") {
+
+                    $transformedRules += [ordered]@{
+                        '@odata.type'          = "#microsoft.graph.win32LobAppProductCodeRule"
+                        productCode            = $rule.productCode
+                        productVersion         = $rule.productVersion
+                        productVersionOperator = $rule.productVersionOperator
+                    }
+                }
+
+                elseif ($PSBoundParameters.ContainsKey('DetectionScript')) {
+                    $body['rules'] = [ordered]@{
+                        '@odata.type' = "#microsoft.graph.win32LobAppDetection"
+                        ruleType      = "script"
+                        scriptContent = $DetectionMethodScript
+                    }
+                }
+            }
+
+            $body['rules'] = $transformedRules
+        }
+
+        # Detection method (script) for the Win32 app
+        if ($PSBoundParameters.ContainsKey('DetectionScript')) {
+            $body['rules'] = [ordered]@{
+                '@odata.type'  = "#microsoft.graph.win32LobAppDetection"
+                detectionType  = "script"
+                detectionValue = $DetectionMethodScript
+            }
+        }
+
+        # Install experience
+        $body['installExperience'] = @{
+            "@odata.type" = "microsoft.graph.win32LobAppInstallExperience"
+            runAsAccount  = $InstallExperience
+        }
+
+        $json = $body | ConvertTo-Json -Depth 5
+
+        # Write-Host Json file but exclude largeIcon value
+        $jsonObject = $json | ConvertFrom-Json 
+
+        if ($jsonObject.PSObject.Properties["largeIcon"]) {
+            $jsonObject.largeIcon = "Base64IcondDataPresentButOmittedDuetoSize"
+            $jsonOutput = $jsonObject | ConvertTo-Json -Depth 5 -Compress
+        }
+
+        Write-Log -Message ("'{0}'" -f $jsonOutput) -LogId $LogId
+        Write-Host $jsonOutput -ForegroundColor Green
 
         # Remove existing JSON file from the Win32apps folder to avoid ambiguity on import
         $existingFiles = [System.IO.Directory]::GetFiles($Path)
@@ -108,14 +234,14 @@ function New-IntuneWinFramework {
                 [System.IO.File]::Delete($file)        
             }
         }
-
+            
         # Write the JSON body to a file
         $jsonFile = Join-Path -Path $Path -ChildPath "Win32appBody.json"
         Write-Log -Message ("Writing JSON body to '{0}'" -f $jsonFile) -LogId $LogId
         Write-Host ("Writing JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
 
         try {
-            [System.IO.File]::WriteAllText($jsonFile, $body)
+            [System.IO.File]::WriteAllText($jsonFile, $json)
             Write-Log -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId
             Write-Host ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -ForegroundColor Green
         }

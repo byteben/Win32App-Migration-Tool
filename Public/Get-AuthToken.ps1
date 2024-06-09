@@ -142,6 +142,17 @@ function Get-AuthToken {
 
     process {
 
+        # Check if the current token is valid or near expiry
+        if ($global:token) {
+            $testToken = Get-AuthTokenValidity -Token $global:token
+
+            if ($testToken -eq 'Expired') {
+
+                # Token is expired, renew the token
+                $RefreshToken = $true
+            }
+        }
+
         # Check if the redirect URI is specified, if not set it depending on the PowerShell version
         Write-Log -Message ("PowerShell version is '{0}'" -f $PSVersionTable.PSVersion) -LogId $LogId
         Write-Host ("PowerShell version is '{0}'" -f $PSVersionTable.PSVersion) -ForegroundColor Cyan
@@ -181,11 +192,17 @@ function Get-AuthToken {
             }
         }
         else {
-            $tokenSplat.Add('DeviceCode', $true)
+
+            # If no authentication method is specified, use interactive authentication
+            if ($PSBoundParameters.ContainsKey('UseDeviceAuthentication')) {
+            
+                # Add DeviceCode to the token splat
+                $tokenSplat.Add('DeviceCode', $true)
+            }
         }
 
         # Check if we need to renew the token
-        if ($PSBoundParameters["RefreshToken"]) {
+        if ($PSBoundParameters["RefreshToken"] -or $RefreshToken) {
             $tokenSplat.Add("ForceRefresh", $true)
         }
 
@@ -202,7 +219,7 @@ function Get-AuthToken {
                 }
             }
 
-            $Global:token = Get-MsalToken @tokenSplat -Verbose
+            $global:token = Get-MsalToken @tokenSplat
         }
         catch {
             Write-Warning -Message ("'{0}'" -f $_.Exception.Message)
@@ -219,7 +236,7 @@ function Get-AuthToken {
 
             # Create the authentication header
             try {
-                $Global:authHeader = @{
+                $global:authHeader = @{
                     "Content-Type"  = "application/json"
                     "Authorization" = $token.CreateAuthorizationHeader()
                     "ExpiresOn"     = $token.ExpiresOn.UTCDateTime
