@@ -51,7 +51,7 @@ function Get-DeploymentTypeInfo {
             Write-Log -Message ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -LogId $LogId
             Write-Host ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -ForegroundColor Cyan
 
-            if ($totalDeploymentTypes -ge 0) {
+            if ($totalDeploymentTypes -gt 0) {
 
                 # If there are deployment types, iterate through each deployment type and collect the details
                 foreach ($object in $xmlContent.AppMgmtDigest.DeploymentType) {
