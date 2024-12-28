@@ -8,7 +8,7 @@ Filename:     New-Win32App.ps1
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
 
 .Description
-**Version 2.0.12 BETA**  
+**Version 2.0.50 BETA**  
 
 .PARAMETER LogId
 The component (script name) passed as LogID to the 'Write-Log' function.
@@ -218,21 +218,21 @@ function New-Win32App {
         }
         #endRegion
 
-        #region Get_Auth_Token
-        # Get a token if the CreateApps parameter is passed
+        #region Connect_MgGraphCustom
+        # Connect to Microsoft Graph if the CreateApps parameter is passed
         if ($PSBoundParameters.ContainsKey('CreateApps')) {
 
-            if (-not $global:authToken -and (-not $PSBoundParameters.ContainsKey('TenantId') -or -not $PSBoundParameters.ContainsKey('ClientId'))) {
-                Write-Log -Message "The 'CreateApps' parameter was passed. Please run Get-AuthToken to obtain an authentication token" -LogId $LogId
-                Write-Host "`nThe 'CreateApps' parameter was passed. Please run Get-AuthToken to obtain an authentication token" -ForegroundColor Cyan
+            if (-not (Test-MgConnection -LogId $LogId -RequiredScopes 'https://graph.microsoft.com/.default')) {
+                Write-Log -Message "The 'CreateApps' parameter was passed. Please run Connect-MgGraphCustom to connect to Microsoft Graph" -LogId $LogId
+                Write-Host "`nThe 'CreateApps' parameter was passed. Please run Connect-MgGraphCustom to connect to Microsoft Graph" -ForegroundColor Cyan
                 break
             }
 
             if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
-                Write-Log -Message "The 'CreateApps' parameter was passed. Testing to see if we have a valid authentication token" -LogId $LogId
-                Write-Host "`nThe 'CreateApps' parameter was passed. Testing to see if we have a valid authentication token" -ForegroundColor Cyan
+                Write-Log -Message "The 'CreateApps' parameter was passed. Testing to see if we have a valid connection to the Microsoft Graph" -LogId $LogId
+                Write-Host "`nThe 'CreateApps' parameter was passed. Testing to see if we have a valid connection to the Microsoft Graph" -ForegroundColor Cyan
 
-                Get-AuthToken -TenantId $TenantId -ClientId $ClientId
+                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId
             }
         }
         #endregion

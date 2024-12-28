@@ -60,16 +60,16 @@ function Invoke-GraphRequest {
             # Call Graph API and get JSON response
             switch ($Method) {
                 "GET" {
-                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $Global:authHeader -Method $Method -ErrorAction Stop
+                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $global:authHeader -Method $Method -ErrorAction Stop
                 }
                 "POST" {
-                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $Global:authHeader -Method $Method -Body $Body -ContentType $ContentType -ErrorAction Stop
+                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $global:authHeader -Method $Method -Body $Body -ContentType $ContentType -ErrorAction Stop
                 }
                 "PATCH" {
-                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $Global:authHeader -Method $Method -Body $Body -ContentType $ContentType -ErrorAction Stop
+                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $global:authHeader -Method $Method -Body $Body -ContentType $ContentType -ErrorAction Stop
                 }
                 "DELETE" {
-                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $Global:authHeader -Method $Method -ErrorAction Stop
+                    $graphResult = Invoke-RestMethod -Uri $GraphUri -Headers $global:authHeader -Method $Method -ErrorAction Stop
                 }
             }
             return $graphResult
