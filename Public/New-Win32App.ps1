@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   23/03/2024
+Updated on:   28/12/2024
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -47,6 +47,9 @@ Pass this parameter to exclude apps created by PMPC from the results. Filter is 
 .PARAMETER ExcludeFilter
 Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"
 
+.PARAMETER NoOgv
+When passed, the Out-Gridview is suppressed
+
 .PARAMETER Win32ContentPrepToolUri
 URI for Win32 Content Prep Tool
 
@@ -61,6 +64,15 @@ When creating the Win32App, allow the user to uninstall the app if it is availab
 
 .PARAMETER TenantId
 Tenant Id or name to connect to. This parameter is mandatory for obtaining a token
+
+.PARAMETER ClientSecret
+Client Secret for the App Registration. This parameter is mandatory for obtaining a token
+
+.PARAMETER CertificateThumbprint
+Client certificate thumbprint for authentication. This parameter is mandatory for obtaining a token
+
+.PARAMETER UseDeviceAuthentication
+Use device authentication instead of user authentication. This parameter is mandatory if you want to use device authentication.
 
 .PARAMETER ClientId
 Client Id (App Registration) to connect to. This parameter is mandatory for obtaining a token
@@ -78,22 +90,22 @@ New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*"
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application"
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -Win32AppNotes "Created by the Win32App Migration Tool"
+New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -Win32AppNotes "Created by the Win32App Migration Tool" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 #>
 function New-Win32App {
@@ -131,12 +143,33 @@ function New-Win32App {
         [string]$Win32AppNotes = "Created by the Win32App Migration Tool",
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 8, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
         [bool]$AllowAvailableUninstall = $true,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, ParameterSetName = 'CreateAppsSet', HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
-        [Switch]$CreateApps,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, ParameterSetName = 'CreateAppsSet', Position = 9, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $false, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
+        [switch]$CreateApps,
+
+        # Shared Parameters for Graph Authentication
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Tenant Id or name to connect to')]
         [string]$TenantId,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, ParameterSetName = 'CreateAppsSet', Position = 10, HelpMessage = 'Client Id (App Registration) to connect to')]
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Client Id (App Registration) to connect to')]
         [string]$ClientId,
+
+        # AuthN and AuthZ Parameters
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client secret for authentication')]
+        [string]$ClientSecret,
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client certificate thumbprint for authentication')]
+        [string]$ClientCertificateThumbprint,
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Use device authentication for Microsoft Graph API')]
+        [switch]$UseDeviceAuthentication,
+        [Parameter(Mandatory = $false, HelpMessage = 'The scopes required for Microsoft Graph API access')]
+        [string[]]$RequiredScopes = ('DeviceManagementApps.ReadWrite.All'),
+    
+        # Additional Parameters
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name
         
@@ -158,6 +191,7 @@ function New-Win32App {
 
         # Create global variable(s) 
         $global:workingFolder_Root = $workingFolder
+        $global:scopes = $RequiredScopes
 
         #region Prepare_Workspace
         # Initialize folders to prepare workspace for logging
@@ -219,20 +253,60 @@ function New-Win32App {
         #endRegion
 
         #region Connect_MgGraphCustom
-        # Connect to Microsoft Graph if the CreateApps parameter is passed
-        if ($PSBoundParameters.ContainsKey('CreateApps')) {
-
-            if (-not (Test-MgConnection -LogId $LogId -RequiredScopes 'https://graph.microsoft.com/.default')) {
-                Write-Log -Message "The 'CreateApps' parameter was passed. Please run Connect-MgGraphCustom to connect to Microsoft Graph" -LogId $LogId
-                Write-Host "`nThe 'CreateApps' parameter was passed. Please run Connect-MgGraphCustom to connect to Microsoft Graph" -ForegroundColor Cyan
-                break
-            }
-
+        # Connect to Microsoft Graph based on the parameter set being used
+        if ($CreateApps) {
             if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
-                Write-Log -Message "The 'CreateApps' parameter was passed. Testing to see if we have a valid connection to the Microsoft Graph" -LogId $LogId
-                Write-Host "`nThe 'CreateApps' parameter was passed. Testing to see if we have a valid connection to the Microsoft Graph" -ForegroundColor Cyan
+                Write-Log -Message ("Testing connection to Microsoft Graph using {0}" -f $PSCmdlet.ParameterSetName) -LogId $LogId
+                Write-Host ("`nTesting connection to Microsoft Graph using {0}" -f $PSCmdlet.ParameterSetName) -ForegroundColor Cyan
 
-                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId
+                if (-not (Test-MgConnection -LogId $LogId -RequiredScopes $RequiredScopes -TestScopes)) {
+                    
+                    Write-Log -Message "No active Microsoft Graph connection found. Attempting to connect..." -LogId $LogId
+                    Write-Host "No active Microsoft Graph connection found. Attempting to connect..." -ForegroundColor Cyan
+
+                    # Attempt connection using available parameters
+                    try {
+
+                        # Create scopes string for logging
+                        $scopesString = "($($RequiredScopes -join ', '))"
+
+                        switch ($PSCmdlet.ParameterSetName) {
+                            'ClientSecret' {
+                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientSecret '{2}' -RequiredScopes {3}" -f $TenantId, $ClientId, 'ClientSecretObfuscated', $scopesString) -LogId $LogId
+                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientSecret '{2}'" -f $TenantId, $ClientId, 'ClientSecretObfuscated') -ForegroundColor Cyan
+                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -ClientSecret $ClientSecret
+                            }
+                            'ClientCertificateThumbprint' {
+                                
+                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientCertificateThumbprint '{2}' -RequiredScopes {3}" -f $TenantId, $ClientId, $ClientCertificate, $scopesString) -LogId $LogId
+                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientCertificateThumbprint '{2}'" -f $TenantId, $ClientId, $ClientCertificate) -ForegroundColor Cyan
+                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -ClientCertificateThumbprint $ClientCertificate
+                            }
+                            'UseDeviceAuthentication' {
+                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
+                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -ForegroundColor Cyan
+                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -UseDeviceAuthentication $true -RequiredScopes $RequiredScopes
+                            }
+                            'Interactive' {
+                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
+                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -ForegroundColor Cyan
+                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -RequiredScopes $RequiredScopes
+                            }
+                            default {
+                                Write-Log -Message ("Unknown authentication method: {0}" -f $AuthenticationMethod) -LogId $LogId -Severity 3
+                                Write-Warning ("Unknown authentication method: {0}" -f $AuthenticationMethod)
+                                break
+                            }
+                        }
+                        
+                        if (-not (Test-MgConnection -LogId $LogId -RequiredScopes $RequiredScopes -TestScopes)) {
+                            Get-ScriptEnd -ErrorMessage "Failed to connect to Microsoft Graph." -LogId $LogId
+                        }
+                    }
+                    catch {
+                        Get-ScriptEnd -ErrorMessage $_.Exception.Message -LogId $LogId
+                    }
+                }
             }
         }
         #endregion

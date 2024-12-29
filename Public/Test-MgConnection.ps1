@@ -19,8 +19,24 @@ function Test-MgConnection {
         [Parameter(Mandatory = $false)]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $false)]
-        [string[]]$RequiredScopes = @('https://graph.microsoft.com/.default')
+        [string[]]$RequiredScopes,
+        [switch]$TestScopes
     )
+
+    # If we don't have required scopes, set the default required scopes to create Win32 apps. This assumes the Connect-MgGraphCustom function is used outside of the New-Win32App function
+    if (-not $RequiredScopes -and -not $TestScopes) {
+        if (Test-Path variable:\global:scopes) {
+            $RequiredScopes = $global:scopes
+            Write-Log -Message ("Required Scopes are defined already in global variable. Using existing required scopes: {0}" -f $RequiredScopes) -LogId $LogId
+            Write-Host ("Required Scopes are defined already in global variable: {0}" -f $RequiredScopes) -ForegroundColor Green
+        }
+        elseif (-not $TestScopes) {
+            $global:scopes = @('DeviceManagementApps.ReadWrite.All')
+            $RequiredScopes = $global:scopes
+            Write-Log -Message ("Required Scopes are not defined yet. Using default required scopes to create Win32 apps: {0}" -f $RequiredScopes) -LogId $LogId
+            Write-Host ("Required Scopes are not defined yet. Using default required scopes to create Win32 apps: {0}" -f $RequiredScopes) -ForegroundColor Green
+        }
+    }
 
     try {
         # Check if we have an active connection
@@ -38,8 +54,19 @@ function Test-MgConnection {
             return $false
         }
 
+        # Check if the required scopes are in the scopes of the active connection
+        $scopes = $context.Scopes
+        $missingScopes = $RequiredScopes | Where-Object { $scopes -notcontains $_ }
+        if ($missingScopes) {
+            Write-Log -Message "Missing required scopes: $($missingScopes -join ', ')" -LogId $LogId
+            return $false
+        }
+
         # Connection is valid with required scopes
-        Write-Log -Message "Valid Microsoft Graph connection with required scopes" -LogId $LogId
+        if ($TestScopes) {
+            Write-Log -Message ("Valid Microsoft Graph connection with required scopes: {0}" -f $RequiredScopes) -LogId $LogId
+            Write-Host ("Valid Microsoft Graph connection with required scopes: {0}" -f $RequiredScopes) -ForegroundColor Green
+        }
         return $true
     }
     catch {

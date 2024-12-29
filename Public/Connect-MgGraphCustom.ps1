@@ -11,7 +11,7 @@ Function to connect to Microsoft Graph using various authentication methods
 The component (script name) passed as LogID to the 'Write-Log' function
 
 .PARAMETER ModuleName
-Module Name to use to connect to Graph. Default is Microsoft.Graph
+Module Name to use to connect to Graph. Default is Microsoft.Graph.Authentication
 
 .PARAMETER PackageProvider
 Package Provider. If not specified, the default value NuGet is used
@@ -38,32 +38,50 @@ The scopes to request from the Microsoft Graph API. If not specified, the defaul
 This parameter will be used to determine if the device authentication flow should be used. If not specified, the default value is used for $false
 #>
 function Connect-MgGraphCustom {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Interactive')]
     param (
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the "Write-Log" function')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the "Write-Log" function')]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Module Name to connect to Graph')]
-        [object]$ModuleName = ('Microsoft.Graph'),
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'If not specified, the default value NuGet is used for PackageProvider')]
+
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'Module Name to connect to Graph. Default is Microsoft.Graph.Authentication')]
+        [object]$ModuleName = ('Microsoft.Graph.Authentication'),
+
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'If not specified, the default value NuGet is used for PackageProvider')]
         [string]$PackageProvider = 'NuGet',
-        [Parameter(Mandatory = $true, ValuefromPipeline = $false, HelpMessage = 'Tenant Id or name to connect to')]
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Tenant Id or name to connect to')]
         [string]$TenantId,
-        [Parameter(Mandatory = $true, ValuefromPipeline = $false, HelpMessage = 'Client Id (App Registration) to connect to')]
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Client Id (App Registration) to connect to')]
         [string]$ClientId,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Client secret for authentication')]
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client secret for authentication')]
         [string]$ClientSecret,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'Client certificate thumbprint for authentication')]
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client certificate thumbprint for authentication')]
         [string]$ClientCertificateThumbprint,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'If not specified, the default value is used for CurrentUser')]
-        [string]$ModuleScope = 'CurrentUser',
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'The scopes to request from the Microsoft Graph API')]
-        [object]$Scopes = @('https://graph.microsoft.com/.default'),
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'This parameter will be used to determine if the device authentication flow should be used')]
-        [switch]$UseDeviceAuthentication = $false
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Use device authentication for Microsoft Graph API')]
+        [switch]$UseDeviceAuthentication,
+
+        [Parameter(Mandatory = $false, HelpMessage = 'The scopes required for Microsoft Graph API access. Default is DeviceManagementApps.ReadWrite.All')]
+        [string[]]$RequiredScopes = ('DeviceManagementApps.ReadWrite.All'),
+
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'Specifies the scope for installing the module. Default is CurrentUser')]
+        [string]$ModuleScope = 'CurrentUser'
     )
 
     begin {
+
         Write-Log -Message 'Function: Connect-MgGraphCustom was called' -LogId $LogId
+        Write-Log -Message "Resolved Parameter Set: $($PSCmdlet.ParameterSetName)" -LogId $LogId
+        Write-Host "Resolved Parameter Set: $($PSCmdlet.ParameterSetName)" -ForegroundColor Cyan
 
         if (-not (Get-PackageProvider -ListAvailable -Name $PackageProvider)) {
             # Install the PackageProvider if it's not already installed
@@ -125,57 +143,119 @@ function Connect-MgGraphCustom {
     }
 
     process {
+
         # First check if we already have a valid connection with required scopes
-        if (Test-MgConnection -LogId $LogId -RequiredScopes $Scopes) {
+        if (Test-MgConnection -LogId $LogId -RequiredScopes $RequiredScopes -TestScopes) {
             Write-Log -Message "Using existing Microsoft Graph connection" -LogId $LogId
             Write-Host "Using existing Microsoft Graph connection" -ForegroundColor Green
             return
         }
 
-        # If we don't have a valid connection, proceed with connection based on parameters
-        try {
-            $connectMgParams = @{
-                TenantId = $TenantId
-                ClientId = $ClientId
-                Scopes   = $Scopes
-            }
-
-            if ($ClientSecret) {
-                $secureSecret = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
-                $connectMgParams['ClientSecretCredential'] = $secureSecret
-            }
-            elseif ($ClientCertificateThumbprint) {
-                $connectMgParams['CertificateThumbprint'] = $ClientCertificateThumbprint
-            }
-            elseif ($UseDeviceAuthentication) {
-                $connectMgParams['UseDeviceCode'] = $true
-            }
-
-            Connect-MgGraph @connectMgParams
-            
-            if (Test-MgConnection -LogId $LogId -RequiredScopes $Scopes) {
-                Write-Log -Message "Successfully connected to Microsoft Graph" -LogId $LogId
-                Write-Host "Successfully connected to Microsoft Graph" -ForegroundColor Green
-                
-                # Get and display connection details
-                $context = Get-MgContext
-                Write-Log -Message ("Connected as: {0}" -f $context.Account) -LogId $LogId
-                Write-Host ("Connected as: {0}" -f $context.Account) -ForegroundColor Green
-                Write-Log -Message ("Scopes: {0}" -f ($context.Scopes -join ', ')) -LogId $LogId
-                Write-Host ("Scopes: {0}" -f ($context.Scopes -join ', ')) -ForegroundColor Green
+        # If we don't have required scopes, set the default required scopes to create Win32 apps. This assumes the Connect-MgGraphCustom function is used outside of the New-Win32App function
+        if (-not $RequiredScopes) {
+            if (Test-Path variable:\global:scopes) {
+                [string[]]$RequiredScopes = $global:scopes
+                Write-Log -Message ("Required Scope defined already. Using existing required scopes: {0}" -f $RequiredScopes) -LogId $LogId
+                Write-Host ("Required Scope defined already. Using existing required scopes: {0}" -f $RequiredScopes) -ForegroundColor Green
             }
             else {
-                throw "Failed to establish a valid connection with required scopes"
+                [string[]]$global:scopes = ('DeviceManagementApps.ReadWrite.All')
+                [string[]]$RequiredScopes = $global:scopes
+                Write-Log -Message ("Required Scope defined yet.Using default required scopes: {0}" -f $RequiredScopes) -LogId $LogId
+                Write-Host ("Required Scope defined yet. Using default required scopes: {0}" -f $RequiredScopes) -ForegroundColor Green
+            }
+        }
+
+        # Determine the authentication method based on provided parameters
+        if ($PSCmdlet.ParameterSetName -eq 'ClientSecret') {
+            $AuthenticationMethod = 'ClientSecret'
+        }
+        elseif ($PSCmdlet.ParameterSetName -eq 'ClientCertificateThumbprint') {
+            $AuthenticationMethod = 'ClientCertificateThumbprint'
+        }
+        elseif ($PSCmdlet.ParameterSetName -eq 'UseDeviceAuthentication') {
+            $AuthenticationMethod = 'UseDeviceAuthentication'
+        }
+        else {
+            $AuthenticationMethod = 'Interactive'
+        }
+
+        # If we don't have a valid connection, proceed with connection based on parameters
+        $connectMgParams = [ordered]@{
+            TenantId = $TenantId
+        }
+
+        switch ($AuthenticationMethod) {
+            'ClientSecret' {
+                $secureClientSecret =  ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $ClientId, $secureClientSecret
+                $connectMgParams['ClientSecretCredential'] = $credential
+            }
+            'ClientCertificateThumbprint' {
+                $connectMgParams['ClientId'] = $ClientId
+                $connectMgParams['CertificateThumbprint'] = $ClientCertificateThumbprint
+            }
+            'UseDeviceAuthentication' {
+                $connectMgParams['ClientId'] = $ClientId
+                $connectMgParams['UseDeviceCode'] = $true
+                $connectMgParams['Scopes'] = $RequiredScopes
+            }
+            'Interactive' {
+                $connectMgParams['ClientId'] = $ClientId
+                $connectMgParams['Scopes'] = $RequiredScopes
+            }
+            default {
+                Write-Log -Message ("Unknown authentication method: {0}" -f $AuthenticationMethod) -LogId $LogId -Severity 3
+                Write-Warning ("Unknown authentication method: {0}" -f $AuthenticationMethod)
+                break
+            }
+        }
+
+        # Convert the parameters to a string for logging
+        $connectMgParamsString = 'Connect-MgGraph ' + ($connectMgParams.Keys | ForEach-Object { '-{0} {1}' -f $_, $connectMgParams.$_ }) -join ' '
+        Write-Host "Connecting to Microsoft Graph with the following parameters: $connectMgParamsString" -ForegroundColor Cyan
+        Write-Log -Message "Connecting to Microsoft Graph with the following parameters: $connectMgParamsString" -LogId $LogId
+            
+        try {
+            # Explicitly pass the parameters to Connect-MgGraph
+            if ($AuthenticationMethod -eq 'ClientSecret') {
+                Connect-MgGraph -TenantId $TenantId -ClientSecretCredential $connectMgParams['ClientSecretCredential'] -NoWelcome
+            }
+            elseif ($AuthenticationMethod -eq 'ClientCertificateThumbprint') {
+                Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -CertificateThumbprint $ClientCertificateThumbprint -NoWelcome
+            }
+            elseif ($AuthenticationMethod -eq 'UseDeviceAuthentication') {
+                Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -UseDeviceCode -Scopes $connectMgParams['Scopes'] -NoWelcome
+            }
+            else {
+                Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -Interactive -Scopes $connectMgParams['Scopes'] -NoWelcome
             }
         }
         catch {
-            Write-Log -Message "Failed to connect to Microsoft Graph: $($_.Exception.Message)" -LogId $LogId -Severity 3
-            Write-Warning "Failed to connect to Microsoft Graph: $($_.Exception.Message)"
-            throw
+            Write-Log -Message ("Failed to connect to Microsoft Graph: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            Write-Warning ("Failed to connect to Microsoft Graph: {0}" -f $_.Exception.Message)
         }
-    }
-
-    end {
-        Write-Log -Message "Function: Connect-MgGraphCustom finished" -LogId $LogId
+            
+        if (Test-MgConnection -LogId $LogId -RequiredScopes $RequiredScopes) {
+            Write-Log -Message "Successfully connected to Microsoft Graph" -LogId $LogId
+            Write-Host "Successfully connected to Microsoft Graph" -ForegroundColor Green
+                
+            # Get and display connection details
+            $context = Get-MgContext
+            if ($AuthenticationMethod -in @('ClientSecret', 'ClientCertificateThumbprint')) {
+                Write-Log -Message ("Connected using Client Credential Flow with application: {0}" -f $context.AppName) -LogId $LogId
+                Write-Host ("Connected using Client Credential Flow with application: {0}" -f $context.AppName) -ForegroundColor Green
+            }
+            else {
+                Write-Log -Message ("Connected using Delegated Flow as: {0}" -f $context.Account) -LogId $LogId
+                Write-Host ("Connected using Delegated Flow as: {0}" -f $context.Account) -ForegroundColor Green
+            }
+            Write-Log -Message ("Scopes: {0}" -f ($context.Scopes -join ', ')) -LogId $LogId
+            Write-Host ("Scopes: {0}" -f ($context.Scopes -join ', ')) -ForegroundColor Green
+        }
+        else {
+            Write-Log -Message "Failed to establish a valid connection with required scopes" -LogId $LogId -Severity 3
+            Write-Warning "Failed to establish a valid connection with required scopes"
+        }
     }
 }
