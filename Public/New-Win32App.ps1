@@ -257,6 +257,8 @@ function New-Win32App {
         #endRegion
 
         #region Connect_MgGraphCustom
+        New-VerboseRegion -Message 'Connecting to the Microsoft Graph...' -ForegroundColor 'Gray'
+
         # Connect to Microsoft Graph based on the parameter set being used
         if ($CreateApps) {
             if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
@@ -580,6 +582,7 @@ function New-Win32App {
                         $paramsToPassWin32App.Add('Name', $app.Name)
                         $paramsToPassWin32App.Add('Description', $Description)
                         $paramsToPassWin32App.Add('Publisher', $app.Publisher)
+                        $paramsToPassWin32App.Add('AppVersion', $app.Version)
                         $paramsToPassWin32App.Add('InformationURL', $app.InfoURL)
                         $paramsToPassWin32App.Add('PrivacyURL', $app.PrivacyURL)
                         $paramsToPassWin32App.Add('Notes', $Win32AppNotes)
@@ -599,7 +602,7 @@ function New-Win32App {
                         }
 
                         # Detection method (rules) for the Win32 app
-                        if (Test-Path -Path $deploymentType.DetectionMethodJsonFile) {
+                        if ($deploymentType.DetectionMethodJsonFile) {
                             try {
                                 $jsonBlob = Get-Content -Path $deploymentType.DetectionMethodJsonFile -Raw
                                 $paramsToPassWin32App.Add('DetectionMethodJson', ($jsonBlob))
@@ -609,29 +612,35 @@ function New-Win32App {
                                 Write-Warning -Message ("Failed to read the JSON file '{0}'" -f $deploymentType.DetectionMethodJsonFile)
                             }
                         }
-                        elseif (Test-Path -path $deploymentType.DetectionTypeScriptType) {
-                            $scriptBlob = Get-Content -Path $deploymentType.DetectionTypeScriptType -Raw
-                            $bytes = [System.Text.Encoding]::UTF8.GetBytes($scriptBlob)
-                            $base64EncodedScript = [Convert]::ToBase64String($bytes)
-                            $paramsToPassWin32App.Add('DetectionScript', $base64EncodedScript)
+                        elseif ($deploymentType.DetectionTypeScriptType) {
+                            $bytes = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path "$($deploymentType.DetectionMethodScriptFile)" -Raw -Encoding UTF8)))
+                            $paramsToPassWin32App.Add('DetectionScript', $bytes)
                         }
                         else {
                             Write-Log -Message ("No detection method found for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
                             Write-Warning -Message ("No detection method found for '{0}'" -f $app.Name)
                         }
+
+                        if ($deploymentType.MaxExecuteTime) {
+                            $paramsToPassWin32App.Add('MaxExecutionTime', $deploymentType.MaxExecuteTime)
+                            
+                        }
                     }
 
                     # Create the JSON body file
                     $newIntuneJson = New-IntuneWinFramework @paramsToPassWin32App
-                    
+
                     if ($newIntuneJson) {
+                        Write-Log "We have a JSON body for the Win32 app" -LogId $LogId
+                        Write-Host "We have a JSON body for the Win32 app" -ForegroundColor Green
+                    
                         New-VerboseRegion -Message 'Creating Win32 app in Intune' -ForegroundColor 'Gray'
             
                         # Create the Win32 app in Intune
                         Write-Log -Message "Creating Win32 app in Intune" -LogId $LogId
                         Write-Host "Creating Win32 app in Intune" -ForegroundColor Cyan
             
-                        $response = Invoke-GraphRequest -Resource "deviceAppManagement/mobileApps" -Method Post -Body $newIntuneJson
+                        $response = Invoke-MgGraphRequestCustom -Resource 'deviceAppManagement/mobileApps' -Method Post -Body $newIntuneJson
 
                         if ($response.id) {
                             Write-Log -Message ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -LogId $LogId
@@ -640,7 +649,7 @@ function New-Win32App {
                             # Create new content request for Win32app
                             Write-Log -Message "Creating request for content version" -LogId $LogId
                             Write-Host "Creating request for content version" -ForegroundColor Cyan
-                            $contentRequest = Invoke-GraphRequest -Resource ("deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions" -f $response.id) -Method Post -Body "{}"
+                            $contentRequest = Invoke-MgGraphRequestCustom -Resource ("deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions" -f $response.id) -Method Post -Body "{}"
 
                             # Check content version request was successful
                             if ($contentRequest.id) {

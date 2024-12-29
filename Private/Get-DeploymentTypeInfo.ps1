@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    23/03/2024
+Update on:    29/12/2024
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -247,13 +247,14 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptRunAs32Bit -Value $detectionTypeScriptRunAs32Bit
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptType -Value $detectionTypeScriptType
                     $deploymentObject | Add-Member NoteProperty -Name DetectionTypeExecutionContext -Value $detectionTypeExecutionContext
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodScriptFile -Value $detectionMethodFile
                     $deploymentObject | Add-Member NoteProperty -Name DetectionMethodXmlFile -Value $detectionMethodXmlFile
                     $deploymentObject | Add-Member NoteProperty -Name DetectionMethodJsonFile -Value $detectionMethodJsonFile
 
                     Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', `
                     Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', `
                     UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}', DetectionTypeScriptRunAs32Bit = '{15}', `
-                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodXmlFile = '{18}', DetectionMethodJsonFile = '{19}'" -f `
+                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodScriptFile = '{18}', DetectionMethodXmlFile = '{19}', DetectionMethodJsonFile = '{20}'" -f `
                             $ApplicationId, `
                             $xmlContent.AppMgmtDigest.Application.title.'#text', `
                             $xmlContent.AppMgmtDigest.Application.LogicalName, `
@@ -272,6 +273,7 @@ function Get-DeploymentTypeInfo {
                             $detectionTypeScriptRunAs32Bit, `
                             $detectionTypeScriptType, `
                             $detectionTypeExecutionContext, `
+                            $detectionMethodScriptFile, `
                             $detectionMethodXmlFile, `
                             $detectionMethodJsonFile) -LogId $LogId
 

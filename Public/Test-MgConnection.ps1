@@ -27,13 +27,13 @@ function Test-MgConnection {
     )
 
     # If we don't have required scopes, set the default required scopes to create Win32 apps. This assumes the Connect-MgGraphCustom function is used outside of the New-Win32App function
-    if (-not $RequiredScopes -and -not $TestScopes) {
+    if (-not $RequiredScopes -and $TestScopes) {
         if (Test-Path variable:\global:scopes) {
             $RequiredScopes = $global:scopes
             Write-Log -Message ("Required Scopes are defined already in global variable. Using existing required scopes: {0}" -f $RequiredScopes) -LogId $LogId
             Write-Host ("Required Scopes are defined already in global variable: {0}" -f $RequiredScopes) -ForegroundColor Green
         }
-        elseif (-not $TestScopes) {
+        elseif (-not $RequiredScopes -and -not $TestScopes) {
             $global:scopes = @('DeviceManagementApps.ReadWrite.All')
             $RequiredScopes = $global:scopes
             Write-Log -Message ("Required Scopes are not defined yet. Using default required scopes to create Win32 apps: {0}" -f $RequiredScopes) -LogId $LogId
@@ -46,7 +46,9 @@ function Test-MgConnection {
         $context = Get-MgContext -ErrorAction Stop
         
         if (-not $context) {
-            Write-Log -Message "No active Microsoft Graph connection found" -LogId $LogId
+            if ($TestScopes) {
+                Write-Log -Message "No active Microsoft Graph connection found" -LogId $LogId
+            }
             return $false
         }
 

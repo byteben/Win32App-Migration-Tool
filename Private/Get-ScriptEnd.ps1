@@ -25,8 +25,8 @@ function Get-ScriptEnd {
     )
     process {
         if ($ErrorMessage) {
-            Write-Log -Message ("'{0}'" -f $ErrorMessage) -LogId $LogId -Severity 3
-            Write-Warning -Message ("'{0}'" -f $ErrorMessage)
+            Write-Log -Message ("{0}" -f $ErrorMessage) -LogId $LogId -Severity 3
+            Write-Warning -Message ("{0}" -f $ErrorMessage)
         }
     } 
     end {
@@ -38,19 +38,22 @@ function Get-ScriptEnd {
             Write-Log -Message "Failed to set location to $PSScriptRoot" -LogId $LogId -Severity 3
         }
 
+        # If connected to Microsoft Graph, disconnect
+        if (Test-MgConnection) {
+            Disconnect-MgGraph | Out-Null
+            Write-Host "Disconnected from Microsoft Graph" -ForegroundColor Cyan
+            Write-Log -Message "Disconnected from Microsoft Graph" -LogId $LogId
+        }
+        else {
+            Write-Host "No active Microsoft Graph connection found" -ForegroundColor Yellow
+            Write-Log -Message "No active Microsoft Graph connection found" -LogId $LogId
+        }
+
         Write-Host ''
         Write-Log -Message "## The Win32AppMigrationTool Script has Finished ##" -LogId $LogId
         Write-Host '## The Win32AppMigrationTool Script has Finished ##'
 
-        # If connected to Microsoft Graph, disconnect
-        if (Test-MgConnection) {
-            Disconnect-MgGraph
-            Write-Host "Disconnected from Microsoft Graph" -ForegroundColor Cyan
-            Write-Log -Message "Disconnected from Microsoft Graph" -LogId $LogId
-        } else {
-            Write-Host "No active Microsoft Graph connection found" -ForegroundColor Yellow
-            Write-Log -Message "No active Microsoft Graph connection found" -LogId $LogId
-        }
+       
 
         break
     }
