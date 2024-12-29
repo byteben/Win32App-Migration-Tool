@@ -7,6 +7,10 @@ Filename:     New-Win32App.ps1
 
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
 
+The script supports different authentication methods for connecting to the Microsoft Graph API. The preferred method is using a certificate, as this method is more secure. If you don't have a certificate, the Delegate and devicecode flow are also supported. Client Secret is an option too, but it is not recommended for production environments.
+
+Documentation can be found at https://github.com/byteben/Win32App-Migration-Tool/blob/main/README.md
+
 .Description
 **Version 2.0.50 BETA**  
 
@@ -65,6 +69,9 @@ When creating the Win32App, allow the user to uninstall the app if it is availab
 .PARAMETER TenantId
 Tenant Id or name to connect to. This parameter is mandatory for obtaining a token
 
+.PARAMETER ClientId
+Client Id (App Registration) to connect to. This parameter is mandatory for obtaining a token
+
 .PARAMETER ClientSecret
 Client Secret for the App Registration. This parameter is mandatory for obtaining a token
 
@@ -73,9 +80,6 @@ Client certificate thumbprint for authentication. This parameter is mandatory fo
 
 .PARAMETER UseDeviceAuthentication
 Use device authentication instead of user authentication. This parameter is mandatory if you want to use device authentication.
-
-.PARAMETER ClientId
-Client Id (App Registration) to connect to. This parameter is mandatory for obtaining a token
 
 .EXAMPLE
 New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"

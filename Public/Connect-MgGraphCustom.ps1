@@ -31,12 +31,32 @@ Client Secret for authentication
 .PARAMETER ClientCertificateThumbprint
 Client certificate thumbprint for authentication
 
-.PARAMETER Scopes
+.PARAMETER RequiredScopes
 The scopes to request from the Microsoft Graph API. If not specified, the default value is used for .default
 
 .PARAMETER UseDeviceAuthentication
 This parameter will be used to determine if the device authentication flow should be used. If not specified, the default value is used for $false
+
+.PARAMETER Interactive
+This parameter will be used to determine if the interactive flow should be used. If not specified, the default value is used for $false
+
+.EXAMPLE
+Delegated Flow Example:
+Connect-MgGraphCustom -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000'
+
+.EXAMPLE
+Client Secret Flow Example:
+Connect-MgGraphCustom -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000' -ClientSecret 'clientsecret'
+
+.EXAMPLE
+Client Certificate Flow Example:
+Connect-MgGraphCustom -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000' -ClientCertificateThumbprint '00000000000000000000000000000000'
+
+.EXAMPLE
+Device Authentication Flow Example:
+Connect-MgGraphCustom -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000' -UseDeviceAuthentication
 #>
+
 function Connect-MgGraphCustom {
     [CmdletBinding(DefaultParameterSetName = 'Interactive')]
     param (

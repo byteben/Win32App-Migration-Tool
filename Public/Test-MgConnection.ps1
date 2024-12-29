@@ -12,6 +12,9 @@ The component (script name) passed as LogID to the 'Write-Log' function
 
 .PARAMETER RequiredScopes
 Array of scopes that should be present in the connection
+
+.PARAMETER TestScopes
+Switch to test the scopes of the connection
 #>
 function Test-MgConnection {
     [CmdletBinding()]
