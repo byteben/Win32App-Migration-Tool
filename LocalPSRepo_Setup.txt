@@ -1,0 +1,46 @@
+# Setting up Local PowerShell Repository for Development
+# =============================================
+
+# 1. INITIAL SETUP (Run these commands once)
+# -----------------------------------------
+# Create local repository directory
+New-Item -Path 'C:\LocalPSRepo' -ItemType Directory -Force
+
+# Register the local repository
+Register-PSRepository -Name 'LocalRepo' -SourceLocation 'C:\LocalPSRepo' -PublishLocation 'C:\LocalPSRepo' -InstallationPolicy Trusted
+
+# Add LocalPSRepo to PSModulePath
+$env:PSModulePath = "C:\LocalPSRepo;" + $env:PSModulePath
+
+# Create module version directory (update version number as needed)
+New-Item -Path 'C:\LocalPSRepo\Win32AppMigrationTool\2.0.50' -ItemType Directory -Force
+
+
+# 2. PUBLISHING UPDATES (Run these every time you make changes)
+# ----------------------------------------------------------
+# Copy all module files to the local repository
+Copy-Item -Path 'C:\Github\byteben\Win32App-Migration-Tool\*' -Destination 'C:\LocalPSRepo\Win32AppMigrationTool\2.0.50' -Recurse -Force
+
+# Remove existing module from session (if loaded)
+Remove-Module Win32AppMigrationTool -Force -ErrorAction SilentlyContinue
+
+# Import the updated module (choose one of these methods):
+# Method 1: Import from local repository
+Import-Module -Name Win32AppMigrationTool -Force
+# Method 2: Import directly from development directory
+Import-Module 'C:\Github\byteben\Win32App-Migration-Tool\Win32AppMigrationTool.psd1' -Force
+
+
+# TROUBLESHOOTING
+# --------------
+# If you have issues, try these commands:
+
+# Check registered repositories
+Get-PSRepository
+
+# Clear PowerShell module cache
+Get-Module Win32AppMigrationTool -ListAvailable | Remove-Module -Force
+Get-ChildItem -Path "$env:ProgramFiles\WindowsPowerShell\Modules\Win32AppMigrationTool" -Recurse | Remove-Item -Force -Recurse
+
+# Verify module is loaded with correct version
+Get-Module Win32AppMigrationTool

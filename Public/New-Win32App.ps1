@@ -146,10 +146,10 @@ function New-Win32App {
         # Add logic to check for CreateApps parameter and validate TenantId and ClientId
         if ($PSCmdlet.ParameterSetName -eq 'CreateAppsSet') {
             if (-not $TenantId) {
-                throw "TenantId is required when CreateApps is specified."
+                Write-Error -Message "TenantId is required when CreateApps is specified." -Category InvalidArgument -ErrorAction Stop
             }
             if (-not $ClientId) {
-                throw "ClientId is required when CreateApps is specified."
+                Write-Error -Message "ClientId is required when CreateApps is specified." -Category InvalidArgument -ErrorAction Stop
             }
         }
     }
@@ -478,13 +478,13 @@ function New-Win32App {
                             }
                             else {
                                 Write-Log -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
-                                throw ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
+                                Write-Warning -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
                                 break
                             }
                         }
                         catch {
                             Write-Log -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
-                            throw ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
+                            Write-Warning -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
                             break
                         }
 
