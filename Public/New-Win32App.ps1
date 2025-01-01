@@ -11,7 +11,7 @@ Documentation can be found at https://github.com/byteben/Win32App-Migration-Tool
 
 .Description
 This script is designed to export the Application and Deployment Data from ConfigMgr to firstly create an .intunewin file and secondly publish the Win32App to Intune
-Change Control Log: https://github.com/byteben/Win32App-Migration-Tool/blob/main/ChangeLog.md
+Change Control Log: https://github.com/byteben/Win32App-Migration-Tool/blob/main/Release_Notes.md
 
 ---------------------------------------------------------------------------------
 LEGAL DISCLAIMER
