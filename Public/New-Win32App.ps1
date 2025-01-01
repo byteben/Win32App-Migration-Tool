@@ -126,7 +126,7 @@ New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge C
 #>
 function New-Win32App {
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
     param (
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
         [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]

@@ -111,18 +111,17 @@ function Get-ContentFiles {
             
             try {
                 # Compare the source and destination folders to ensure the copy was successful
-                $sourceCompare = Get-ChildItem -Path $sourceUNC -Recurse -ErrorAction Stop
-                $destinationCompare = Get-ChildItem -Path $Destination -Recurse -ErrorAction Stop
+                # Extract file names from the paths
+                $sourceFileNames = $sourceCompare | ForEach-Object { [System.IO.Path]::GetFileName($_) }
+                $destinationFileNames = $destinationCompare | ForEach-Object { [System.IO.Path]::GetFileName($_) }
 
-                # Compare the file hashes
-                $compareResult = Compare-Object -ReferenceObject $sourceCompare -DifferenceObject $destinationCompare
+                $compareResult = Compare-Object -ReferenceObject $sourceFileNames -DifferenceObject $destinationFileNames
 
                 try {
                     # Filter out the differences
                     $differences = $compareResult | Where-Object { $_.SideIndicator -eq '<=' -or $_.SideIndicator -eq '=>' }
 
                     if ($differences) {
-
                         # Files are different but this is OK if the uninstall content has been copied. Check if we have all the source files in the destination folder
                         foreach ($difference in $differences) {
                             if ($difference.SideIndicator -eq '<=') { 
@@ -138,8 +137,8 @@ function Get-ContentFiles {
                     }
                 }
                 catch {
-                    Write-Log -Message 'Could not compare the source and destination folders' -LogId $LogId -Severity 3
-                    Write-Warning -Message 'Could not compare the source and destination folders'
+                    Write-Log -Message 'Could not compare the differences between the source and destination folders' -LogId $LogId -Severity 3
+                    Write-Warning -Message 'Could not compare the differences between the source and destination folders'
                     Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
                     Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message    
                 }

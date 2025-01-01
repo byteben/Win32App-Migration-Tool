@@ -33,8 +33,10 @@ You assume all risks and responsibilities associated with its usage.
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
 - **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
 - **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
-- **PowerShell 5.1**  
+- **PowerShell 5.1**  PowerShell 7 is recommended
 - **Internet Access** to download the Win32 Content Prep Tool
+- **Microsoft.Graph.Authentication Module** Install-Module -Name Microsoft.Graph.Authentication (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
+- **Az.Storage Module** Install-Module -Name Az.Storage (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
   
 ## Quick Start  
   

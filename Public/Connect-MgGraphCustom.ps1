@@ -192,7 +192,7 @@ function Connect-MgGraphCustom {
                 Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -UseDeviceCode -Scopes $connectMgParams['Scopes'] -NoWelcome
             }
             else {
-                Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -Interactive -Scopes $connectMgParams['Scopes'] -NoWelcome
+                Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -Scopes $connectMgParams['Scopes'] -NoWelcome
             }
         }
         catch {
