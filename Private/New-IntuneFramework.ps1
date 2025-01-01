@@ -145,7 +145,7 @@ function New-IntuneWinFramework {
             displayName                    = $Name
             description                    = $Description
             publisher                      = $Publisher
-            appVersion                     = $AppVersion
+            displayVersion                 = $AppVersion
             informationUrl                 = $InformationURL
             privacyInformationUrl          = $PrivacyURL
             notes                          = $Notes
@@ -166,6 +166,11 @@ function New-IntuneWinFramework {
             uninstallCommandLine           = $deploymentType.UninstallCommandLine
             minimumSupportedWindowsRelease = $MinimumOSVersion
             applicableArchitectures        = $MinimumOSArchitecture
+        }
+
+        # Allow available uninstall
+        if ($AllowAvailableUninstall) {
+            $body['allowAvailableUninstall'] = $true
         }
 
         # Detection method (rules) for the Win32 app
@@ -236,39 +241,24 @@ function New-IntuneWinFramework {
             runAsAccount  = $InstallExperience
         }
 
-        $json = $body | ConvertTo-Json -Depth 5
+        # Create JSON body
+        $json = $body | ConvertTo-Json -Depth 5 -Compress
 
-        # Write-Host Json file but exclude largeIcon and ScriptContent values
-        $jsonObject = $json | ConvertFrom-Json 
+        # Write-Host JSON body but exclude largeIcon and ScriptContent values
+        $jsonObject = $body
 
-        if ($jsonObject.PSObject.Properties["largeIcon"]) {
-            $jsonObject.largeIcon = "Base64IcondDataPresentButOmittedDuetoSize"
+        if ($jsonObject.Contains("largeIcon")) {
+            $jsonObject["largeIcon"] = "Base64IcondDataPresentButOmittedFromOutputDuetoSize"
         }
-
-        # Always a sinle rule when using script detection
-        if ($jsonObject.rules[0].PSObject.Properties["scriptContent"]) {
-            $jsonObject.rules[0].PSObject.Properties["scriptContent"].Value = "Base64ScriptDataPresentButOmittedDuetoSize"
+        if ($jsonObject.Contains("rules") -and $jsonObject["rules"][0].Contains("scriptContent")) {
+            $jsonObject["rules"][0]["scriptContent"] = "Base64ScriptDataPresentButOmittedFromOutputDuetoSize"
         }
 
         Write-Log -Message "JSON body created" -LogId $LogId
         Write-Host "JSON body created" -ForegroundColor Cyan
         $jsonOutput = $jsonObject | ConvertTo-Json -Depth 5 -Compress
-
         Write-Log -Message ("'{0}'" -f $jsonOutput) -LogId $LogId
         Write-Host $jsonOutput -ForegroundColor Green
-
-        # Remove existing JSON file from the Win32apps folder to avoid ambiguity on import
-        $existingFiles = [System.IO.Directory]::GetFiles($Path)
-        $fileNameToDelete = "Win32appBody.json"
-                    
-        foreach ($file in $existingFiles) {
-            if ([System.IO.Path]::GetFileName($file) -eq $fileNameToDelete) {
-
-                # Delete the existing file
-                Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
-                [System.IO.File]::Delete($file)        
-            }
-        }
             
         # Write the JSON body to a file
         $jsonFile = Join-Path -Path $Path -ChildPath "Win32appBody.json"
@@ -276,7 +266,7 @@ function New-IntuneWinFramework {
         Write-Host ("`nWriting JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
 
         try {
-            [System.IO.File]::WriteAllText($jsonFile, $json)
+            [System.IO.File]::WriteAllText($jsonFile, $json, [System.Text.Encoding]::UTF8)
             Write-Log -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId
             Write-Host ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -ForegroundColor Green
 

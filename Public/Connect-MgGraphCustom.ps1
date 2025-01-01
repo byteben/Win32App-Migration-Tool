@@ -64,7 +64,7 @@ function Connect-MgGraphCustom {
         [string]$LogId = $($MyInvocation.MyCommand).Name,
 
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'Module Name to connect to Graph. Default is Microsoft.Graph.Authentication')]
-        [object]$ModuleName = ('Microsoft.Graph.Authentication'),
+        [object]$ModuleNames = ('Microsoft.Graph.Authentication'),
 
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'If not specified, the default value NuGet is used for PackageProvider')]
         [string]$PackageProvider = 'NuGet',
@@ -103,63 +103,7 @@ function Connect-MgGraphCustom {
         Write-Log -Message "Resolved Parameter Set: $($PSCmdlet.ParameterSetName)" -LogId $LogId
         Write-Host "Resolved Parameter Set: $($PSCmdlet.ParameterSetName)" -ForegroundColor Cyan
 
-        if (-not (Get-PackageProvider -ListAvailable -Name $PackageProvider)) {
-            # Install the PackageProvider if it's not already installed
-            Write-Log -Message ("PackageProvider not found. Will install PackageProvider '{0}'" -f $PackageProvider) -LogId $LogId
-            Write-Host ("Installing PackageProvider '{0}'" -f $PackageProvider) -ForegroundColor Cyan
-    
-            try {
-                Install-PackageProvider -Name $PackageProvider -ForceBootstrap -Confirm:$false -Verbose
-            }
-            catch {
-                Write-Log -Message ("Warning: Could not install the PackageProvider '{0}'" -f $PackageProvider) -LogId $LogId -Severity 3
-                Write-Warning ("Warning: Could not install the PackageProvider '{0}'" -f $PackageProvider)
-                Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
-                Get-ScriptEnd -ErrorMessage $_.Exception.Message -LogId $LogId 
-            }
-        }
-
-        # Check if the module is installed
-        foreach ($Module in $ModuleName) {
-            if (-not (Get-Module -ListAvailable -Name $Module)) {
-                # Install the module if it's not already installed
-                Write-Log -Message ("Module not found. Will install module '{0}' in the scope of '{1}'" -f $Module, $ModuleScope) -LogId $LogId
-                Write-Host ("Installing module '{0}' in the scope of '{1}'" -f $Module, $ModuleScope) -ForegroundColor Cyan
-    
-                try {
-                    Install-Module -Name $Module -Scope $ModuleScope -AllowClobber -Force -Confirm:$false
-                }
-                catch {
-                    Write-Log -Message ("Warning: Could not install the module '{0}'" -f $Module) -LogId $LogId -Severity 3
-                    Write-Warning ("Warning: Could not install the module '{0}'" -f $Module)
-                    Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
-                    Get-ScriptEnd -ErrorMessage $_.Exception.Message -LogId $LogId
-                }
-            }
-            else {
-                # Module is already installed, import it
-                Write-Log -Message ("Module '{0}' is already installed" -f $Module) -LogId $LogId
-                Write-Host ("Module '{0}' is already installed" -f $Module) -ForegroundColor Cyan
-
-                if (-not (Get-Module -Name $Module)) {
-                    try {
-                        Write-Log -Message ("Import-Module {0}" -f $Module) -LogId $LogId
-                        Write-Host ("Importing Module: '{0}'" -f $Module) -ForegroundColor Cyan
-                        Import-Module $Module
-                    }
-                    catch {
-                        Write-Log -Message ("Warning: Could not import the module '{0}'" -f $Module) -LogId $LogId -Severity 3
-                        Write-Warning ("Warning: Could not import the module '{0}'" -f $Module)
-                        Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
-                        Get-ScriptEnd -ErrorMessage $_.Exception.Message -LogId $LogId 
-                    }
-                }
-                else {
-                    Write-Log -Message ("Module '{0}' is imported into PowerShell session" -f $Module) -LogId $LogId
-                    Write-Host ("Module '{0}' is imported into PowerShell session" -f $Module) -ForegroundColor Cyan
-                }
-            }
-        }
+       Initialize-Module -Modules $ModuleNames
     }
 
     process {

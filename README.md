@@ -8,12 +8,24 @@ The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and
 Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you.
   
 **Blog Post** https://msendpointmgr.com/2021/03/27/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/
+
+---
+
+**LEGAL DISCLAIMER**
+
+This solution is distributed under the **GNU GENERAL PUBLIC LICENSE**.
+
+The PowerShell script provided is shared with the community *as-is*. The author and co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose. 
+Please note that the script may need to be modified or adapted to fit your specific environment or requirements. It is recommended to thoroughly test the script in a non-production environment before using it in a live or critical system. 
+The author and co-author(s) cannot be held responsible for any damages, losses, or adverse effects that may arise from the use of this script. 
+You assume all risks and responsibilities associated with its usage.
+
+---
   
 ## Development Status
 
-  **STATUS: BETA**  
-  The Win32App Migration Tool is still in BETA. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
-  After the BETA has been tested succesfully, the next stage of the project will be to build the Win32Apps in Intune automatically.  
+  **STATUS: Generally Available**  
+  The Win32App Migration Tool is now Generally Available as of January 2025. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
   
 ## Requirements  
 
@@ -27,11 +39,11 @@ Instead of manually checking Application and Deployment Type information and gat
 ## Quick Start  
   
   **1. Install-Module Win32AppMigrationTool**  
-  **2. New-Win32App**  -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
+  **2. New-Win32App** -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
   **3. Use Information from the CSVs to build a Win32App in Intune**
 
   ```
-  New-Win32App [-SiteCode] <String> [[-ProviderMachineName] <String>] [[-AppName] <String[]>]
+  New-Win32App -ProviderMachineName <String> -AppName <String>
   ```
 
 The current release of the Win32 App Migration Tool will do the following:-  
@@ -43,6 +55,13 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)  
 - Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>  
 - Export Application icons(s) to %WorkingDirectory%\Icons  
+- Build Win32App JSON payload body for Intune
+- Convert detection to JSON for Intune
+- Extract the IntunePackage.intunewin for upload
+- Get encryption information for Intunewin
+- Request Content Upload Uri from Intune
+- Upload file in chunks to Intune
+- Commit file to Intune
 - Log events to %WorkingDirectory%\Logs\Main.log  
   
 ## Important Information
@@ -57,13 +76,13 @@ Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output o
 
 ### -SiteCode
 
-The Site Code of the ConfigMgr Site. he Site Code must be only 3 alphanumeric characters
+The Site Code of the ConfigMgr Site. he Site Code must be only 3 alphanumeric characters. This is an optional parameter. If not passed, the script will attempt to get the Site Code from the ConfigMgr Console. If the Site Code cannot be determined, the script will exit with an error message
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 
-Required: True
+Required: False
 Position: 0
 Default value: None
 Accept pipeline input: False
@@ -266,12 +285,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Parameter NoOgv
+### -Parameter AllowAvailableUninstall
 
-When passed, the Out-Gridview is suppressed and the value entered for $AppName will be searched using Get-CMApplication -Fast
+When passed, the AvailableUninstall value will be set to True when creating the Win32App
 
 ```yaml
-Type: Switch
+Type: Boolean
 Parameter Sets: (All)
 
 Required: False
@@ -280,33 +299,125 @@ Default value:
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-  
+
+### -TenantId
+
+Tenant Id or name to connect to.
+
+```yaml
+Type: String
+Parameter Sets: ClientSecret, ClientCertificateThumbprint, UseDeviceAuthentication, Interactive
+
+Required: True
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ClientId
+
+Client Id or name to connect to. Please create an App Registration in EntraId and avoid using the Microsoft Graph Command Line Tools client app.
+The client app must have the following API permission: DeviceManagementApps.ReadWrite.All.
+
+```yaml
+Type: String
+Parameter Sets: ClientSecret, ClientCertificateThumbprint, UseDeviceAuthentication, Interactive
+
+Required: True
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ClientSecret
+
+If using a Client Secret for authentication, pass the secret here.
+Certificates are recommended for production environments.
+
+```yaml
+Type: String
+Parameter Sets: ClientSecret
+
+Required: True
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ClientCertificateThumbprint
+
+Certificates are recommended for production environments. Pass the thumbprint of the certificate to use for authentication to the client app.
+You must have the private key and the public key must have been uploaded to the App Registration in Entra Id.
+
+```yaml
+Type: String
+Parameter Sets: ClientCertificateThumbprint
+
+Required: True
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseDeviceAuthentication
+
+Generates a token using device authentication.
+
+```yaml
+Type: Switch
+Parameter Sets: UseDeviceAuthentication
+
+Required: True
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ## Examples  
   
+The following examples will export information from ConfigMgr but not create the Win32Apps in Intune. 
+  
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
-  ```
-  ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent  
-  ```
-  ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent  
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo  
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps  
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -NoOGV  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog  
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog -NoOGV  
   ```
   ```
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" 
-  ```  
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog -ExcludePMPC
+  ```
+  ```
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" 
+  ```
+  ```
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC
+  ```
+
+## Examples 2 
+  
+The following examples will export information from ConfigMgr and will create the Win32Apps in Intune. 
+  
+  ```
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -CreateApps ExportLogo -PackageApps -ResetLog -TenantId "yourtenant.onmicrosoft.com" -ClientId "yourclientid" -ClientSecret "yourclientsecret"
+  ```
+  ```
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -CreateApps ExportLogo -PackageApps -ResetLog -TenantId "yourtenant.onmicrosoft.com" -ClientId "yourclientid" -ClientCertificateThumbprint "yourclientcertthumbprint"
+  ```
+  ```

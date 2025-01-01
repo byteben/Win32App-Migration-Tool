@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   09/06/2024
-Updated on:   09/06/2024
+Updated on:   30/12/2024
 Created by:   Ben Whitmore
 Filename:     New-IntuneWinContentRequest.ps1
 
@@ -16,12 +16,6 @@ This parameter is built from the line number of the call from the function up th
 .PARAMETER ContentVersion
 The version of the content to be uploaded
 
-.PARAMETER Win32AppId 
-The ID of the Win32 app to upload the content for
-
-.PARAMETER ContentVersionNumber
-The version number of the content to be uploaded
-
 .PARAMETER Name
 The intunewin file name
 
@@ -31,32 +25,22 @@ The compressed size of the content to be uploaded
 .PARAMETER SizeUnencrypted
 The uncompressed size of the content to be uploaded
 
-.PARAMETER Manifest
-The manifest if present
-
 .PARAMETER IsDependency
 Is this content a dependency
 
 #>
 function New-IntuneWinContentRequest {
     param(
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the Write-Log function')]
-        [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The ID of the Win32 app to upload the content for')]
-        [string]$Win32AppId,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The version number of the content to be uploaded')]
-        [int64]$ContentVersionNumber,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 4, HelpMessage = 'The intunewin file name')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The intunewin file name')]
         [string]$Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The compressed size of the content to be uploaded')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'The compressed size of the content to be uploaded')]
         [int64]$SizeEncrypted,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'The uncompressed size of the content to be uploaded')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The uncompressed size of the content to be uploaded')]
         [int64]$SizeUnencrypted,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = 'The manifest if present')]
-        [byte[]]$Manifest = $null,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 8, HelpMessage = 'Is this content a dependency')]
-        [bool]$IsDependency = $false
-
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'Is this content a dependency')]
+        [bool]$IsDependency = $false,
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = 'The component (script name) passed as LogID to the Write-Log function')]
+        [string]$LogId = $($MyInvocation.MyCommand).Name
     )
     begin {
 
@@ -71,8 +55,8 @@ function New-IntuneWinContentRequest {
             "name"          = $Name
             "size"          = $SizeUnEncrypted
             "sizeEncrypted" = $SizeEncrypted
-            "manifest"      = $Manifest
             "isDependency"  = $IsDependency
+            "manifest"      = $null
         }
 
         Write-Log -Message "IntuneWinContentRequest created" -LogId $LogId

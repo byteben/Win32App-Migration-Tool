@@ -1,18 +1,30 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   28/12/2024
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
-
 The script supports different authentication methods for connecting to the Microsoft Graph API. The preferred method is using a certificate, as this method is more secure. If you don't have a certificate, the Delegate and devicecode flow are also supported. Client Secret is an option too, but it is not recommended for production environments.
-
 Documentation can be found at https://github.com/byteben/Win32App-Migration-Tool/blob/main/README.md
 
 .Description
-**Version 2.0.50 BETA**  
+This script is designed to export the Application and Deployment Data from ConfigMgr to firstly create an .intunewin file and secondly publish the Win32App to Intune
+Change Control Log: https://github.com/byteben/Win32App-Migration-Tool/blob/main/ChangeLog.md
+
+---------------------------------------------------------------------------------
+LEGAL DISCLAIMER
+
+This solution is distributed under the GNU GENERAL PUBLIC LICENSE 
+
+The PowerShell script provided is shared with the community as-is
+The author and co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose
+Please note that the script may need to be modified or adapted to fit your specific environment or requirements
+It is recommended to thoroughly test the script in a non-production environment before using it in a live or critical system
+The author and co-author(s) cannot be held responsible for any damages, losses, or adverse effects that may arise from the use of this script
+You assume all risks and responsibilities associated with its usage
+---------------------------------------------------------------------------------
 
 .PARAMETER LogId
 The component (script name) passed as LogID to the 'Write-Log' function.
@@ -24,10 +36,10 @@ Pass a string to the toll to search for applications in ConfigMgr
 When passed, the content for the deployment type is saved locally to the working folder "Content"
 
 .PARAMETER SiteCode
-Specify the Sitecode you wish to connect to
+Specify the Sitecode you wish to connect to. We try to get this auitomatically from the SMS_ProviderLocation WMI class if non is specified
 
 .PARAMETER ProviderMachineName
-Specify the Site Server to connect to
+Specify the SMS Provider you wish to connect to
 
 .PARAMETER ExportIcon
 When passed, the Application icon is decoded from base64 and saved to the Logos folder
@@ -82,95 +94,95 @@ Client certificate thumbprint for authentication. This parameter is mandatory fo
 Use device authentication instead of user authentication. This parameter is mandatory if you want to use device authentication.
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -DownloadContent
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 .EXAMPLE
-New-Win32App -SiteCode "BB1" -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -Win32AppNotes "Created by the Win32App Migration Tool" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -CreateApps -ResetLog -ExcludePMPC -ExcludeFilter "Microsoft*" -OverrideIntuneWin32FileName "application" -Win32AppNotes "Created by the Win32App Migration Tool" -TenantId "1234-1234-1234" -ClientId "1234-1234-1234" -ClientSecret "1234-1234-1234"
 
 #>
 function New-Win32App {
 
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The Site Code of the ConfigMgr Site')]
         [ValidatePattern('(?##The Site Code must be only 3 alphanumeric characters##)^[a-zA-Z0-9]{3}$')]
         [string]$SiteCode,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 1, HelpMessage = 'Server name that has an SMS Provider site system role')]
         [string]$ProviderMachineName,  
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The name of the application to search for. Accepts wildcards *')]
         [string]$AppName,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'DownloadContent: When passed, the content for the deployment type is saved locally to the working folder "Content"')]
         [Switch]$DownloadContent,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExportLogo: When passed, the Application icon is decoded from base64 and saved to the Logos folder')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'ExportLogo: When passed, the Application icon is decoded from base64 and saved to the Logos folder')]
         [Switch]$ExportIcon,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The working folder for the Win32AppMigration Tool. Care should be given when specifying the working folder because downloaded content can increase the working folder size considerably')]
         [string]$workingFolder = "C:\Win32AppMigrationTool",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = 'PackageApps: Pass this parameter to package selected apps in the .intunewin format')]
         [Switch]$PackageApps,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
         [Switch]$ResetLog,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 8, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 9, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"')]
         [string]$ExcludeFilter,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 10, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
         [Switch]$NoOgv,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 5, HelpMessage = 'URI for Win32 Content Prep Tool')]
-        [string]$Win32ContentPrepToolUri = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe',
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Override intunewin filename. Default is the name calcualted from the install command line')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 11, HelpMessage = 'URI for Win32 Content Prep Tool')]
+        [string]$Win32ContentPrepToolUri = 'https://raw.githubusercontent.com/microsoft/Microsoft-Win32-Content-Prep-Tool/refs/heads/master/IntuneWinAppUtil.exe',
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 12, HelpMessage = 'Override intunewin filename. Default is the name calculated from the install command line')]
         [string]$OverrideIntuneWin32FileName,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = 'Notes field value to add to the Win32App JSON body')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = 'Notes field value to add to the Win32App JSON body')]
         [string]$Win32AppNotes = "Created by the Win32App Migration Tool",
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 8, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
         [bool]$AllowAvailableUninstall = $true,
-        [Parameter(Mandatory = $false, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
-        [switch]$CreateApps,
+        [Parameter(Mandatory = $false, Position = 15, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
+        [Switch]$CreateApps,
 
         # Shared Parameters for Graph Authentication
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
         [string]$TenantId,
 
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
         [string]$ClientId,
 
         # AuthN and AuthZ Parameters
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', HelpMessage = 'Client secret for authentication')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 18, HelpMessage = 'Client secret for authentication')]
         [string]$ClientSecret,
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', HelpMessage = 'Client certificate thumbprint for authentication')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 18, HelpMessage = 'Client certificate thumbprint for authentication')]
         [string]$ClientCertificateThumbprint,
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', HelpMessage = 'Use device authentication for Microsoft Graph API')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 18, HelpMessage = 'Use device authentication for Microsoft Graph API')]
         [switch]$UseDeviceAuthentication,
-        [Parameter(Mandatory = $false, HelpMessage = 'The scopes required for Microsoft Graph API access')]
+        [Parameter(Mandatory = $false, Position = 19, HelpMessage = 'The scopes required for Microsoft Graph API access')]
         [string[]]$RequiredScopes = ('DeviceManagementApps.ReadWrite.All'),
     
         # Additional Parameters
@@ -224,7 +236,12 @@ function New-Win32App {
         Write-Log -Message ("ScriptRoot is '{0}'" -f $ScriptRoot) -LogId $LogId
 
         # Connect to Site Server
-        Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
+        if ($PSBoundParameters.ContainsKey('SiteCode')) {
+            Connect-SiteServer -SiteCode $SiteCode -ProviderMachineName $ProviderMachineName
+        } 
+        else {
+            Connect-SiteServer -ProviderMachineName $ProviderMachineName
+        }
 
         # Check the folder structure for the working directory and create if necessary
         New-VerboseRegion -Message 'Checking Win32AppMigrationTool folder structure' -ForegroundColor 'Gray'
@@ -238,16 +255,27 @@ function New-Win32App {
         #region Get_Content_Tool
         New-VerboseRegion -Message 'Checking if the Win32contentpreptool is required' -ForegroundColor 'Gray'
 
-        # Download the Win32 Content Prep Tool if the PackageApps parameter is passed
+        # Download the Win32 Content Prep Tool if the PackageApps parameter is passed and the existing content prep tool is older than 30 days
         if ($PackageApps) {
-            Write-Host "Downloading the Win32contentpreptool..." -ForegroundColor Cyan
-            if (Test-Path (Join-Path -Path "$workingFolder_Root\ContentPrepTool" -ChildPath "IntuneWinAppUtil.exe")) {
-                Write-Log -Message ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f "$workingFolder_Root\ContentPrepTool") -LogId $LogId -Severity 2
-                Write-Host ("Information: IntuneWinAppUtil.exe already exists at '{0}'. Skipping download" -f "$workingFolder_Root\ContentPrepTool") -ForegroundColor Yellow
+            $fileDestination = Join-Path -Path "$workingFolder_Root\ContentPrepTool" -ChildPath "IntuneWinAppUtil.exe"
+
+            if (Test-Path $fileDestination) {
+                $fileAge = (Get-Item $fileDestination).LastWriteTime
+                $fileAgeInDays = (New-TimeSpan -Start $fileAge -End (Get-Date)).Days
+
+                if ($fileAgeInDays -gt 30) {
+                    Write-Log -Message ("Information: IntuneWinAppUtil.exe is {0} days old. Downloading new version" -f $fileAgeInDays) -LogId $LogId -Severity 2
+                    Write-Host ("Information: IntuneWinAppUtil.exe is {0} days old. Downloading new version" -f $fileAgeInDays) -ForegroundColor Yellow
+                    Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $fileDestination
+                }
+                else {
+                    Write-Log -Message ("Information: IntuneWinAppUtil.exe is {0} days old. Skipping download" -f $fileAgeInDays) -LogId $LogId -Severity 2
+                    Write-Host ("Information: IntuneWinAppUtil.exe is {0} days old. Skipping download" -f $fileAgeInDays) -ForegroundColor Yellow
+                }
             }
             else {
-                Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, "$workingFolder_Root\ContentPrepTool") -LogId $LogId
-                Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination "$workingFolder_Root\ContentPrepTool"
+                Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $fileDestination) -LogId $LogId
+                Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $fileDestination
             }
         } 
         else {
@@ -291,7 +319,7 @@ function New-Win32App {
                             'UseDeviceAuthentication' {
                                 Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
                                 Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -ForegroundColor Cyan
-                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -UseDeviceAuthentication $true -RequiredScopes $RequiredScopes
+                                Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -UseDeviceAuthentication -RequiredScopes $RequiredScopes
                             }
                             'Interactive' {
                                 Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
@@ -637,33 +665,72 @@ function New-Win32App {
                         New-VerboseRegion -Message 'Creating Win32 app in Intune' -ForegroundColor 'Gray'
             
                         # Create the Win32 app in Intune
-                        Write-Log -Message "Creating Win32 app in Intune" -LogId $LogId
-                        Write-Host "Creating Win32 app in Intune" -ForegroundColor Cyan
-            
                         $response = Invoke-MgGraphRequestCustom -Resource 'deviceAppManagement/mobileApps' -Method Post -Body $newIntuneJson
 
                         if ($response.id) {
                             Write-Log -Message ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -LogId $LogId
                             Write-Host ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -ForegroundColor Green
 
-                            # Create new content request for Win32app
-                            Write-Log -Message "Creating request for content version" -LogId $LogId
-                            Write-Host "Creating request for content version" -ForegroundColor Cyan
-                            $contentRequest = Invoke-MgGraphRequestCustom -Resource ("deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions" -f $response.id) -Method Post -Body "{}"
+                            # Create the content request for the Win32 app
+                            try {
+
+                                # Get Encryption information to use for the commit later
+                                $encryptionInfo = Get-IntuneWinEncryptionInfo -FilePath $intuneWinSetupFilePath
+                                
+                                # Get the encrypted size of the intunewin file
+                                $sizeEncrypted = (Get-Item -Path $encryptionInfo.intuneWinPath).Length
+                                Write-Log -Message ("The size of the encrypted intunewin file is '{0}'" -f $sizeEncrypted) -LogId $LogId
+                                Write-Host ("The size of the encrypted intunewin file is '{0}'" -f $sizeEncrypted) -ForegroundColor Green
+
+                                Write-Log -Message "Building JSON for the content request" -LogId $LogId
+                                Write-Host "Building JSON for the content request" -ForegroundColor Cyan
+
+                                # Get the content request file name and unencrypted size
+                                $contentRequestFileName = $encryptionInfo.contentApplicationInfo | ConvertFrom-Json | Select-Object -ExpandProperty  fileName
+                                $contentRequestSizeUnencrypted = $encryptionInfo.contentApplicationInfo | ConvertFrom-Json | Select-Object -ExpandProperty UnencryptedContentSize
+                                
+                                $contentRequest = New-IntuneWinContentRequest -Name $contentRequestFileName  -SizeUnencrypted $contentRequestSizeUnencrypted -SizeEncrypted $sizeEncrypted -IsDependency $false
+                            }
+                            catch {
+                                Write-Log -Message ("Failed to create the content request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
+                                Write-Warning -Message ("Failed to create the content request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
+                            }
 
                             # Check content version request was successful
-                            if ($contentRequest.id) {
-                                Write-Log -Message ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. Content version requested is '{2}'" -f $app.Name, $deploymentType.Name, $contentRequest.id) -LogId $LogId
-                                Write-Host ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. Content version requested is '{2}'" -f $app.Name, $deploymentType.Name, $contentRequest.id) -ForegroundColor Green
+                            if ($contentRequest) {
 
-                                # Create the content request for the Win32 app
-                                # Get the encrypted size of the intunewin file
-                                $sizeEncrypted = (Get-Item -Path $intuneWinSetupFilePath).Length
+                                Write-Log -Message ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. " -f $AppName, $DeploymentTypeName) -LogId $LogId
+                                Write-Host ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'." -f $AppName, $DeploymentTypeName) -ForegroundColor Green
 
-                                Write-Log -Message "Creating request for content" -LogId $LogId
-                                Write-Host "Creating request for content" -ForegroundColor Cyan
-                                $contentRequest = New-IntuneWinContentRequest -Win32AppId $response.id -ContentVersionNumber $contentRequest.id -Name $intuneWinInfo.FileName -SizeUnencrypted $intuneWinInfo.UnencryptedContentSize -SizeEncrypted $sizeEncrypted
+                                # Call the Get-SasUri function to get the Sas Urifor the content
+                                $sasUri = Get-SasUri -Win32AppId $response.id -ContentRequest ($contentRequest | ConvertTo-Json -Depth 5 -Compress)
+                                
+                                if ($sasUri.contentReady -and $sasUri.contentVersion -and $sasUri.contentRequestId) {
+                                   
+                                    # Attempt to upload the content to the Sas Uri
+                                    $uploadSuccess = Invoke-StorageUpload -Uri $sasUri.contentReady.azureStorageUri -FilePath $encryptionInfo.intuneWinPath -FileSize $sizeEncrypted -ContentVersion $sasUri.contentVersion -ContentRequestId $sasUri.contentRequestId -Win32AppId $response.id -ContentRequest $contentRequest
+                                }
+                                if ($uploadSuccess -eq $true) {
+    
+                                    Write-Log -Message ("Committing the encryption information for the Win32 app with Id '{0}'" -f $response.id) -LogId $LogId
+                                    Write-Host ("Committing the encryption information for the Win32 app with Id '{0}'" -f $response.id) -ForegroundColor Cyan
 
+                                    # Commit the content to the Win32 app
+                                    $commitResponse = Invoke-IntuneContentCommit -Win32AppId $response.id -EncryptionInfo $encryptionInfo.encryptionDetails -ContentVersion $sasUri.contentVersion -ContentRequestId $sasUri.contentRequestId
+
+                                    if ($commitResponse -eq $true) {
+                                        Write-Log -Message ("Migration Complete. App name '{0}' migrated successfully to Intune with App Id '{1}'" -f $app.Name, $response.id) -LogId $LogId
+                                        Write-Host ("Migration Complete. App name '{0}' migrated successfully to Intune with App Id '{1}'" -f $app.Name, $response.id) -ForegroundColor Green
+                                    }
+                                    else {
+                                        Write-Log -Message ("Migration failure: Unable to update the Win32 app '{0}' with the content locations in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
+                                        Write-Host ("Migration failure: Unable to update the Win32 app '{0}' with the content locations in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -ForegroundColor Red
+                                    }
+                                }
+                                else {
+                                    Write-Log -Message ("Failed to upload the content for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
+                                    Write-Host ("Failed to upload the content for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -ForegroundColor Red
+                                }
                             }
                             else {
                                 Write-Log -Message ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
@@ -683,7 +750,6 @@ function New-Win32App {
                     }          
                 }
             }
-
             #endregion
             Get-ScriptEnd
         }

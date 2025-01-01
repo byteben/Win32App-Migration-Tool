@@ -40,21 +40,32 @@ function Get-ScriptEnd {
 
         # If connected to Microsoft Graph, disconnect
         if (Test-MgConnection) {
-            Disconnect-MgGraph | Out-Null
-            Write-Host "Disconnected from Microsoft Graph" -ForegroundColor Cyan
-            Write-Log -Message "Disconnected from Microsoft Graph" -LogId $LogId
+            $userInput = Read-Host -Prompt "Do you want to disconnect from Microsoft Graph? (y) or [n]"
+            if ($userInput -eq '') {
+                $userInput = 'n'
+            }
+            switch ($userInput.ToLower()) {
+                "n" {
+                    Write-Log -Message "Leaving Microsoft Graph connection open" -LogId $LogId
+                    Write-Host "Leaving Microsoft Graph connection open" -ForegroundColor Cyan
+                    break
+                }
+                "y" {
+                    Write-Host "Disconnecting from Microsoft Graph" -ForegroundColor Cyan
+                    Write-Log -Message "Disconnecting from Microsoft Graph" -LogId $LogId
+                    Disconnect-MgGraph | Out-Null
+                }
+                default {
+                    Write-Host "Invalid input. Please type 'y' or 'n'." -ForegroundColor Yellow
+                }
+            }
         }
         else {
             Write-Host "No active Microsoft Graph connection found" -ForegroundColor Yellow
             Write-Log -Message "No active Microsoft Graph connection found" -LogId $LogId
         }
-
-        Write-Host ''
         Write-Log -Message "## The Win32AppMigrationTool Script has Finished ##" -LogId $LogId
-        Write-Host '## The Win32AppMigrationTool Script has Finished ##'
-
-       
-
+        Write-Host '## The Win32AppMigrationTool Script has Finished ##' -ForegroundColor Green
         break
     }
 }

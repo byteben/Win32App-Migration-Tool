@@ -27,6 +27,9 @@ The resource to use for the request
 .PARAMETER Body
 The body of the request
 
+.PARAMETER OutputBody
+If True, output body of the request to console and log
+
 .PARAMETER ContentType
 The content type for the PATCH or POST request
 #>
@@ -44,9 +47,11 @@ function Invoke-MgGraphRequestCustom {
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, HelpMessage = 'The resource to use for the request')]
         [string]$Resource,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The body of the request')]
-        [object]$Body,
+        [string]$Body,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'If True, output body of the request to console and log. Useful for debugging')]
+        [bool]$OutputBody = $false,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'The content type for the PATCH or POST request')]
-        [string]$ContentType = "application/json; charset=utf-8"
+        [string]$ContentType = "application/json"
     )
     
     process {
@@ -54,8 +59,14 @@ function Invoke-MgGraphRequestCustom {
         try {
             # Build the Uri
             $graphUri = "$($GraphUrl)/$($Endpoint)/$($Resource)"
-            Write-Log -Message ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -LogId $LogId
-            Write-Host ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -ForegroundColor Cyan
+            if ($Body -and $OutputBody) {
+                Write-Log -Message ("Building Uri for Graph request. Method: '{0}', Uri: '{1}', Body: '{2}'" -f $Method, $GraphUri, $Body) -LogId $LogId
+                Write-Host ("Building Uri for Graph request. Method: '{0}', Uri: '{1}', Body: '{2}'" -f $Method, $GraphUri, $Body) -ForegroundColor Cyan
+            }
+            else {
+                Write-Log -Message ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -LogId $LogId
+                Write-Host ("Building Uri for Graph request. Method: '{0}', Uri: '{1}'" -f $Method, $GraphUri) -ForegroundColor Cyan
+            }
     
             # Call Graph API and get JSON response
             switch ($Method) {
@@ -77,21 +88,6 @@ function Invoke-MgGraphRequestCustom {
         catch {
             Write-Log -Message $_ -LogId $LogId -Severity 3
             Write-Error -Message $_
-
-            $userInput = Read-Host -Prompt "An error was encountered with the Graph request. Do you want to continue (c) or quit (q)?"
-            switch ($userInput.ToLower()) {
-                "c" {
-                    Write-Host "Continuing the script..." -ForegroundColor Green
-                    break
-                }
-                "q" {
-                    Write-Host "Ending the script..." -ForegroundColor Red
-                    Get-ScriptEnd -LogId $LogId -ErrorMessage $_.Exception.Message
-                }
-                default {
-                    Write-Host "Invalid input. Please type 'c' or 'q'." -ForegroundColor Yellow
-                }
-            }
         }
     }
 }
