@@ -2,12 +2,11 @@
 
  ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)  
 
-## Watch the tool in action
-
-## Watch the tool in action
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/xpQO5naqsnA" title="Win32App Migration Tool GA Preview" frameborder="0" allowfullscreen></iframe>
-
+## Watch the tool in action  
+  
+[![Watch the video](https://byteben.com/bb/Downloads/GitHub/YouTube-MigTool.jpg)](https://www.youtube.com/watch?v=xpQO5naqsnA)  
+https://www.youtube.com/watch?v=xpQO5naqsnA  
+  
 ## Synopsis  
   
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.  
