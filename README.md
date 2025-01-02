@@ -4,7 +4,7 @@
 
 ## Watch the tool in action
 
-[![Win32App Migration Tool](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool-GAPreview.mp4)](Win32AppMigrationTool-GAPreview)
+<video controls src="https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool-GAPreview.mp4" title="Win32AppMigrationTool-GAPreview"></video>
 
 ## Synopsis  
   
