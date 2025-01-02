@@ -42,7 +42,7 @@ You assume all risks and responsibilities associated with its usage.
   
   **1. Install-Module Win32AppMigrationTool**  
   **2. New-Win32App** -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
-  **3. Use Information from the CSVs to build a Win32App in Intune**
+  **3. Use Information from the CSVs to build a Win32 app in Intune**
 
   ```
   New-Win32App -ProviderMachineName <String> -AppName <String>
@@ -52,14 +52,14 @@ You assume all risks and responsibilities associated with its usage.
 
 The current release of the Win32 App Migration Tool will do the following:-  
   
-- Download the Win32app Content Prep Tool to %WorkingDirectory%\ContentPrepTool
+- Download the Win32 app Content Prep Tool to %WorkingDirectory%\ContentPrepTool
 - Export .intunewin files to %WorkingDirectory%\Win32Apps\<Application GUID>\<Deployment Type GUID>  
 - Export Application Details to %WorkingDirectory%\Details\Applications.csv  
 - Export Deployment Type Details to %WorkingDirectory%\Details\DeploymentTypes.csv  
 - Export Content Details to %WorkingDirectory%\Details\Content.csv (If -DownloadContent parameter passed)  
 - Copy Select Deployment Type Content to %WorkingDirectory%\Content\<Deployment Type GUID>  
 - Export Application icons(s) to %WorkingDirectory%\Icons  
-- Build Win32App JSON payload body for Intune
+- Build Win32 app JSON payload body for Intune
 - Convert detection to JSON for Intune
 - Extract the IntunePackage.intunewin for upload
 - Get encryption information for Intunewin
