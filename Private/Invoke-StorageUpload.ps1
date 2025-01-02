@@ -1,8 +1,13 @@
 <#
-.SYNOPSIS
+.Synopsis
 Uploads content to Azure Blob Storage using Az.Storage module
 
-.DESCRIPTION
+Created on:   28/12/2024
+Updated on:   01/01/2025
+Created by:   Ben Whitmore
+Filename:     Invoke-StorageUpload.ps1
+
+.Description
 Uses Az.Storage module to upload content to Azure Blob Storage with retry logic and progress tracking
 
 .PARAMETER Uri
@@ -69,6 +74,9 @@ function Invoke-StorageUpload {
     )
 
     begin {
+
+        Write-LogAndHost -Message "Function: Invoke-StorageUpload was called" -LogId $LogId -ForegroundColor Cyan
+
         # Check for required module
         Initialize-Module -Modules @('Az.Storage')
 
@@ -96,8 +104,8 @@ function Invoke-StorageUpload {
             Write-Host ($uploadInfo | ConvertTo-Json -Compress) -ForegroundColor Green
         }
         catch {
-            Write-Log -Message ("Error parsing Sas Uri: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
-            Write-Warning -Message ("Error parsing Sas Uri: {0}" -f $_.Exception.Message)
+            Write-LogAndHost -Message ("Error parsing Sas Uri: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
+
             throw
         }
     }
@@ -107,11 +115,8 @@ function Invoke-StorageUpload {
         try {
 
             # Upload content file information to Win32 app
-            Write-Log -Message ("Adding Content information to '{0}'" -f $Win32AppId) -LogId $LogId
-            Write-Host ("Adding Content information to '{0}'" -f $Win32AppId) -ForegroundColor Cyan
-                        
-            Write-Log -Message ("Starting upload of '{0}' to Azure Storage using Set-AzStorageBlobContent" -f $FilePath) -LogId $LogId
-            Write-Host ("Starting upload of '{0}' to Azure Storage using Set-AzStorageBlobContent" -f $FilePath) -ForegroundColor Cyan
+            Write-LogAndHost -Message ("Adding Content information to '{0}'" -f $Win32AppId) -LogId $LogId -ForegroundColor Cyan     
+            Write-LogAndHost -Message ("Starting upload of '{0}' to Azure Storage using Set-AzStorageBlobContent" -f $FilePath) -LogId $LogId -ForegroundColor Cyan
 
             $attempt = 1
             $success = $false
@@ -133,8 +138,7 @@ function Invoke-StorageUpload {
                     $buffer = New-Object Byte[] $blockSize
                     $blockIds = New-Object 'System.Collections.Generic.List[System.String]'
 
-                    Write-Log -Message ("Uploading file in chunks of {0} bytes" -f $blockSize) -LogId $LogId
-                    Write-Host ("Uploading file in chunks of {0} bytes" -f $blockSize) -ForegroundColor Cyan
+                    Write-LogAndHost -Message ("Uploading file in chunks of {0} bytes" -f $blockSize) -LogId $LogId -ForegroundColor Cyan
 
                     try {
                         $i = 0
@@ -154,14 +158,12 @@ function Invoke-StorageUpload {
                             # Dispose of the memory stream
                             $memoryStream.Dispose()
                             $i++
-                            Write-Log -Message ("Uploading block {0} of {1}" -f $i, $blocks) -LogId $LogId
-                            Write-Host ("Uploading block {0} of {1}" -f $i, $blocks) -ForegroundColor Cyan
+                            Write-LogAndHost -Message ("Uploading block {0} of {1}" -f $i, $blocks) -LogId $LogId -ForegroundColor Cyan
                         }
 
                         # Commit the blocks
                         $blobClient.PutBlockList($blockIds)
-                        Write-Log -Message "Upload reported as completed successfully" -LogId $LogId
-                        Write-Host "Upload reported as completed successfully" -ForegroundColor Green
+                        Write-LogAndHost -Message "Upload reported as completed successfully" -LogId $LogId -ForegroundColor Green
                         $success = $true
                     }
                     finally {
@@ -170,21 +172,19 @@ function Invoke-StorageUpload {
                 }
                 catch {
                     if ($attempt -ge $RetryCount) {
-                        Write-Log -Message ("Upload failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
-                        Write-Warning ("Upload failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message)
+                        Write-LogAndHost -Message ("Upload failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
+                        
                         throw
                     }
 
-                    Write-Log -Message ("Attempt {0}/{1} failed. Retrying... Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 2
-                    Write-Warning -Message ("Attempt {0}/{1} failed. Retrying... Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message)
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying... Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 2
                     Start-Sleep -Seconds $RetryDelay
                 }
                 $attempt++
             } while (-not $success -and $attempt -le $RetryCount)
             
             # Verify upload success
-            Write-Log -Message "Verifying upload success..." -LogId $LogId
-            Write-Host "Verifying upload success..." -ForegroundColor Cyan
+            Write-LogAndHost -Message "Verifying upload success..." -LogId $LogId -ForegroundColor Cyan
             
             # Delay to allow Azure to update blob properties
             Start-Sleep -Seconds $RetryDelay
@@ -206,7 +206,9 @@ function Invoke-StorageUpload {
                 Write-Host ("Blob info: {0}" -f $json) -ForegroundColor Green
             }
             else {
-                Write-Warning -Message "Blob not found in the specified container and path."
+                Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
+
+                throw
             }
 
             $attempt = 1
@@ -221,52 +223,58 @@ function Invoke-StorageUpload {
                         $FileSize = (Get-Item $FilePath).Length
                         $blobSize = $blob.ICloudBlob.Properties.Length
             
-                        Write-Log -Message ("Comparing file size: Local file size is {0} bytes, Blob file size is {1} bytes" -f $FileSize, $blobSize) -LogId $LogId
-                        Write-Host ("Comparing file size: Local file size is {0} bytes, Blob file size is {1} bytes" -f $FileSize, $blobSize) -ForegroundColor Cyan
+                        Write-LogAndHost -Message ("Comparing file size: Local file size is {0} bytes, Blob file size is {1} bytes" -f $FileSize, $blobSize) -LogId $LogId -ForegroundColor Cyan
             
                         if ($FileSize -eq $blobSize) {
-                            Write-Log -Message "Upload verification successful: File sizes match" -LogId $LogId
-                            Write-Host "Upload verification successful: File sizes match" -ForegroundColor Green
+                            Write-LogAndHost -Message "Upload verification successful: File sizes match" -LogId $LogId -ForegroundColor Green
                             $success = $true
                         }
                         else {
-                            throw "Upload verification failed: File sizes do not match"
+
+                            # Upload verification failed, sizes do not match
+                            Write-LogAndHost -Message "Upload verification failed: File sizes do not match" -LogId $LogId -Severity 3
+
+                            break
                         }
                     }
                     else {
-                        throw "Upload verification failed: Blob not found"
+
+                        # Blob not found
+                        Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
+
+                        break
                     } 
                 }
                 catch {
                     if ($attempt -ge $RetryCount) {
-                        Write-Log -Message ("Upload verification failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
+                        Write-LogAndHost -Message ("Upload verification failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
+
                         throw
                     }
             
-                    Write-Log -Message ("Attempt {0}/{1} failed. Retrying..." -f $attempt, $RetryCount) -LogId $LogId -Severity 2
-                    Write-Warnging -Message ("Attempt {0}/{1} failed. Retrying..." -f $attempt, $RetryCount)
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying..." -f $attempt, $RetryCount) -LogId $LogId -Severity 2
                     Start-Sleep -Seconds $RetryDelay
                     $attempt++
                 }
             } while (-not $success -and $attempt -le $RetryCount)
         }
         catch {
-            Write-Log -Message ("Upload failed: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
-            Write-Warning -Message ("Upload failed: {0}" -f $_.Exception.Message)
+            Write-LogAndHost -Message ("Upload failed: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
+
             throw
         }
 
         if ($success -eq $true) {
 
             # Verify upload state
-            Write-Log -Message "Verifying upload state..." -LogId $LogId
-            Write-Host "Verifying upload state..." -ForegroundColor Cyan
+            Write-LogAndHost -Message "Verifying upload state..." -LogId $LogId -ForegroundColor Cyan
 
             $attempt = 1
             $success = $false
 
             do {
                 try {
+
                     # Construct the status URI
                     $statusUri = "deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions/{1}/files/{2}" -f $Win32AppId, $ContentVersion, $ContentRequestId
 
@@ -275,21 +283,19 @@ function Invoke-StorageUpload {
 
                     # Check if the upload state is acceptable
                     if (($statusResponse.uploadState) -eq "azureStorageUriRequestSuccess" ) {
-                        Write-Log -Message ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -LogId $LogId
-                        Write-Host ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -ForegroundColor Green
+                        Write-LogAndHost -Message ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -LogId $LogId -ForegroundColor Green
                         $success = $true
                     }
                     else {
-                        Write-Log -Message ("Upload state is '{0}'. Waiting..." -f ($statusResponse.uploadState)) -LogId $LogId
-                        Write-Warning -Message ("Upload state is '{0}'. Waiting..." -f ($statusResponse.uploadState))
+                        Write-LogAndHost -Message ("Upload state is '{0}'. Waiting..." -f ($statusResponse.uploadState)) -LogId $LogId -Severity 2
                         Start-Sleep -Seconds $RetryDelay
                     }
                 }
                 catch {
 
                     # Log error and decide whether to retry
-                    Write-Log -Message ("Attempt {0}/{1} failed. Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
-                    Write-Warning ("Attempt {0}/{1} failed. Retrying in {2} seconds." -f $attempt, $RetryCount, $RetryDelay)
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying in {2} seconds." -f $attempt, $RetryCount, $RetryDelay) -LogId $LogId -Severity 2
                     Start-Sleep -Seconds $RetryDelay
                 }
 
@@ -299,13 +305,14 @@ function Invoke-StorageUpload {
             } while (-not $success -and $attempt -le $RetryCount)
 
             if ($success -eq $true) {
-                Write-Log -Message "Upload completed successfully" -LogId $LogId
-                Write-Host "Upload completed successfully" -ForegroundColor Green
+                Write-LogAndHost -Message "Upload completed successfully" -LogId $LogId -ForegroundColor Green
+
                 return $true
             }
             else {
-                Write-Log -Message "Upload verification failed" -LogId $LogId -Severity 3
-                Write-Warning "Upload verification failed"
+                Write-LogAndHost -Message "Upload verification failed" -LogId $LogId -Severity 3
+
+                return $false
             }
         }
     }

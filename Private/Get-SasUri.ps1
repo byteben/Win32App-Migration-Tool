@@ -1,11 +1,11 @@
 <#
-.SYNOPSIS
+.Synopsis
 Created on:   09/06/2024
-Updated on:   09/06/2024
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-SasUri.ps1
 
-.DESCRIPTION
+.Description
 Function to get a SAS URI for uploading content to Azure Blob storage
 
 .PARAMETER Win32AppId
@@ -43,7 +43,7 @@ function Get-SasUri {
     )
 
     begin {
-        Write-Log -Message "Function: Get-SasUri was called" -LogId $LogId
+        Write-LogAndHost -Message "Function: Get-SasUri was called" -LogId $LogId -ForegroundColor Cyan
     }
 
     process {
@@ -51,22 +51,19 @@ function Get-SasUri {
         try {
 
             # Create new content request for Win32app
-            Write-Log -Message "Creating request for content version" -LogId $LogId
-            Write-Host "Creating request for content version" -ForegroundColor Cyan
+            Write-LogAndHost -Message "Creating request for content version" -LogId $LogId -ForegroundColor Cyan
             $contentVersionRequest = Invoke-MgGraphRequestCustom -Method POST -Resource ("deviceAppManagement/mobileApps/{0}/microsoft.graph.win32LobApp/contentVersions" -f $Win32AppId) -Body "{}"
 
             if ($contentVersionRequest.Id) {
-                Write-Log -Message ("Content Version to use is '{0}'. " -f $contentVersionRequest.id) -LogId $LogId
-                Write-Host ("Content Version to use is '{0}'. " -f $contentVersionRequest.id) -ForegroundColor Green
+                Write-LogAndHost -Message ("Content Version to use is '{0}'. " -f $contentVersionRequest.id) -LogId $LogId -ForegroundColor Green
             }
             
             # Build the Uri's
-            Write-Log -Message ("Committing content information for '{0}'. JSON Body: {1}" -f $Win32AppId, $contentRequest) -LogId $LogId
-            Write-Host ("Committing content information for '{0}'. JSON Body: {1}" -f $Win32AppId, $contentRequest) -ForegroundColor Cyan
-
+            Write-LogAndHost -Message ("Committing content information for '{0}'. JSON Body: {1}" -f $Win32AppId, $contentRequest) -LogId $LogId -ForegroundColor Cyan
             $buildContentRequestUri = "deviceAppManagement/mobileApps/{0}/microsoft.graph.Win32LobApp/contentVersions/{1}/files" -f $Win32AppId, $contentVersionRequest.id
-            $contentRequestUri = Invoke-MgGraphRequestCustom -Method POST -Resource $buildContentRequestUri -Body $contentRequest
 
+            # Create the content request
+            $contentRequestUri = Invoke-MgGraphRequestCustom -Method POST -Resource $buildContentRequestUri -Body $contentRequest
             $probeContentRequestUri = "deviceAppManagement/mobileApps/{0}/microsoft.graph.Win32LobApp/contentVersions/{1}/files/{2}" -f $Win32AppId, $contentVersionRequest.id, $contentRequestUri.id
 
             # Let's wait for the conetnt landing zone to be ready
@@ -74,30 +71,35 @@ function Get-SasUri {
             $startTime = Get-Date
             do {
                 try {
+
+                    # Get the content ready state
                     $contentReady = Invoke-MgGraphRequestCustom -Method 'GET' -Resource $probeContentRequestUri
                     $tries++
+
                     if ($contentReady.uploadState -eq 'azureStorageUriRequestSuccess') {
-                        Write-Log -Message ("Probe content request Sas Uri try {0}/{1}. Upload state is '{2}'" -f $tries, $MaxRetries, $contentReady.uploadState) -LogId $LogId
-                        Write-Host ("Probe content request Uri try {0}/{1}." -f $tries, $MaxRetries) -ForegroundColor Cyan
-                        Write-Host ("Sas Uri state is '{0}'" -f $contentReady.uploadState) -ForegroundColor Green
+                        Write-LogAndHost -Message ("Probe content request Sas Uri attempt {0}/{1}" -f $tries, $MaxRetries) -LogId $LogId -ForegroundColor Cyan
+                        Write-LogAndHost -Message ("Sas Uri state is '{0}'" -f $contentReady.uploadState) -LogId $LogId -ForegroundColor Green
+
                         break
                     } else {
-                        Write-Log -Message ("Probe content request Sas Uri try {0}/{1}. Upload state is '{2}'" -f $tries, $MaxRetries, $contentReady.uploadState) -LogId $LogId
-                        Write-Host ("Probe content request Uri try {0}/{1}." -f $tries, $MaxRetries) -ForegroundColor Yellow
-                        Write-Host ("Sas Uri state is '{0}'" -f $contentReady.uploadState) -ForegroundColor Yellow
+                        Write-LogAndHost -Message ("Probe content request Sas Uri attempt {0}/{1}" -f $tries, $MaxRetries) -LogId $LogId -Severity 2
+                        Write-LogAndHost -Message ("Sas Uri state is '{0}'" -f $contentReady.uploadState) -LogId $LogId -Severity 2
                     }
                 }
                 catch {
-                    Write-Log -Message ("Error during probe content request: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
-                    Write-Warning -Message ("Error during probe content request: {0}" -f $_.Exception.Message)
+                    Write-LogAndHost -Message ("Error during probe content request: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
                 }
+
                 Start-Sleep -Seconds 3
             } until ($contentReady.uploadState -eq 'azureStorageUriRequestSuccess' -or [int]((Get-Date) - $startTime).TotalSeconds -gt $MaxWaitTime -or $tries -ge $MaxRetries)
 
             # Output the SAS Uri information to the console and log
             $contentReadyOutput = @{}
             $contentReadyOutputJson = @()
+
             foreach ($property in $contentReady.GetEnumerator() | Sort-Object -Property Key) {
+
+                # Skip the manifest property (It's too long to output!)
                 if ($property.Key -ne 'manifest') {
                     $contentReadyOutputJson += [PSCustomObject]@{Key = $property.Key; Value = $property.Value }
                     $contentReadyOutput[$property.Key] = $property.Value
@@ -115,13 +117,11 @@ function Get-SasUri {
                     contentRequestId = $contentRequestUri.id
                 }
             } else {
-                Write-Log -Message "azureStorageUri is null" -LogId $LogId -Severity 3
-                Write-Warning -Message "azureStorageUri is null"
+                Write-LogAndHost -Message "azureStorageUri is null" -LogId $LogId -Severity 3
             }
         }
         catch {
-            Write-Log -Message ("Failed to get Sas Uri: {0}" -f $_) -LogId $LogId -Severity 3
-            Write-Error -Message $_
+            Write-LogAndHost -Message ("Failed to get Sas Uri: {0}" -f $_) -LogId $LogId -Severity 3
         }
     }
 }

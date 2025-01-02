@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    20/01/2024
+Update on:    01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-AppInfo.ps1
 
@@ -41,14 +41,11 @@ function Get-AppInfo {
 
             # Increment counter
             $i++
-
-            Write-Log -Message ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -LogId $LogId
-            Write-Host ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -ForegroundColor Cyan
+            Write-LogAndHost -Message ("Processing application '{0}' of '{1}': '{2}'" -f $i, $applicationCount, $application.LocalizedDisplayName) -LogId $LogId -ForegroundColor Cyan
         
             try {
                 # Grab the SDMPackgeXML which contains the application details
-                Write-Log -Message ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId
-                Write-Host ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -ForegroundColor Cyan
+                Write-LogAndHost -Message ("Invoking Get-CMApplication where Id equals '{0}' for application '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId -ForegroundColor Cyan
                 $xmlPackage = Get-CMApplication -Id $application.Id | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
         
                 # Prepare xml from SDMPackageXML
@@ -56,7 +53,7 @@ function Get-AppInfo {
 
                 # Get the total number of deployment types for the application
                 $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-                Write-Log -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId
+                Write-LogAndHost -Message ("The total number of deployment types for '{0}' with CI_ID '{1}' is '{2}')" -f $application.LocalizedDisplayName, $application.Id, $totalDeploymentTypes) -LogId $LogId -ForegroundColor Green
 
                 # Create a new custom hashtable to store application details
                 $applicationObject = [PSCustomObject]@{}
@@ -107,8 +104,7 @@ function Get-AppInfo {
                 $applicationTypes += $applicationObject
             }
             catch {
-                Write-Log -Message ("Could not get application information for '{0}'" -f $application.LocalizedDisplayName) -LogId $LogId -Severity 3
-                Write-Warning -Message ("Could not get application information for '{0}'" -f $application.LocalizedDisplayName)
+                Write-LogAndHost -Message ("Could not get application information for '{0}'" -f $application.LocalizedDisplayName) -LogId $LogId -Severity 3
                 Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
             }
         }

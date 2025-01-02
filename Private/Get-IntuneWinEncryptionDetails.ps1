@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   11/11/2023
-Updated on:   16/12/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-IntuneWinEncryptionDetails.ps1
 
@@ -43,14 +43,12 @@ function Get-IntuneWinEncryptionInfo {
             # Extract IntunePackage.intunewin to the "temp" folder
             $tempPath = Join-Path -Path $tempDir -ChildPath "IntunePackage.intunewin"
             [System.IO.Compression.ZipFileExtensions]::ExtractToFile($intunePackageEntry, $tempPath, $true)
-
-            Write-Log -Message ("Successfully extracted encrypted IntunePackage.intunewin to '{0}'" -f $tempPath) -LogId $LogId
-            Write-Host ("Successfully extracted encrypted IntunePackage.intunewin to '{0}'" -f $tempPath) -ForegroundColor Green
+            Write-LogAndHost -Message ("Successfully extracted encrypted IntunePackage.intunewin to '{0}'" -f $tempPath) -LogId $LogId -ForegroundColor Green
         }
         else {
-            Write-Log -Message ("IntunePackage.intunewin not found in the .intunewin archive at '{0}'" -f $FilePath) -LogId $LogId
-            Write-Warning ("IntunePackage.intunewin not found in the .intunewin archive at '{0}'" -f $FilePath)
-            break
+            Write-LogAndHost -Message ("IntunePackage.intunewin not found in the .intunewin archive at '{0}'" -f $FilePath) -LogId $LogId
+
+            throw
         }
 
         # Locate the metadata.xml file inside the archive
@@ -89,31 +87,33 @@ function Get-IntuneWinEncryptionInfo {
             $beamReader.Close()
         }
         else {
-            Write-Log -Message "metadata.xml not found in the .intunewin archive." -LogId $LogId
-            Write-Warning "metadata.xml not found in the .intunewin archive."
+            Write-LogAndHost -Message "metadata.xml not found in the .intunewin archive." -LogId $LogId -Severity 3
+
+            throw
         }
 
         # Dispose of the archive
         $binFile.Dispose()
     }
     catch {
-        Write-Log -Message ("Error extracting metadata from the .intunewin file: {0}" -f $_.Exception.Message) -LogId $LogId
-        Write-Error ("Error extracting metadata from the .intunewin file: {0}" -f $_.Exception.Message)
-        break
+        Write-LogAndHost -Message ("Error extracting metadata from the .intunewin file: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
+
+        throw
     }
 
     # Return the intunewin encryption details
     if (-not [string]::IsNullOrEmpty($contentEncryptionData)) {
-
-        Write-Log -Message ("Application info details: {0}" -f ($contentApplicationInfo | ConvertTo-Json -Compress)) -LogId $LogId
-        Write-Log -Message ("Encryption details: {0}" -f ($contentEncryptionData | ConvertTo-Json -Compress)) -LogId $LogId
-        Write-Host ("Application info details: {0}" -f ($contentApplicationInfo | ConvertTo-Json -Compress)) -ForegroundColor Green
-        Write-Host ("Encryption details: {0}" -f ($contentEncryptionData | ConvertTo-Json -Compress)) -ForegroundColor Green
+        Write-LogAndHost -Message ("Application info details: {0}" -f ($contentApplicationInfo | ConvertTo-Json -Compress)) -LogId $LogId -ForegroundColor Green
+        Write-LogAndHost -Message ("Encryption details: {0}" -f ($contentEncryptionData | ConvertTo-Json -Compress)) -LogId $LogId -ForegroundColor Green
 
         return @{
             encryptionDetails      = ($contentEncryptionData | ConvertTo-Json -Compress)
             contentApplicationInfo = ($contentApplicationInfo | ConvertTo-Json -Compress)
             intuneWinPath          = $tempPath
         }
+    } else {
+        Write-LogAndHost -Message "No encryption details found in the .intunewin archive." -LogId $LogId -Severity 3
+
+        return $false
     }
 }

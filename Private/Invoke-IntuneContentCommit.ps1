@@ -2,6 +2,11 @@
 .SYNOPSIS
 Commits the uploaded Win32 content to Intune
 
+Created on:   30/12/2024
+Updated on:   01/01/2025
+Created by:   Ben Whitmore
+Filename:     Invoke-IntuneContentCommit.ps1
+
 .DESCRIPTION
 This function commits the uploaded Win32 content to Intune by creating a commit request and waiting for processing.
 
@@ -70,14 +75,13 @@ function Invoke-IntuneContentCommit {
             # Commit the content
             try {
                 $commitPostResponse = Invoke-MgGraphRequestCustom -Method POST -Resource "$($commitUri)/commit" -Body $commitJSONEntry
-                Write-Log -Message ("Commit request sent successfully to {0}:" -f $commitUri) -LogId $LogId
-                Write-Host ("Commit request sent successfully to {0}:" -f $commitUri) -ForegroundColor Green
-                Write-Log -Message ("Commit Body: {0}" -f $commitJSONEntry) -LogId $LogId
-                Write-Host ("Commit Body: {0}" -f $commitJSONEntry) -ForegroundColor Green
+                Write-LogAndHost -Message ("Commit request sent successfully to {0}:" -f $commitUri) -LogId $LogId -ForegroundColor Green
+                Write-LogAndHost -Message ("Commit Body: {0}" -f $commitJSONEntry) -LogId $LogId -ForegroundColor Green
             }
             catch {
-                Write-Log -Message ("Failed to commit content to {0}: {1}" -f $commitUri, $_.Exception.Message) -LogId $LogId -Severity 2
-                Write-Warning ("Failed to commit content to {0}: {1}" -f $commitUri, $_.Exception.Message)
+                Write-LogAndHost -Message ("Failed to commit content to {0}: {1}" -f $commitUri, $_.Exception.Message) -LogId $LogId -Severity 3
+
+                throw
             }
                     
             # Check upload state
@@ -92,35 +96,35 @@ function Invoke-IntuneContentCommit {
 
                     # Check if the upload state is acceptable
                     if (($statusResponse.uploadState) -eq "commitFileSuccess" ) {
-                        Write-Log -Message ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -LogId $LogId
-                        Write-Host ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -ForegroundColor Green
+                        Write-LogAndHost -Message ("Upload state is '{0}'." -f ($statusResponse.uploadState)) -LogId $LogId -ForegroundColor Green
                         $success = $true
                     }
                     elseif (($statusResponse.uploadState) -eq "commitFileFailed" ) {
                         $contentReadyOutput = [ordered]@{}
+
                         foreach ($property in $statusResponse.GetEnumerator() | Sort-Object -Property Key) {
+
+                            # Skip the manifest property (it's too long to output!)
                             if ($property.Key -ne 'manifest') {
                                 $contentReadyOutput[$property.Key] = $property.Value
                             }
                         }
                         $contentReadyOutputJson = $contentReadyOutput | ConvertTo-Json -Compress
-
-                        Write-Log -Message ("Upload state is '{0}'. The commit failed. The response was: {1}" -f ($statusResponse.uploadState), $contentReadyOutputJson) -LogId $LogId
-                        Write-Warning -Message ("Upload state is '{0}'. The commit failed. The response was: {1}" -f ($statusResponse.uploadState), $contentReadyOutputJson)
+                        Write-Log -Message ("Upload state is '{0}'. The commit failed. The response was: {1}" -f ($statusResponse.uploadState), $contentReadyOutputJson) -LogId $LogId -Severity 2
                         $success = $false
+
                         break
                     }
                     else {
-                        Write-Log -Message ("Attempt {0}/{1}. Upload state is '{2}'. Waiting for commit..." -f $attempt, $RetryCount, ($statusResponse.uploadState)) -LogId $LogId
-                        Write-Warning -Message ("Attempt {0}/{1}. Upload state is '{2}'. Waiting for commit..." -f $attempt, $RetryCount, ($statusResponse.uploadState))
+                        Write-LogAndHost -Message ("Attempt {0}/{1}. Upload state is '{2}'. Waiting for commit..." -f $attempt, $RetryCount, ($statusResponse.uploadState)) -LogId $LogId -Severity 2
                         Start-Sleep -Seconds $RetryDelay
                     }
                 }
                 catch {
 
                     # Log error and decide whether to retry
-                    Write-Log -Message ("Attempt {0}/{1} failed. Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
-                    Write-Warning ("Attempt {0}/{1} failed. Retrying in {2} seconds." -f $attempt, $RetryCount, $RetryDelay)
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Error: {2}" -f $attempt, $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 2
+                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying in {2} seconds." -f $attempt, $RetryCount, $RetryDelay) -LogId $LogId -Severity 2
                     Start-Sleep -Seconds $RetryDelay
                 }
 
@@ -130,12 +134,10 @@ function Invoke-IntuneContentCommit {
             } while (-not $success -and $attempt -le $RetryCount)
 
             if ($success) {
-                Write-Log -Message "Commit operation completed successfully." -LogId $LogId
-                Write-Host "Commit operation completed successfully." -ForegroundColor Green
+                Write-LogAndHost -Message "Commit operation completed successfully." -LogId $LogId -ForegroundColor Green
 
                 # Now update the app with the committed content version
-                Write-Log -Message ("Updating committed content version for app {0} to {1}..." -f $newApp.id, $contentVersion.id) -LogId $LogId
-                Write-Host ("Updating committed content version for app {0} to {1}..." -f $newApp.id, $contentVersion.id) -ForegroundColor Yellow
+                Write-LogAndHost -Message ("Updating committed content version for app {0} to {1}..." -f $Win32Appid, $ContentVersion) -LogId $LogId -ForegroundColor Cyan
 
                 $updateAppUri = "deviceAppManagement/mobileApps/$($Win32AppId)"
                 $updateData = @{
@@ -144,27 +146,26 @@ function Invoke-IntuneContentCommit {
                 }
 
                 $updateDataJson = $updateData | ConvertTo-Json -Compress
-                Write-Log -Message ("Update data: {0}" -f $updateDataJson) -LogId $LogId
-                Write-Host ("Update data: {0}" -f $updateDataJson) -ForegroundColor Green
+                Write-LogAndHost -Message ("Committed content version data: {0}" -f $updateDataJson) -LogId $LogId -ForegroundColor Green
                 
                 try {
                     $updateResponse = Invoke-MgGraphRequestCustom -Method PATCH -Resource $updateAppUri -Body $updateDataJson
-                    Write-Log -Message ("Successfully updated the content version in Intune for '{0}'" -f $Win32AppId) -LogId $LogId
-                    Write-Host ("Successfully updated the content version in Intune for '{0}'" -f $Win32AppId) -ForegroundColor Green
+                    Write-LogAndHost -Message ("Successfully updated the content version in Intune for '{0}'" -f $Win32AppId) -LogId $LogId -ForegroundColor Green
+
                     return $true
                 }
                 catch {
-                    Write-Log -Message ("Failed to update app {0} with committed content version: {1}" -f $Win32AppId, $_.Exception.Message) -LogId $LogId -Severity 3
-                    Write-Warning -Message ("Failed to update app {0} with committed content version: {1}" -f $Win32AppId, $_.Exception.Message)
-                    throw
+                    Write-LogAndHost -Message ("Failed to update app {0} with committed content version: {1}" -f $Win32AppId, $_.Exception.Message) -LogId $LogId -Severity 3
+
+                    return $false
                 }
                 
             }
         }
         catch {
-            Write-Log -Message ("Commit operation failed: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
-            Write-Warning -Message "Commit operation failed: $_"
-            throw
+            Write-LogAndHost -Message ("Commit operation failed: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
+
+            return $false
         }
     }
 }

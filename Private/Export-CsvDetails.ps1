@@ -1,7 +1,7 @@
 <#
 .Synopsis
-Created on:   05/11/23
-Updated on:   17/02/24
+Created on:   05/11/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Export-Csv.ps1
 
@@ -41,8 +41,7 @@ function Export-CsvDetails {
         $archiveFolder = 'Old'
 
         # Log the export
-        Write-Log -Message ("Exporting '{0}' information to '{1}\{0}.csv'" -f $Name, $Path) -LogId $LogId
-        Write-Host ("Exporting '{0}' information to '{1}\{0}.csv'" -f $Name, $Path) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Exporting '{0}' information to '{1}\{0}.csv'" -f $Name, $Path) -LogId $LogId -ForegroundColor Cyan
 
         # Build path string
         $fullPath = Join-Path -Path $Path -ChildPath ("{0}.csv" -f $Name)
@@ -50,8 +49,7 @@ function Export-CsvDetails {
 
         # Rollover the csv if it already exists from a previous run
         if (Test-Path -Path $fullPath) {
-            Write-Log -Message ("'{0}' already exists, rolling over csv" -f $fullPath) -LogId $LogId -Severity 2
-            Write-Host ("'{0}' already exists, rolling over csv" -f $fullPath) -ForegroundColor Yellow
+            Write-LogAndHost -Message ("'{0}' already exists, rolling over csv" -f $fullPath) -LogId $LogId -Severity 2
             $date = Get-Date -Format 'yyyyMMddHHmmss'
             $pathRename = $fullPath -replace '.csv', ''
 
@@ -68,12 +66,10 @@ function Export-CsvDetails {
                 # Move the old CSV into the archive folder
                 Move-Item -Path $newPath -Destination $archivePath -Force
 
-                Write-Log -Message ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $Name, $date) -LogId $LogId
-                Write-Host ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $Name, $date) -ForegroundColor Green
+                Write-LogAndHost -Message ("Previous Csv rolled over to '{0}\{1}_{2}.csv'" -f $archivePath, $Name, $date) -LogId $LogId -ForegroundColor Cyan
             }
             catch {
-                Write-Log -Message ("Failed to rollover '{0}'. Csv will be overwritten." -f $Path) -LogId $LogId -Severity 3
-                Write-Host ("Failed to rollover '{0}'. Csv will be overwritten." -f $Path) -ForegroundColor Red
+                Write-LogAndHost -Message ("Failed to rollover '{0}'. Csv will be overwritten." -f $Path) -LogId $LogId -Severity 3
             }
         }
     }
@@ -97,9 +93,9 @@ function Export-CsvDetails {
                 }
             }
             catch {
-                Write-Log -Message ("Failed to export '{0}' information to '{1}'" -f $Type, $fullPath) -LogId $LogId -Severity 3
-                Write-Host ("Failed to export '{0}' information to '{1}'" -f $Type, $fullPath) -ForegroundColor Red
+                Write-LogAndHost -Message ("Failed to export '{0}' information to '{1}'" -f $Type, $fullPath) -LogId $LogId -Severity 3
                 Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+                
                 throw
             }
         }

@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   04/11/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-ContentInfo.ps1
 
@@ -75,8 +76,7 @@ function Get-ContentInfo {
     }
     process {
 
-        Write-Log -Message ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId
-        Write-Host ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId -ForegroundColor Cyan
 
         # Create a new custom hashtable to store content details
         $contentObject = [PSCustomObject]@{}

@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    29/12/2024
+Updated on:    01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -39,8 +39,7 @@ function Get-DeploymentTypeInfo {
         try {
 
             # Grab the SDMPackgeXML which contains the application and deployment type details
-            Write-Log -Message ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -LogId $LogId
-            Write-Host ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -ForegroundColor Cyan
+            Write-LogAndHost -Message ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -LogId $LogId -ForegroundColor Cyan
             $xmlPackage = Get-CMApplication -Id $ApplicationId | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
         
             # Prepare xml from SDMPackageXML
@@ -48,8 +47,7 @@ function Get-DeploymentTypeInfo {
 
             # Get the total number of deployment types for the application
             $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-            Write-Log -Message ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -LogId $LogId
-            Write-Host ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -ForegroundColor Cyan
+            Write-LogAndHost -Message ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -LogId $LogId -ForegroundColor Green
 
             if ($totalDeploymentTypes -gt 0) {
 
@@ -83,7 +81,7 @@ function Get-DeploymentTypeInfo {
                     $existingFiles = [System.IO.Directory]::GetFiles($detectionMethodsFolder)
                     
                     foreach ($file in $existingFiles) {
-                        Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
+                        Write-LogAndHost -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
                         [System.IO.File]::Delete($file) 
                     }
 
@@ -169,12 +167,10 @@ function Get-DeploymentTypeInfo {
 
                                 # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead to write to file
                                 [System.IO.File]::WriteAllText($detectionMethodFile, $finalScriptContent, $utf8NoBomEncoding)
-                                Write-Log -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId
-                                Write-Host ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -ForegroundColor Green
+                                Write-LogAndHost -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId -ForegroundColor Green
                             }
                             catch {
-                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -ForegroundColor Red
+                                Write-LogAndHost -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
                             }
                         }
 
@@ -189,10 +185,10 @@ function Get-DeploymentTypeInfo {
                             # Write the detection method to an Xml file
 
                             try {
+
                                 # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
                                 [System.IO.File]::WriteAllText($detectionMethodXmlFile, $detectionTypeMethodBody, $utf8NoBomEncoding)
-                                Write-Log -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId
-                                Write-Host ("`Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId -ForegroundColor Cyan
                             }
                             catch {
                                 Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
@@ -204,13 +200,10 @@ function Get-DeploymentTypeInfo {
                                 $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
                                 
                                 if ($localDetectionMethods.Count -gt 0) {
-
-                                    Write-Log -Message 'Local Detection Methods extracted from XML' -LogId $LogId
-                                    Write-Host "`nLocal Detection Methods extracted from XML" -ForegroundColor Cyan
+                                    Write-LogAndHost -Message 'Local Detection Methods extracted from XML' -LogId $LogId -ForegroundColor Cyan
 
                                     foreach ($method in $localDetectionMethods) {
-                                        Write-Log -Message ("{0}" -f $method) -LogId $LogId
-                                        Write-Host ("{0}" -f $method) -ForegroundColor Green
+                                        Write-LogAndHost -Message ("{0}" -f $method) -LogId $LogId -ForegroundColor Green
                                     }
                                     
                                     # Export the detection method to a Json file
@@ -221,24 +214,21 @@ function Get-DeploymentTypeInfo {
                                     $detectionJson = New-IntuneDetectionMethod -LocalSettings $localDetectionMethods
 
                                     try {
+
                                         # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
                                         [System.IO.File]::WriteAllText($detectionMethodJsonFile, $detectionJson, $utf8NoBomEncoding)
-                                        Write-Log -Message ("Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId
-                                        Write-Host ("`Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -ForegroundColor Cyan
+                                        Write-LogAndHost -Message ("Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -ForegroundColor Green
                                     }
                                     catch {
-                                        Write-Log -Message ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -Severity 3
-                                        Write-Host ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -ForegroundColor Red
+                                        Write-LogAndHost -Message ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -Severity 3
                                     }
                                 }
                                 else {
-                                    Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
-                                    Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -ForegroundColor Red
+                                    Write-LogAndHost -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
                                 }
                             }
                             else {
-                                Write-Log -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
-                                Write-Host ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -ForegroundColor Red
+                                Write-LogAndHost -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
                             }
                         }
                     }
@@ -286,16 +276,14 @@ function Get-DeploymentTypeInfo {
                 }
             }
             else {
-                Write-Log -Message ("Warning: No DeploymentTypes found for '{0}'" -f $xmlContent.AppMgmtDigest.Application.LogicalName) -LogId $LogId -Severity 2
-                Write-Host ("Warning: No DeploymentTypes found for '{0}'" -f $xmlContent.AppMgmtDigest.Application.LogicalName) -ForegroundColor Yellow
+                Write-LogAndHost -Message ("Warning: No DeploymentTypes found for '{0}'" -f $xmlContent.AppMgmtDigest.Application.LogicalName) -LogId $LogId -Severity 2
             }
         
             return $deploymentTypes
 
         }
         catch {
-            Write-Log -Message ("Could not get deployment type information for application Id '{0}'" -f $ApplicationId) -LogId $LogId -Severity 3
-            Write-Warning -Message ("Could not get deployment type information for application id '{0}'" -f $ApplicationId)
+            Write-LogAndHost -Message ("Could not get deployment type information for application Id '{0}'" -f $ApplicationId) -LogId $LogId -Severity 3
             Get-ScriptEnd -LogId $LogId -ErrorMessage $_.Exception.Message
         }
     }

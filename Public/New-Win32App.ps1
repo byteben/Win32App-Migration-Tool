@@ -264,39 +264,37 @@ function New-Win32App {
                 $fileAgeInDays = (New-TimeSpan -Start $fileAge -End (Get-Date)).Days
 
                 if ($fileAgeInDays -gt 30) {
-                    Write-Log -Message ("Information: IntuneWinAppUtil.exe is {0} days old. Downloading new version" -f $fileAgeInDays) -LogId $LogId -Severity 2
-                    Write-Host ("Information: IntuneWinAppUtil.exe is {0} days old. Downloading new version" -f $fileAgeInDays) -ForegroundColor Yellow
+                    Write-LogAndHost -Message ("Information: IntuneWinAppUtil.exe is {0} days old. Downloading new version" -f $fileAgeInDays) -LogId $LogId -Severity 2 -ForegroundColor Yellow
                     Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $fileDestination
                 }
                 else {
-                    Write-Log -Message ("Information: IntuneWinAppUtil.exe is {0} days old. Skipping download" -f $fileAgeInDays) -LogId $LogId -Severity 2
-                    Write-Host ("Information: IntuneWinAppUtil.exe is {0} days old. Skipping download" -f $fileAgeInDays) -ForegroundColor Yellow
+                    Write-LogAndHost ("Information: IntuneWinAppUtil.exe is {0} days old. Skipping download" -f $fileAgeInDays) -LogId $LogId -Severity 2 -ForegroundColor Yellow
                 }
             }
             else {
-                Write-Log -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $fileDestination) -LogId $LogId
+                Write-LogAndHost -Message ("Get-FileFromInternet -URI '{0} -Destination {1}" -f $Win32ContentPrepToolUri, $fileDestination) -LogId $LogId -ForegroundColor Cyan
                 Get-FileFromInternet -Uri $Win32ContentPrepToolUri -Destination $fileDestination
             }
         } 
         else {
-            Write-Log -Message "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool" -LogId $LogId -Severity 2
-            Write-Host "The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool" -ForegroundColor Yellow
+            Write-LogAndHost -Message ("The 'PackageApps' parameter was not passed. Skipping downloading of the Win32 Content Prep Tool") -LogId $LogId -Severity 2 -ForegroundColor Yellow
         }
         #endRegion
-
         #region Connect_MgGraphCustom
-        New-VerboseRegion -Message 'Connecting to the Microsoft Graph...' -ForegroundColor 'Gray'
-
-        # Connect to Microsoft Graph based on the parameter set being used
+        
         if ($CreateApps) {
-            if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
-                Write-Log -Message ("Testing connection to Microsoft Graph using {0}" -f $PSCmdlet.ParameterSetName) -LogId $LogId
-                Write-Host ("`nTesting connection to Microsoft Graph using {0}" -f $PSCmdlet.ParameterSetName) -ForegroundColor Cyan
 
-                if (-not (Test-MgConnection -LogId $LogId -RequiredScopes $RequiredScopes -TestScopes)) {
-                    
-                    Write-Log -Message "No active Microsoft Graph connection found. Attempting to connect..." -LogId $LogId
-                    Write-Host "No active Microsoft Graph connection found. Attempting to connect..." -ForegroundColor Cyan
+            # Connect to Microsoft Graph based on the parameter set being used   
+            New-VerboseRegion -Message 'Connecting to the Microsoft Graph...' -ForegroundColor 'Gray'
+
+            if ($PSBoundParameters.ContainsKey('TenantId') -and $PSBoundParameters.ContainsKey('ClientId')) {
+                Write-LogAndHost -Message ("TenantId '{0}' and ClientId '{1}' are present" -f $TenantId, $ClientId) -LogId $LogId -ForegroundColor Cyan
+                Write-LogAndHost -Message ("Parameter set used: {0}" -f $PSCmdlet.ParameterSetName) -LogId $LogId -ForegroundColor Cyan
+                Write-LogAndHost -Message ("Required Scopes: {0}" -f ($RequiredScopes -join ', ')) -LogId $LogId -ForegroundColor Cyan
+                Write-LogAndHost -Message "Testing connection to Microsoft Graph" -LogId $LogId -ForegroundColor Cyan
+
+                if (-not (Test-MgConnection -RequiredScopes $RequiredScopes -TestScopes)) {
+                    Write-LogAndHost -Message "No active Microsoft Graph connection found. Attempting to connect..." -LogId $LogId -ForegroundColor Cyan
 
                     # Attempt connection using available parameters
                     try {
@@ -306,29 +304,23 @@ function New-Win32App {
 
                         switch ($PSCmdlet.ParameterSetName) {
                             'ClientSecret' {
-                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientSecret '{2}' -RequiredScopes {3}" -f $TenantId, $ClientId, 'ClientSecretObfuscated', $scopesString) -LogId $LogId
-                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientSecret '{2}'" -f $TenantId, $ClientId, 'ClientSecretObfuscated') -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientSecret '{2}'" -f $TenantId, $ClientId, 'ClientSecretObfuscated') -LogId $LogId -ForegroundColor Cyan
                                 Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -ClientSecret $ClientSecret
                             }
                             'ClientCertificateThumbprint' {
-                                
-                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientCertificateThumbprint '{2}' -RequiredScopes {3}" -f $TenantId, $ClientId, $ClientCertificate, $scopesString) -LogId $LogId
-                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientCertificateThumbprint '{2}'" -f $TenantId, $ClientId, $ClientCertificate) -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -ClientCertificateThumbprint '{2}'" -f $TenantId, $ClientId, $ClientCertificate) -LogId $LogId
                                 Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -ClientCertificateThumbprint $ClientCertificate
                             }
                             'UseDeviceAuthentication' {
-                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
-                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -UseDeviceAuthentication -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId -ForegroundColor Cyan
                                 Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -UseDeviceAuthentication -RequiredScopes $RequiredScopes
                             }
                             'Interactive' {
-                                Write-Log -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId
-                                Write-Host ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Connect-MgGraphCustom -TenantId '{0}' -ClientId '{1}' -RequiredScopes {2}" -f $TenantId, $ClientId, $scopesString) -LogId $LogId -ForegroundColor Cyan
                                 Connect-MgGraphCustom -TenantId $TenantId -ClientId $ClientId -RequiredScopes $RequiredScopes
                             }
                             default {
-                                Write-Log -Message ("Unknown authentication method: {0}" -f $AuthenticationMethod) -LogId $LogId -Severity 3
-                                Write-Warning ("Unknown authentication method: {0}" -f $AuthenticationMethod)
+                                Write-LogAndHost -Message ("Unknown authentication method: {0}" -f $AuthenticationMethod) -LogId $LogId -Severity 3
                                 break
                             }
                         }
@@ -342,9 +334,13 @@ function New-Win32App {
                     }
                 }
             }
+            else {
+
+                # If TenantId and ClientId are not passed, we cannot connect to Microsoft Graph and leverage the CreateApps parameter
+                Get-ScriptEnd -ErrorMessage "TenantId and ClientId are required to connect to Microsoft Graph." -LogId $LogId
+            }
         }
         #endregion
-
         #region Display_Application_Results
         New-VerboseRegion -Message 'Filtering application results' -ForegroundColor 'Gray'
 
@@ -352,22 +348,18 @@ function New-Win32App {
         $paramsToPassApp = @{}
         if ($ExcludePMPC) {
             $paramsToPassApp.Add('ExcludePMPC', $true) 
-            Write-Log -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId -Severity 2
-            Write-Host "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -ForegroundColor Cyan
+            Write-LogAndHost -Message "The ExcludePMPC parameter was passed. Ignoring all PMPC created applications" -LogId $LogId -Severity 2 -ForegroundColor Cyan
         }
         if ($ExcludeFilter) {
             $paramsToPassApp.Add('ExcludeFilter', $ExcludeFilter) 
-            Write-Log -Message ("The 'ExcludeFilter' parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2
-            Write-Host ("The 'ExcludeFilter' parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -ForegroundColor Cyan
+            Write-LogAndHost -Message ("The 'ExcludeFilter' parameter was passed. Ignoring applications that match '{0}'" -f $ExcludeFilter) -LogId $LogId -Severity 2 -ForegroundColor Cyan
         }
         if ($NoOGV) {
             $paramsToPassApp.Add('NoOGV', $true) 
-            Write-Log -Message "The 'NoOgv' parameter was passed. Suppressing Out-GridView" -LogId $LogId -Severity 2   
-            Write-Host "The 'NoOgv' parameter was passed. Suppressing Out-GridView" -ForegroundColor Cyan
+            Write-LogAndHost -Message "The 'NoOgv' parameter was passed. Suppressing Out-GridView" -LogId $LogId -Severity 2 -ForegroundColor Cyan
         }
 
-        Write-Log -Message ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -LogId $LogId
-        Write-Host ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Running function 'Get-AppList' -AppName '{0}'" -f $AppName) -LogId $LogId -ForegroundColor Cyan
 
         $applicationName = Get-AppList -AppName $AppName @paramsToPassApp
  
@@ -413,16 +405,16 @@ function New-Win32App {
         New-VerboseRegion -Message 'Getting deployment type content information' -ForegroundColor 'Gray'
   
         # Calling function to grab deployment type content information
-        Write-Log -Message "Calling 'Get-ContentFiles' function to grab deployment type content" -LogId $LogId
-        Write-Host "Calling 'Get-ContentFiles' function to grab deployment type content" -ForegroundColor Cyan
+        Write-LogAndHost -Message "Calling 'Get-ContentFiles' function to grab the deployment type content" -LogId $LogId -ForegroundColor Cyan
             
         $content_Array = foreach ($deploymentType in $deploymentTypes_Array) { 
     
-            # Build or reset a hash table of switch parameters to pass to the Get-ContentFiles function
+            # Build a hash table of parameters to pass to the Get-ContentFiles function
             $paramsToPassContent = @{}
     
             if ($deploymentType.InstallContent) { $paramsToPassContent.Add('InstallContent', $deploymentType.InstallContent) }
             $paramsToPassContent.Add('UninstallSetting', $deploymentType.UninstallSetting)
+
             if ($deploymentType.UninstallContent) { $paramsToPassContent.Add('UninstallContent', $deploymentType.UninstallContent) }
             $paramsToPassContent.Add('ApplicationId', $deploymentType.Application_Id)
             $paramsToPassContent.Add('ApplicationName', $deploymentType.ApplicationName)
@@ -438,7 +430,7 @@ function New-Win32App {
         New-VerboseRegion -Message 'Copying content files' -ForegroundColor 'Gray'
 
         if ($DownloadContent) {
-            Write-Log -Message "The 'DownloadContent' parameter passed" -LogId $LogId
+            Write-LogAndHost -Message "The 'DownloadContent' parameter was passed" -LogId $LogId -ForegroundColor Cyan
 
             foreach ($content in $content_Array) {
                 Get-ContentFiles -Source $content.Install_Source -Destination $content.Install_Destination
@@ -450,18 +442,15 @@ function New-Win32App {
             }  
         }
         else {
-            Write-Log -Message "The 'DownloadContent' parameter was not passed. Skipping content download" -LogId $LogId -Severity 2
-            Write-Host "The 'DownloadContent' parameter was not passed. Skipping content download" -ForegroundColor Yellow
+            Write-LogAndHost -Message "The 'DownloadContent' parameter was not passed. Skipping content download" -LogId $LogId -Severity 2
         }
         #endregion
-    
         #region Exporting_Csv data
+
         # Export $DeploymentTypes to CSV for reference
         New-VerboseRegion -Message 'Exporting collected data to Csv' -ForegroundColor 'Gray'
         $detailsFolder = (Join-Path -Path $workingFolder_Root -ChildPath 'Details')
-
-        Write-Log -Message ("Destination folder will be '{0}\Details" -f $workingFolder_Root) -LogId $LogId -Severity 2
-        Write-Host ("Destination folder will be '{0}\Details" -f $workingFolder_Root) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Destination folder will be '{0}\Details" -f $workingFolder_Root) -LogId $LogId -Severity 2 -ForegroundColor Cyan
 
         # Export application information to CSV for reference
         Export-CsvDetails -Name 'Applications' -Data $app_Array -Path $detailsFolder
@@ -474,8 +463,8 @@ function New-Win32App {
             Export-CsvDetails -Name 'Content' -Data $content_Array -Path $detailsFolder
         }
         #endregion
-
         #region Exporting_Logos
+
         # Export icon(s) for the applications
         New-VerboseRegion -Message 'Exporting icon(s)' -ForegroundColor 'Gray'
 
@@ -485,12 +474,10 @@ function New-Win32App {
             foreach ($applicationIcon in $app_Array) {
 
                 if ([string]::IsNullOrWhiteSpace($applicationIcon.IconData)) {
-                    Write-Log -Message ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -LogId $LogId -Severity 2
-                    Write-Host ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -ForegroundColor Yellow
+                    Write-LogAndHost -Message ("No icon data found for '{0}'. Skipping icon export" -f $applicationIcon.Name) -LogId $LogId -Severity 2
                 }
                 else {
-                    Write-Log -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId
-                    Write-Host ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -ForegroundColor Cyan
+                    Write-LogAndHost -Message ("Exporting icon for '{0}' to '{1}'" -f $applicationIcon.Name, $applicationIcon.IconPath) -Logid $LogId -ForegroundColor Cyan
                 
                     # Export the icon to disk
                     Export-Icon -AppName $applicationIcon.Name -IconPath $applicationIcon.IconPath -IconData $applicationIcon.IconData
@@ -498,29 +485,26 @@ function New-Win32App {
             }
         }
         else {
-            Write-Log -Message "The 'ExportIcon' parameter was not passed. Skipping icon export" -LogId $LogId -Severity 2
-            Write-Host "The 'ExportIcon' parameter was not passed. Skipping icon export" -ForegroundColor Yellow
+            Write-LogAndHost -Message "The 'ExportIcon' parameter was not passed. Skipping icon export" -LogId $LogId -Severity 2
         }
         #endregion
-
         #region Package_Apps
+
         if ($PackageApps) {
 
             # If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files
-            Write-Log -Message "The 'PackageApps' Parameter passed" -LogId $LogId
+            Write-LogAndHost -Message "The 'PackageApps' Parameter passed" -LogId $LogId -ForegroundColor Cyan
             New-VerboseRegion -Message 'Creating intunewin file(s)' -ForegroundColor 'Gray'
 
             foreach ($content in $content_Array) {
 
-                Write-Log -Message ("Working on application '{0}'..." -f $content.Application_Name) -LogId $LogId
-                Write-Host ("`nWorking on application '{0}'..." -f $content.Application_Name) -ForegroundColor Cyan
+                Write-LogAndHost -Message ("Working on application '{0}'..." -f $content.Application_Name) -LogId $LogId -ForegroundColor Cyan
 
                 # Create the Win32app folder for the .intunewin files
                 New-FolderToCreate -Root "$workingFolder_Root\Win32Apps" -FolderNames $content.Win32app_Destination
         
                 # Create intunewin files
-                Write-Log -Message ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name) -LogId $LogId
-                Write-Host ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name)  -ForegroundColor Cyan
+                Write-LogAndHost -Message ("Creating intunewin file for the deployment type '{0}' for app '{1}'" -f $content.DeploymentType_Name, $content.Application_Name) -LogId $LogId -ForegroundColor Cyan
             
                 # Build parameters to splat at the New-IntuneWin function
                 $paramsToPassIntuneWin = @{}
@@ -545,16 +529,15 @@ function New-Win32App {
             }
         }
         else {
-            Write-Log -Message "The 'PackageApps' parameter was not passed. Intunewin files will not be created" -LogId $LogId -Severity 2
-            Write-Host "The 'PackageApps' parameter was not passed. Intunewin files will not be created" -ForegroundColor Yellow
+            Write-LogAndHost -Message "The 'PackageApps' parameter was not passed. Intunewin files will not be created" -LogId $LogId -Severity 2
         }
         #endRegion
-
         #region Create Intune Win32 app JSON body
+
         if ($CreateApps -and $PackageApps) {
 
             # If the $CreateApps parameter was passed. Start creating the Win32 apps in Intune
-            Write-Log -Message "The 'CreateApps' Parameter passed" -LogId $LogId
+            Write-LogAndHost -Message "The 'CreateApps' Parameter passed" -LogId $LogId -ForegroundColor Cyan
             New-VerboseRegion -Message 'Creating Win32 app JSON body' -ForegroundColor 'Gray'
 
             foreach ($app in $app_array) {
@@ -563,8 +546,7 @@ function New-Win32App {
 
                     foreach ($content in $content_Array | Where-Object { $_.DeploymentType_LogicalName -eq $deploymentType.LogicalName }) {
 
-                        Write-Log -Message ("Working on application '{0}'..." -f $app.Name) -LogId $LogId
-                        Write-Host ("`nWorking on application '{0}'..." -f $app.name) -ForegroundColor Cyan
+                        Write-LogAndHost -Message ("Working on application '{0}'..." -f $app.Name) -LogId $LogId -ForegroundColor Cyan
 
                         # Create the Win32app folder for the JSON files if it doesn't exist
                         if (-not (Test-Path -Path "$workingFolder_Root\Win32Apps") ) {
@@ -578,27 +560,23 @@ function New-Win32App {
                             $intuneWinSetupFilePath = Get-ChildItem -Path $PathforWin32AppBodyJSON -Filter "*.intunewin" -Recurse | Select-Object -First 1 -ExpandProperty FullName
                             
                             if ($intuneWinSetupFilePath) {
-                                Write-Log -Message ("Found the .intunewin file at '{0}'" -f $intuneWinSetupFilePath) -LogId $LogId
-                                Write-Host ("Found the .intunewin file at '{0}'" -f $intuneWinSetupFilePath) -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("Found the .intunewin file at '{0}'" -f $intuneWinSetupFilePath) -LogId $LogId -ForegroundColor Green
 
                                 # Get the intunewin file information
                                 $intuneWinInfo = Get-IntuneWinInfo -SetupFile $intuneWinSetupFilePath
                             }
                             else {
-                                Write-Log -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
-                                Write-Warning -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
+                                Write-LogAndHost -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
                                 break
                             }
                         }
                         catch {
-                            Write-Log -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
-                            Write-Warning -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON)
+                            Write-LogAndHost -Message ("Failed to get the .intunewin file from '{0}'" -f $PathforWin32AppBodyJSON) -LogId $LogId -Severity 3
                             break
                         }
 
                         # Create Win32 app body
-                        Write-Log -Message ("Creating Win32 app body for the deployment type '{0}' for app '{1}'" -f $deploymentType.Name, $deploymentType.ApplicationName) -LogId $LogId
-                        Write-Host ("Creating Win32 app body for the deployment type '{0}' for app '{1}'" -f $deploymentType.Name, $deploymentType.ApplicationName)  -ForegroundColor Cyan
+                        Write-LogAndHost -Message ("Creating Win32 app body for the deployment type '{0}' for app '{1}'" -f $deploymentType.Name, $deploymentType.ApplicationName) -LogId $LogId -ForegroundColor Cyan
 
                         # Build parameters to splat at the New-IntuneWinFramework function
 
@@ -636,8 +614,7 @@ function New-Win32App {
                                 $paramsToPassWin32App.Add('DetectionMethodJson', ($jsonBlob))
                             }
                             catch {
-                                Write-Log -Message ("Failed to read the JSON file '{0}'" -f $deploymentType.DetectionMethodJsonFile) -LogId $LogId -Severity 3
-                                Write-Warning -Message ("Failed to read the JSON file '{0}'" -f $deploymentType.DetectionMethodJsonFile)
+                                Write-LogAndHost -Message ("Failed to read the JSON file '{0}'" -f $deploymentType.DetectionMethodJsonFile) -LogId $LogId -Severity 3
                             }
                         }
                         elseif ($deploymentType.DetectionTypeScriptType) {
@@ -645,8 +622,7 @@ function New-Win32App {
                             $paramsToPassWin32App.Add('DetectionScript', $bytes)
                         }
                         else {
-                            Write-Log -Message ("No detection method found for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
-                            Write-Warning -Message ("No detection method found for '{0}'" -f $app.Name)
+                            Write-LogAndHost -Message ("No detection method found for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
                         }
 
                         if ($deploymentType.MaxExecuteTime) {
@@ -659,17 +635,15 @@ function New-Win32App {
                     $newIntuneJson = New-IntuneWinFramework @paramsToPassWin32App
 
                     if ($newIntuneJson) {
-                        Write-Log "We have a JSON body for the Win32 app" -LogId $LogId
-                        Write-Host "We have a JSON body for the Win32 app" -ForegroundColor Green
-                    
+
+                        Write-LogAndHost -Message "We have a JSON body for the Win32 app" -LogId $LogId -ForegroundColor Green
                         New-VerboseRegion -Message 'Creating Win32 app in Intune' -ForegroundColor 'Gray'
             
                         # Create the Win32 app in Intune
                         $response = Invoke-MgGraphRequestCustom -Resource 'deviceAppManagement/mobileApps' -Method Post -Body $newIntuneJson
 
                         if ($response.id) {
-                            Write-Log -Message ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -LogId $LogId
-                            Write-Host ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -ForegroundColor Green
+                            Write-LogAndHost -Message ("Successfully created the Win32 app '{0}' in Intune for deployment type '{1}'. AppId is '{2}'" -f $app.Name, $deploymentType.Name, $response.id) -LogId $LogId -ForegroundColor Green
 
                             # Create the content request for the Win32 app
                             try {
@@ -679,11 +653,8 @@ function New-Win32App {
                                 
                                 # Get the encrypted size of the intunewin file
                                 $sizeEncrypted = (Get-Item -Path $encryptionInfo.intuneWinPath).Length
-                                Write-Log -Message ("The size of the encrypted intunewin file is '{0}'" -f $sizeEncrypted) -LogId $LogId
-                                Write-Host ("The size of the encrypted intunewin file is '{0}'" -f $sizeEncrypted) -ForegroundColor Green
-
-                                Write-Log -Message "Building JSON for the content request" -LogId $LogId
-                                Write-Host "Building JSON for the content request" -ForegroundColor Cyan
+                                Write-LogAndHost -Message ("The size of the encrypted intunewin file is '{0}'" -f $sizeEncrypted) -LogId $LogId -ForegroundColor Green
+                                Write-LogAndHost -Message "Building JSON for the content request" -LogId $LogId -ForegroundColor Cyan
 
                                 # Get the content request file name and unencrypted size
                                 $contentRequestFileName = $encryptionInfo.contentApplicationInfo | ConvertFrom-Json | Select-Object -ExpandProperty  fileName
@@ -692,15 +663,13 @@ function New-Win32App {
                                 $contentRequest = New-IntuneWinContentRequest -Name $contentRequestFileName  -SizeUnencrypted $contentRequestSizeUnencrypted -SizeEncrypted $sizeEncrypted -IsDependency $false
                             }
                             catch {
-                                Write-Log -Message ("Failed to create the content request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
-                                Write-Warning -Message ("Failed to create the content request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
+                                Write-LogAndHost -Message ("Failed to create the content request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
                             }
 
                             # Check content version request was successful
                             if ($contentRequest) {
 
-                                Write-Log -Message ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. " -f $AppName, $DeploymentTypeName) -LogId $LogId
-                                Write-Host ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'." -f $AppName, $DeploymentTypeName) -ForegroundColor Green
+                                Write-LogAndHost -Message ("Successfully created the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'. " -f $AppName, $DeploymentTypeName) -LogId $LogId -ForegroundColor Green
 
                                 # Call the Get-SasUri function to get the Sas Urifor the content
                                 $sasUri = Get-SasUri -Win32AppId $response.id -ContentRequest ($contentRequest | ConvertTo-Json -Depth 5 -Compress)
@@ -710,43 +679,35 @@ function New-Win32App {
                                     # Attempt to upload the content to the Sas Uri
                                     $uploadSuccess = Invoke-StorageUpload -Uri $sasUri.contentReady.azureStorageUri -FilePath $encryptionInfo.intuneWinPath -FileSize $sizeEncrypted -ContentVersion $sasUri.contentVersion -ContentRequestId $sasUri.contentRequestId -Win32AppId $response.id -ContentRequest $contentRequest
                                 }
-                                if ($uploadSuccess -eq $true) {
+                                if ($uploadSuccess) {
     
-                                    Write-Log -Message ("Committing the encryption information for the Win32 app with Id '{0}'" -f $response.id) -LogId $LogId
-                                    Write-Host ("Committing the encryption information for the Win32 app with Id '{0}'" -f $response.id) -ForegroundColor Cyan
+                                    Write-LogAndHost -Message ("Committing the encryption information for the Win32 app with Id '{0}'" -f $response.id) -LogId $LogId -ForegroundColor Cyan
 
                                     # Commit the content to the Win32 app
                                     $commitResponse = Invoke-IntuneContentCommit -Win32AppId $response.id -EncryptionInfo $encryptionInfo.encryptionDetails -ContentVersion $sasUri.contentVersion -ContentRequestId $sasUri.contentRequestId
 
-                                    if ($commitResponse -eq $true) {
-                                        Write-Log -Message ("Migration Complete. App name '{0}' migrated successfully to Intune with App Id '{1}'" -f $app.Name, $response.id) -LogId $LogId
-                                        Write-Host ("Migration Complete. App name '{0}' migrated successfully to Intune with App Id '{1}'" -f $app.Name, $response.id) -ForegroundColor Green
+                                    if ($commitResponse) {
+                                        Write-LogAndHost -Message ("Migration Complete. App name '{0}' migrated successfully to Intune with App Id '{1}'" -f $app.Name, $response.id) -LogId $LogId -ForegroundColor Green
                                     }
                                     else {
-                                        Write-Log -Message ("Migration failure: Unable to update the Win32 app '{0}' with the content locations in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
-                                        Write-Host ("Migration failure: Unable to update the Win32 app '{0}' with the content locations in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -ForegroundColor Red
+                                        Write-LogAndHost -Message ("Migration failure: Unable to update the Win32 app '{0}' with the content locations in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
                                     }
                                 }
                                 else {
-                                    Write-Log -Message ("Failed to upload the content for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
-                                    Write-Host ("Failed to upload the content for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -ForegroundColor Red
+                                    Write-LogAndHost -Message ("Failed to upload the content for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
                                 }
                             }
                             else {
-                                Write-Log -Message ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
-                                Write-Host ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
+                                Write-LogAndHost -Message ("Failed to create the content version request for the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
                             
                             }
                         }
                         else {
-                            Write-Log -Message ("Failed to create the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
-                            Write-Host ("Faield to create the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name)
-                        
+                            Write-LogAndHost -Message ("Failed to create the Win32 app '{0}' in Intune for deployment type '{1}'" -f $app.Name, $deploymentType.Name) -LogId $LogId -Severity 3
                         }
                     }
                     else {
-                        Write-Log -Message ("Failed to create the JSON body for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
-                        Write-Warning -Message ("Failed to create the JSON body for '{0}'" -f $app.Name)
+                        Write-LogAndHost -Message ("Failed to create the JSON body for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
                     }          
                 }
             }

@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   24/03/2024
-Updated on:   02/04/2024
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32appFramework.ps1
 
@@ -117,7 +117,7 @@ function New-IntuneWinFramework {
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "The minimum operating system architecture required for the app")]
         [string]$MinimumOSArchitecture = 'x64,x86',
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 16, HelpMessage = "The minimum operating system version required for the app")]
-        [string]$MinimumOSVersion = "1703",
+        [string]$MinimumOSVersion = "Windows10_21H2",
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 17, HelpMessage = "System or User")]
         [ValidateSet('System', 'User')]
         [string]$InstallExperience,
@@ -132,14 +132,14 @@ function New-IntuneWinFramework {
 
     begin {
 
-        Write-Log -Message "Function: New-Win32appFramework was called" -LogId $LogId
-        Write-Log -Message ("Processing JSON body for '{0}'" -f $Name) -LogId $LogId
-        Write-Host ("Processing JSON body for '{0}'" -f $Name) -ForegroundColor Cyan
+        Write-LogAndHost -Message "Function: New-Win32appFramework was called" -LogId $LogId -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Processing JSON body for '{0}'" -f $Name) -LogId $LogId -ForegroundColor Cyan
     
     }
 
     process {
             
+        # Create the JSON body for the Win32 app
         $body = [ordered]@{
             '@odata.type'                  = "#microsoft.graph.win32LobApp"
             displayName                    = $Name
@@ -177,12 +177,12 @@ function New-IntuneWinFramework {
         $transformedRules = @()
 
         if ($PSBoundParameters.ContainsKey('DetectionMethodJson')) {
-            Write-Log -Message "Using JSON method for building detection" -LogId $LogId
-            Write-Host "Using JSON method for building detection" -ForegroundColor Cyan
+            Write-LogAndHost -Message "Using JSON method for building detection" -LogId $LogId -ForegroundColor Cyan
             $jsonObject = $DetectionMethodJson | ConvertFrom-Json
 
             # Transform the detection rules from the JSON object
             foreach ($rule in $jsonObject) {
+
                 # File system detection
                 if ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppFileSystemDetection") {
                     $transformedRules += [ordered]@{
@@ -211,8 +211,7 @@ function New-IntuneWinFramework {
                 }
                 # Product code detection
                 elseif ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppProductCodeRule") {
-                    Write-Log -Message "Using Product code detection" -LogId $LogId
-                    Write-Host "Using Product code detection" -ForegroundColor Cyan
+                    Write-LogAndHost -Message "Using Product code detection" -LogId $LogId -ForegroundColor Cyan
                     $transformedRules += [ordered]@{
                         '@odata.type'          = "#microsoft.graph.win32LobAppProductCodeRule"
                         productCode            = $rule.productCode
@@ -223,8 +222,7 @@ function New-IntuneWinFramework {
             }
         }
         elseif ($PSBoundParameters.ContainsKey('DetectionScript')) {
-            Write-Log -Message "Using script method for building detection" -LogId $LogId
-            Write-Host "Using script method for building detection" -ForegroundColor Cyan
+            Write-LogAndHost -Message "Using script method for building detection" -LogId $LogId -ForegroundColor Cyan
             $transformedRules += [ordered]@{
                 '@odata.type'           = "#microsoft.graph.win32LobAppPowerShellScriptRule"
                 'scriptContent'         = $DetectionScript
@@ -254,27 +252,26 @@ function New-IntuneWinFramework {
             $jsonObject["rules"][0]["scriptContent"] = "Base64ScriptDataPresentButOmittedFromOutputDuetoSize"
         }
 
-        Write-Log -Message "JSON body created" -LogId $LogId
-        Write-Host "JSON body created" -ForegroundColor Cyan
+        Write-LogAndHost -Message "JSON body created" -LogId $LogId -ForegroundColor Cyan
         $jsonOutput = $jsonObject | ConvertTo-Json -Depth 5 -Compress
-        Write-Log -Message ("'{0}'" -f $jsonOutput) -LogId $LogId
-        Write-Host $jsonOutput -ForegroundColor Green
+        Write-LogAndHost -Message ("'{0}'" -f $jsonOutput) -LogId $LogId -ForegroundColor Green
             
         # Write the JSON body to a file
         $jsonFile = Join-Path -Path $Path -ChildPath "Win32appBody.json"
-        Write-Log -Message ("Writing JSON body to '{0}'" -f $jsonFile) -LogId $LogId
-        Write-Host ("`nWriting JSON body to '{0}'" -f $jsonFile) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Writing JSON body to '{0}'" -f $jsonFile) -LogId $LogId -ForegroundColor Cyan -NewLine
 
         try {
+
+            # Write the JSON body to the file
             [System.IO.File]::WriteAllText($jsonFile, $json, [System.Text.Encoding]::UTF8)
-            Write-Log -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId
-            Write-Host ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -ForegroundColor Green
+            Write-LogAndHost -Message ("Successfully wrote JSON body to '{0}'" -f $jsonFile) -LogId $LogId -ForegroundColor Green
 
             return $json
         }
         catch {
-            Write-Log -Message ("Failed to write JSON body to '{0}'" -f $jsonFile) -LogId $LogId -Severity 3
-            Write-Host ("Failed to write JSON body to '{0}'" -f $jsonFile) -ForegroundColor Red
+            Write-LogAndHost -Message ("Failed to write JSON body to '{0}'" -f $jsonFile) -LogId $LogId -Severity 3
+
+            return $false
         }
     }
 }

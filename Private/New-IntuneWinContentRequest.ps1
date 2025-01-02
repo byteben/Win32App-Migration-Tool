@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   09/06/2024
-Updated on:   30/12/2024
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-IntuneWinContentRequest.ps1
 
@@ -44,24 +44,29 @@ function New-IntuneWinContentRequest {
     )
     begin {
 
-        Write-Log -Message "Function: new-IntuneWinContentRequest was called" -Log "Main.log"
+        Write-LogAndHost -Message "Function: new-IntuneWinContentRequest was called" -Log "Main.log" -ForegroundColor Cyan
 
     }
     process {
 
         # Create the IntuneWinContentRequest Json
-        $intuneWinContentRequest = [ordered]@{
-            "@odata.type"   = "#microsoft.graph.mobileAppContentFile"               
-            "name"          = $Name
-            "size"          = $SizeUnEncrypted
-            "sizeEncrypted" = $SizeEncrypted
-            "isDependency"  = $IsDependency
-            "manifest"      = $null
+        try {
+            $intuneWinContentRequest = [ordered]@{
+                "@odata.type"   = "#microsoft.graph.mobileAppContentFile"
+                "name"          = $Name
+                "size"          = $SizeUnencrypted
+                "sizeEncrypted" = $SizeEncrypted
+                "isDependency"  = $IsDependency
+                "manifest"      = $null
+            }
+        }
+        catch {
+            Write-LogAndHost -Message "An error occurred while creating the IntuneWinContentRequest" -LogId $LogId -Severity 3
+
+            return $false
         }
 
-        Write-Log -Message "IntuneWinContentRequest created" -LogId $LogId
-        Write-Log -Message ("{0}" -f ($intuneWinContentRequest | ConvertTo-Json -Depth 5 -Compress) ) -LogId $LogId
-        Write-Host ("{0}" -f ($intuneWinContentRequest | ConvertTo-Json -Depth 5 -Compress) ) -ForegroundColor Green
+        Write-LogAndHost -Message ("{0}" -f ($intuneWinContentRequest | ConvertTo-Json -Depth 5 -Compress) ) -LogId $LogId -ForegroundColor Green
 
         return $intuneWinContentRequest
     }

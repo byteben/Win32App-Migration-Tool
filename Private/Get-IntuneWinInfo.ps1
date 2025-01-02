@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   09/06/2024
-Updated on:   09/06/2024
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-IntuneWinInfo.ps1
 
@@ -25,7 +25,7 @@ function Get-IntuneWinInfo {
     )
     begin {
 
-        Write-Log -Message "Function: Get-IntuneWinInfo was called" -Log "Main.log"
+        Write-LogAndHost -Message "Function: Get-IntuneWinInfo was called" -Log "Main.log" -ForegroundColor Cyan
 
         try {
 
@@ -35,10 +35,9 @@ function Get-IntuneWinInfo {
             }
         }
         catch {
+            Write-LogAndHost -Message "Failed to load System.IO.Compression.FileSystem" -LogId $LogId -Severity 3
 
-            Write-Log -Message "Failed to load System.IO.Compression.FileSystem" -LogId $LogId -Severity 3
-            throw $_.Exception
-            break
+            throw
         }
     }
     process {
@@ -59,9 +58,8 @@ function Get-IntuneWinInfo {
             $stream.Close()
         }
         else {
-
-            throw "Detection.xml not found in the MetaData folder."
-            break
+            Write-LogAndHost -Message ("Detection.xml not found in the .intunewin archive at '{0}'" -f $SetupFile) -LogId $LogId -Severity 3
+            throw
         }
 
         # Add the required metadata to the array

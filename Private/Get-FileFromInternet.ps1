@@ -2,6 +2,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-FileFromInternet.ps1
 
@@ -12,7 +13,7 @@ Function to download a file from the internet
 The component (script name) passed as LogID to the 'Write-Log' function. 
 This parameter is built from the line number of the call from the function up the pipeline
 
-.PARAMETER URI
+.PARAMETER Uri
 The URI of the file to download
 
 .PARAMETER Destination
@@ -29,12 +30,9 @@ function Get-FileFromInternet {
     )
 
     begin {
-        Write-Log -Message 'Function: Get-FileFromInternet was called' -LogId $LogId
-        Write-Log -Message ("Attempting to download the file from '{0}'" -f $Uri) -LogId $LogId
-        Write-Host ("Attempting to download the file from '{0}'" -f $Uri) -ForegroundColor Cyan
-
-        Write-Log -Message ("File destination will be '{0}'" -f $Destination) -LogId $LogId
-        Write-Host ("File destination will be '{0}'" -f $Destination) -ForegroundColor Cyan
+        Write-LogAndHost -Message 'Function: Get-FileFromInternet was called' -LogId $LogId -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Attempting to download the file from '{0}'" -f $Uri) -LogId $LogId -ForegroundColor Cyan
+        Write-LogAndHost -Message ("File destination will be '{0}'" -f $Destination) -LogId $LogId -ForegroundColor Cyan
     }
 
     process {
@@ -46,37 +44,36 @@ function Get-FileFromInternet {
         }
         catch {
             $statusCode = $_.Exception.Response.StatusCode.Value__
-            Write-Log -Message ("It looks like the Uri '{0}' is invalid. Error '{1}" -f $Uri, $statusCode) -LogId $LogId -Severity 3
-            Write-Warning -Message ("It looks like the Uri '{0}' is invalid. Error '{1}'" -f $Uri, $statusCode)
+            Write-LogAndHost -Message ("It looks like the Uri '{0}' is invalid. Error '{1}" -f $Uri, $statusCode) -LogId $LogId -Severity 3
+
             throw
         }
 
         # If the URL is valid, attempt to download the file otherwise break and warn
         if ($statusCode -eq 200) {
             try {
-                Write-Log -Message ("Response '{0}' received'. Attempting download...'" -f $statusCode) -LogId $LogId
-                Write-Host ("Response '{0}' received'. Attempting download...'" -f $statusCode) -ForegroundColor Cyan
 
+                Write-LogAndHost -Message ("Response '{0}' received'. Attempting download...'" -f $statusCode) -LogId $LogId -ForegroundColor Cyan
                 Invoke-WebRequest -UseBasicParsing -Method Get -Uri $Uri -OutFile $Destination -ErrorAction SilentlyContinue
 
                 if (Test-Path -Path $fileDestination) {
-                    Write-Log -Message ("File download successful. File saved to '{0}'" -f $fileDestination) -LogId $LogId
-                    Write-Host ("File download sucessful. File saved to '{0}'" -f $fileDestination) -ForegroundColor Green
+                    Write-LogAndHost -Message ("File download successful. File saved to '{0}'" -f $fileDestination) -LogId $LogId -ForegroundColor Green
                 }
                 else {
-                    Write-Log -Message ("The download was interrupted or an error occured moving the file to '{0}'" -f $Uri) -LogId $LogId -Severity 3
-                    Write-Warning -Message ("The download was interrupted or an error occured moving the file to '{0}'" -f $Uri)
+                    Write-LogAndHost -Message ("The download was interrupted or an error occured moving the file to '{0}'" -f $Uri) -LogId $LogId -Severity 3
                 }
             }
             catch {
-                Write-Log -Message ("Error downloading file '{0}'" -f $Uri) -LogId $LogId -Severity 3
-                Write-Warning -Message ("Error downloading file '{0}'" -f $Uri)
+
+                # Error downloading the file
+                Write-LogAndHost -Message ("Error downloading file '{0}'" -f $Uri) -LogId $LogId -Severity 3
+
                 throw
             }
         }
         else {
-            Write-Log -Message ("URL Does not exists or the website is down. Status Code '{0}'" -f $statusCode) -LogId $LogId -Severity 3
-            Write-Warning -Message ("URL Does not exists or the website is down. Status Code '{0}'" -f $statusCode)
+            Write-LogAndHost -Message ("URL Does not exists or the website is down. Status Code '{0}'" -f $statusCode) -LogId $LogId -Severity 3
+            
             throw
         }
     }

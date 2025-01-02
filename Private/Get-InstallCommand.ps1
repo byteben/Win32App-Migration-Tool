@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   11/11/2023
-Updated on:   16/12/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-InstallCommand.ps1
 
@@ -30,11 +30,10 @@ function Get-InstallCommand {
 
     )
     process {
-        Write-Log -Message "Function: Get-InstallCommand was called" -Log "Main.log"
+        Write-LogAndHost -Message "Function: Get-InstallCommand was called" -Log "Main.log" -ForegroundColor Cyan
 
         # Search the Install Command line for the installer type
-        Write-Log -Message ("'{0}' installer type was detected" -f $InstallTech) -LogId $LogId 
-        Write-Host ("'{0}' installer type was detected" -f $InstallTech) -ForegroundColor Green
+        Write-LogAndHost -Message ("'{0}' installer type was detected" -f $InstallTech) -LogId $LogId -ForegroundColor Green
 
         # Build the command to be used with the Win32 Content Prep Tool
         $right = ($SetupFile -split "$InstallTech")[0]
@@ -43,10 +42,8 @@ function Get-InstallCommand {
         $command = $fileName + $InstallTech
 
         # Verbose and log the result
-        Write-Log -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -LogId $LogId
-        Write-Host "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -ForegroundColor Cyan
-        Write-Log -Message ("The setupfile to pass to Win32ContentPrepTool is '{0}'" -f $command) -LogId $LogId
-        Write-Host ("The setupfile to pass to Win32ContentPrepTool is '{0}'" -f $command) -ForegroundColor Green
+        Write-LogAndHost -Message "Extracting the SetupFile Name for the Microsoft Win32 Content Prep Tool from the Install Command..." -LogId $LogId -ForegroundColor Cyan
+        Write-LogAndHost -Message ("The setupfile to pass to Win32ContentPrepTool is '{0}'" -f $command) -LogId $LogId -ForegroundColor Green
 
         return $command
     }

@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/03/2024
-Update on:    17/03/2024
+Update on:    01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-IntuneDetection.ps1
 
@@ -276,8 +276,7 @@ function New-IntuneDetectionMethod {
             # Check if more than one parameter was passed within the parameter set
         
             if ($PSBoundParameters.Keys.Count -gt 1) {
-                Write-Log -Message 'Only one parameter is allowed in parameter set "Methods". Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
-                Write-Host 'Only one parameter is allowed in parameter set "Methods". Choose either "LocalSettings" or "Script"' -ForegroundColor Red
+                Write-LogAndHost -Message 'Only one parameter is allowed in parameter set "Methods". Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
                 return
             }
             else {
@@ -289,8 +288,8 @@ function New-IntuneDetectionMethod {
                 elseif ($PSBoundParameters['Script']) {
                 }
                 else {
-                    Write-Log -Message 'No settings were passed to the function' -LogId $LogId -Severity 3
-                    Write-Host 'No settings were passed to the function' -ForegroundColor Red
+                    Write-LogAndHost -Message 'No settings were passed to the function' -LogId $LogId -Severity 3
+
                     return
                 }
 
@@ -345,8 +344,8 @@ function New-IntuneDetectionMethod {
             }
         }
         else {
-            Write-Log -Message 'At least one parameter from parameter set "Methods" is required. Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
-            Write-Host 'At least one parameter from parameter set "Methods" is required. Choose either "LocalSettings" or "Script"' -ForegroundColor Red
+            Write-LogAndHost -Message 'At least one parameter from parameter set "Methods" is required. Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
+
             return
         }
     }
