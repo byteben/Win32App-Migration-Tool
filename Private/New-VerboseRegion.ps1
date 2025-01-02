@@ -36,4 +36,5 @@ function New-VerboseRegion {
     Write-Host ("{0}..." -f $Message) -ForegroundColor $ForegroundColor
     Write-Host '--------------------------------------------' -ForegroundColor $ForegroundColor
     Write-Host ''
+    pause
 }

@@ -498,9 +498,9 @@ function New-Win32App {
         if ($PackageApps) {
 
             # If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files
-            Write-LogAndHost -Message "The 'PackageApps' Parameter passed" -LogId $LogId -ForegroundColor Cyan
             New-VerboseRegion -Message 'Creating intunewin file(s)' -ForegroundColor 'Gray'
-
+            Write-LogAndHost -Message "The 'PackageApps' Parameter was passed" -LogId $LogId -ForegroundColor Cyan
+            
             foreach ($content in $content_Array) {
 
                 Write-LogAndHost -Message ("Working on application '{0}'..." -f $content.Application_Name) -LogId $LogId -ForegroundColor Cyan
@@ -542,7 +542,7 @@ function New-Win32App {
         if ($CreateApps -and $PackageApps) {
 
             # If the $CreateApps parameter was passed. Start creating the Win32 apps in Intune
-            Write-LogAndHost -Message "The 'CreateApps' Parameter passed" -LogId $LogId -ForegroundColor Cyan
+            Write-LogAndHost -Message "The 'CreateApps' Parameter was passed" -LogId $LogId -ForegroundColor Cyan
             New-VerboseRegion -Message 'Creating Win32 app JSON body' -ForegroundColor 'Gray'
 
             foreach ($app in $app_array) {

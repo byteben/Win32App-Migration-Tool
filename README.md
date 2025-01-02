@@ -1,6 +1,6 @@
 # Win32App Migration Tool
 
- ![alt text](https://byteben.com/bb/Downloads/GitHub/Win32AppMigrationTool_10.jpg)  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)  
 
 ## Synopsis  
   
@@ -48,6 +48,8 @@ You assume all risks and responsibilities associated with its usage.
   New-Win32App -ProviderMachineName <String> -AppName <String>
   ```
 
+## Order of Operations  
+
 The current release of the Win32 App Migration Tool will do the following:-  
   
 - Download the Win32app Content Prep Tool to %WorkingDirectory%\ContentPrepTool
@@ -66,9 +68,58 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Commit file to Intune
 - Log events to %WorkingDirectory%\Logs\Main.log  
   
+### 1. Environment Setup  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool1-Env.jpg)  
+  
+### 2. Authentication  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool2-Authentication.jpg)
+  
+### 3. Application Selection  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)
+  
+### 4. Application Details Export  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool4-AppDetails.jpg)
+  
+### 5. Deployment Type Details Export  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool5-DeploymentTypeDetails.jpg)
+
+### 6. Content Details Export  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool6-ContentDetails.jpg)
+  
+### 7. Content Download  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool7-ContentCopy.jpg)
+  
+### 8. CSV Export of Application Details  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool8-CSVExport.jpg)
+  
+### 9. Icon Export  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool9-IconExport.jpg)
+  
+### 10. Create an Intunewin  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool10-CreateIntunewinjpg.jpg)
+
+### 11. Create Win32App JSON Body  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool11-CreateWin32AppJson.jpg)
+  
+### 12. Create the WIn32 app in Intune  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool12-CreateWin32App.jpg)
+  
+  
 ## Important Information
 
-_**// Please use the tool with caution and test in your lab (dont be the guy or gal who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
+_**// Please use the tool with caution and test in your lab (dont be the person who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
 
 ## Troubleshooting  
   

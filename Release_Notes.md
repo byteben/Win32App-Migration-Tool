@@ -1,9 +1,32 @@
 # Win32App Migration Tool - Release Notes
 
+## 3.0.01 - General Availability - 01/01/2025
+
+✅ New Branch for 3.0.01
+✅ Removed dependency on MSAL.PS and replaced with Microsoft.Graph.Authentication  
+✅ New Module Connect-MgGraphCustom to authenticate to the Microsoft Graph API  
+✅ New Module Test-MgGraphConnection to test the connection to the Microsoft Graph API and required scopes  
+✅ New Module Get-IntuneWinEncryptionDetails to get the encryption details of a .intunewin file  
+✅ New-Module Get-IntuneWinInfo to get metadata of a .intunewin file to build the Win32 app JSON  
+✅ New-Module Get-SasUri to generate a Sas Uri for uploading content to Azure Storage  
+✅ New-Module Initialize-Module to handle module initialization like Microsoft.Graph.Authentication and Az.Storage  
+✅ New-Module Invoke-IntuneContentCommit to commit content to Intune after uploading to Azure Storage  
+✅ New-Module Invoke-MgGraphRequestCustom to make CRUD requests to the Microsoft Graph API  
+✅ New-Module Invoke-StorageUpload to upload content to Azure Storage using the Az.Storage module  
+✅ New-Module New-IntuneDetection to create detection method JSON for a Win32 app  
+✅ New-Module New-IntuneFramework to create the body for requesting a Win32 app  
+✅ New-Module New-IntuneWinContentRequest to create a content request blob for commital of a Win32 app content  
+✅ New-Module Write-LogAndHost to write to both the log and console host thus removing duplication of the same Write-Log and Write-Host commands  
+✅ Fixed an issue where we were not handling the difference indicators test correctly when comparing the source and destination folders  
+✅ Improvement to when we download the Win32ContentPrepTool. We now only download if the packageapps parameter is passed and it has been more than 30 days since the last tool download  
+✅ Improvement to Get-ScriptEnd. We now test if there is an active session with Get-MgContext and offer to disconnect or leave the session connected  
+✅ Improvement in the Win32 app JSON creation. We now handle -AllowAvailableInstall ($true/$false)  
+✅ Improvement in the Win32 app JSON creation. Return Codes are now added in the default, expected, order  
+
 ## 2.0.50 - BETA - 03/04/2024
 
 ✅ New Branch for 2.0.50  
-✅ Fixed a regex bug  in New-IntuneWin.ps1 where the name of the .intunewin was not passed correctly if it contained multiple periods  
+✅ Fixed a regex bug in New-IntuneWin.ps1 where the name of the .intunewin was not passed correctly if it contained multiple periods  
 ✅ Renamed Connect-Graph module to Get-AuthToken. Using MSAL.PS so we can get the access token  
 ✅ New Module Get-ClientCertificate to get the x509 blob from either the CurrentUser or LocalMachine for authentication  
 ✅ New Module Invoke-GraphRequest to make Graph API requests  

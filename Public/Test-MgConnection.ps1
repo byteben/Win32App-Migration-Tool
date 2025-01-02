@@ -54,14 +54,16 @@ function Test-MgConnection {
         
         if ($missingScopes) {
             Write-LogAndHost -Message ("Missing required scopes: {0}" -f ($missingScopes -join ', ')) -LogId $LogId -Severity 2 -ForegroundColor Yellow
+
             return $false
         }
     
-        Write-LogAndHost -Message "All required scopes are present in the active Microsoft Graph connection" -LogId $LogId -ForegroundColor Green
+        # If we get here, we have a valid connection with the required scopes
         return $true
     }
     catch {
         Write-LogAndHost -Message ("Error while checking Microsoft Graph connection: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3 -ForegroundColor Red
+
         return $false
     }
 }
