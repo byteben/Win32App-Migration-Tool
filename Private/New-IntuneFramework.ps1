@@ -79,6 +79,9 @@ The maximum time (in minutes) that the app is expected to take to execute
 .PARAMETER AllowAvailableUninstall
 When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal
 
+.PARAMETER ReturnCodeMap
+Hash table of default return codes
+
 #>
 function New-IntuneWinFramework {
     param(
@@ -127,14 +130,24 @@ function New-IntuneWinFramework {
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 19, HelpMessage = "The maximum time (in minutes) that the app is expected to take to execute")]
         [int]$MaxExecutionTime = 60,
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 20, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
-        [bool]$AllowAvailableUninstall
+        [bool]$AllowAvailableUninstall,
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 21, HelpMessage = "Hash table of default return codes")]
+        [string]$ReturnCodes = '{"0": "success","1707": "success","3010": "softReboot","1641": "hardReboot","1618": "retry"}'
     )
 
     begin {
 
         Write-LogAndHost -Message "Function: New-Win32appFramework was called" -LogId $LogId -ForegroundColor Cyan
         Write-LogAndHost -Message ("Processing JSON body for '{0}'" -f $Name) -LogId $LogId -ForegroundColor Cyan
-    
+
+        # Convert the JSON to an array of objects
+        [object]$parsedJson = $ReturnCodes | ConvertFrom-Json
+        [object]$returnCodesOrdered = foreach ($property in $parsedJson.PSObject.Properties) {
+            [PSCustomObject]@{
+                returnCode = [int]$property.Name
+                type       = [string]$property.Value
+            }
+        }
     }
 
     process {
@@ -172,6 +185,9 @@ function New-IntuneWinFramework {
         if ($AllowAvailableUninstall) {
             $body['allowAvailableUninstall'] = $true
         }
+
+        # Add returns codes
+        $body['returnCodes'] = $returnCodesOrdered
 
         # Detection method (rules) for the Win32 app
         $transformedRules = @()
