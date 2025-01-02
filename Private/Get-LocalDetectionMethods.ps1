@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/02/2024
-Update on:    16/03/2024
+Update on:    01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-LocalDetectionMethods.ps1
 
@@ -35,7 +35,7 @@ function Get-DetectionMethod {
         # Create an empty array to store the settings
         $settings = @()
 
-        # Create a helper function to iterate through the XML nodes and find SettingReferences
+        # Helper function to iterate through the XML nodes and find SettingReferences
         function Find-SettingReferences {
             param (
                 [System.Xml.XmlNode]$node,
@@ -45,7 +45,9 @@ function Get-DetectionMethod {
             # If the node is a SettingReference, add it to the rules
             if ($node.Name -eq 'SettingReference') {
                 $logicalName = $node.SettingLogicalName
+
                 if ($logicalName) {
+
                     if (-not $rules.Value.ContainsKey($logicalName)) {
                         $rules.Value[$logicalName] = @()
                     }
@@ -61,6 +63,7 @@ function Get-DetectionMethod {
             # If the node is an Operands or Expression node, iterate through its child nodes to get SettingReferences
             elseif ($node.Name -eq 'Operands' -or $node.Name -eq 'Expression') {
                 foreach ($childNode in $node.ChildNodes) {
+                    
                     Find-SettingReferences -Node $childNode -Rules ([ref]$rules.Value)
                 }
             }

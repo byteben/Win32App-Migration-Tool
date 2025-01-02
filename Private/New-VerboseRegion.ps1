@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   26/10/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-VerboseRegion.ps1
 
@@ -35,4 +36,5 @@ function New-VerboseRegion {
     Write-Host ("{0}..." -f $Message) -ForegroundColor $ForegroundColor
     Write-Host '--------------------------------------------' -ForegroundColor $ForegroundColor
     Write-Host ''
+    pause
 }

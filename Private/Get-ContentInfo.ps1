@@ -1,6 +1,7 @@
 <#
 .Synopsis
 Created on:   04/11/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-ContentInfo.ps1
 
@@ -30,7 +31,7 @@ The logical name of the deployment type to get content for
 The name of the deployment type to get content for
 
 .PARAMETER UninstallSetting
-Is uninstall content same as install or differet?
+Is uninstall content same as install or different?
 
 .PARAMETER InstallCommandLine
 Command line used to install the deployment type
@@ -51,7 +52,7 @@ function Get-ContentInfo {
         [string]$DeploymentTypeLogicalName,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 5, HelpMessage = 'The name of the deployment type to get content for')]
         [string]$DeploymentTypeName,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or differet?')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 6, HelpMessage = 'Is uninstall content same as install or different?')]
         [string]$UninstallSetting,
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 7, HelpMessage = 'Command line used to install the deployment type')]
         [string]$InstallCommandLine
@@ -75,8 +76,7 @@ function Get-ContentInfo {
     }
     process {
 
-        Write-Log -Message ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId
-        Write-Host ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Getting content details for the application '{0}' and deployment type '{1}'" -f $applicationName, $DeploymentTypeName) -LogId $LogId -ForegroundColor Cyan
 
         # Create a new custom hashtable to store content details
         $contentObject = [PSCustomObject]@{}

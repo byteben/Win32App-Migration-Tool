@@ -1,11 +1,12 @@
 <#
 .Synopsis
 Created on:   06/11/2023
+Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     Export-Icon.ps1
 
 .Description
-Function to export icon from selected ConfigMgr Application
+Function to export icon from the selected ConfigMgr Application
 
 .PARAMETER LogId
 The component (script name) passed as LogID to the 'Write-Log' function. 
@@ -38,8 +39,7 @@ function Export-Icon {
             
             #Check if the file exists
             if (Test-Path -Path $IconPath) {
-                Write-Log -Message ("Application icon for '{0}' already exists at '{1}'" -f $AppName, $IconPath) -LogId $LogId -Severity 2
-                Write-Host ("Application icon for '{0}' already exists at '{1}'" -f $AppName, $IconPath) -ForegroundColor Yellow
+                Write-LogAndHost -Message ("Application icon for '{0}' already exists at '{1}'" -f $AppName, $IconPath) -LogId $LogId -Severity 2
             }
             else {
                 
@@ -49,15 +49,14 @@ function Export-Icon {
 
                 # Check if the file exists
                 if (Test-Path -Path $IconPath) {
-                    Write-Log -Message ("Success: Application icon for '{0}' was exported successfully to '{1}'" -f $AppName, $IconPath) -LogId $LogId
-                    Write-Host ("Success: Application icon for '{0}' was exported successfully to '{1}'" -f $AppName, $IconPath) -ForegroundColor Green
+                    Write-LogAndHost -Message ("Success: Application icon for '{0}' was exported successfully to '{1}'" -f $AppName, $IconPath) -LogId $LogId -ForegroundColor Green
                 }
             }
         }
         catch {
-            Write-Log -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos") -LogId $LogId -Severity 3
-            Write-Warning -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos")
+            Write-LogAndHost -Message ("Could not export icon for '{0}' to '{1}'" -f $AppName, "$workingFolder_Root\Logos") -LogId $LogId -Severity 3
             Write-Log -Message ("'{0}'" -f $_.Exception.Message) -LogId $LogId -Severity 3
+            
             throw
         }
     }
