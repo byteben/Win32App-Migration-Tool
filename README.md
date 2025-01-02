@@ -128,13 +128,15 @@ _**// Please use the tool with caution and test in your lab (dont be the person 
 
 ## Troubleshooting  
   
-Main.log in the %WorkingFolder%\Logs folder contains a detailed verbose output of the solution  
+**Main.log** in the **%WorkingFolder%\Logs** folder contains a detailed verbose output of the solution  
+  
+ ![alt text](https://byteben.com/bb/Downloads/GitHub/Main-Log.jpg)
 
 ## Parameters  
 
 ### -SiteCode
 
-The Site Code of the ConfigMgr Site. he Site Code must be only 3 alphanumeric characters. This is an optional parameter. If not passed, the script will attempt to get the Site Code from the ConfigMgr Console. If the Site Code cannot be determined, the script will exit with an error message
+The Site Code of the ConfigMgr Site. The Site Code must be only 3 alphanumeric characters. This is an optional parameter. If not passed, the script will attempt to get the Site Code automatically from WMI. If the Site Code cannot be determined, the script will exit with an error message after 3 invalid attempts.
 
 ```yaml
 Type: String
