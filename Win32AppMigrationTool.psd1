@@ -4,7 +4,7 @@
     RootModule        = 'Win32AppMigrationTool.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '2.0.50'
+    ModuleVersion     = '3.0.01'
    
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -25,7 +25,7 @@
     Description       = 'Win32AppMigrationTool is designed to export the Application and Deployment Data from ConfigMgr to firstly create an .intunewin file and secondly publish the Win32App to Intune'
 
     # Minimum version of the Windows PowerShell engine required by this module
-    # PowerShellVersion = ''
+    PowerShellVersion = '5.1'
 
     # Name of the Windows PowerShell host required by this module
     # PowerShellHostName = ''

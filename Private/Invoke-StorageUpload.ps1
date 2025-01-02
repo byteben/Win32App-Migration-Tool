@@ -183,80 +183,89 @@ function Invoke-StorageUpload {
                 $attempt++
             } while (-not $success -and $attempt -le $RetryCount)
             
-            # Verify upload success
-            Write-LogAndHost -Message "Verifying upload success..." -LogId $LogId -ForegroundColor Cyan
             
-            # Delay to allow Azure to update blob properties
-            Start-Sleep -Seconds $RetryDelay
             
             # Verify upload success
-            $blob = Get-AzStorageBlob -Context $context -Container $container -Blob $blobPath
+            if ($PSVersionTable.PSVersion.Major -ge 7) {
 
-            if ($blob) {
-                $blobInfo = [PSCustomObject]@{
-                    Name         = $blob.Name
-                    BlobType     = $blob.BlobType
-                    Length       = $blob.Length
-                    Uri          = $blob.ICloudBlob.Uri.AbsoluteUri
-                    LastModified = $blob.ICloudBlob.Properties.LastModified
-                    ContentType  = $blob.ICloudBlob.Properties.ContentType
+                # Verify upload success
+                Write-LogAndHost -Message "We have a PowerShell 7+ session! We can attempt to verify the upload success..." -LogId $LogId -ForegroundColor Cyan
+            
+                # Delay to allow Azure to update blob properties
+                Start-Sleep -Seconds $RetryDelay
+                $blob = Get-AzStorageBlob -Context $context -Container $container -Blob $blobPath
+
+                if ($blob) {
+                    $blobInfo = [PSCustomObject]@{
+                        Name         = $blob.Name
+                        BlobType     = $blob.BlobType
+                        Length       = $blob.Length
+                        Uri          = $blob.ICloudBlob.Uri.AbsoluteUri
+                        LastModified = $blob.ICloudBlob.Properties.LastModified
+                        ContentType  = $blob.ICloudBlob.Properties.ContentType
+                    }
+                    $json = $blobInfo | ConvertTo-Json -Compress
+                    Write-LogAndHost -Message ("Blob info: {0}" -f $json) -LogId $LogId -ForegroundColor Green
                 }
-                $json = $blobInfo | ConvertTo-Json -Compress
-                Write-Log -Message ("Blob info: {0}" -f $json) -LogId $LogId
-                Write-Host ("Blob info: {0}" -f $json) -ForegroundColor Green
-            }
-            else {
-                Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
+                else {
+                    Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
 
-                throw
-            }
+                    throw
+                }
 
-            $attempt = 1
-            $success = $false
+                $attempt = 1
+                $success = $false
 
-            do {
-                try {
+                do {
+                    try {
 
-                    # Get blob size and compare
-                    if ($blob) {
-                        $blob.ICloudBlob.FetchAttributes()
-                        $FileSize = (Get-Item $FilePath).Length
-                        $blobSize = $blob.ICloudBlob.Properties.Length
+                        # Get blob size and compare
+                        if ($blob) {
+                            $blob.ICloudBlob.FetchAttributes()
+                            $FileSize = (Get-Item $FilePath).Length
+                            $blobSize = $blob.ICloudBlob.Properties.Length
             
-                        Write-LogAndHost -Message ("Comparing file size: Local file size is {0} bytes, Blob file size is {1} bytes" -f $FileSize, $blobSize) -LogId $LogId -ForegroundColor Cyan
+                            Write-LogAndHost -Message ("Comparing file size: Local file size is {0} bytes, Blob file size is {1} bytes" -f $FileSize, $blobSize) -LogId $LogId -ForegroundColor Cyan
             
-                        if ($FileSize -eq $blobSize) {
-                            Write-LogAndHost -Message "Upload verification successful: File sizes match" -LogId $LogId -ForegroundColor Green
-                            $success = $true
+                            if ($FileSize -eq $blobSize) {
+                                Write-LogAndHost -Message "Upload verification successful: File sizes match" -LogId $LogId -ForegroundColor Green
+                                $success = $true
+                            }
+                            else {
+
+                                # Upload verification failed, sizes do not match
+                                Write-LogAndHost -Message "Upload verification failed: File sizes do not match" -LogId $LogId -Severity 3
+
+                                break
+                            }
                         }
                         else {
 
-                            # Upload verification failed, sizes do not match
-                            Write-LogAndHost -Message "Upload verification failed: File sizes do not match" -LogId $LogId -Severity 3
+                            # Blob not found
+                            Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
 
                             break
+                        } 
+                    }
+                    catch {
+                        if ($attempt -ge $RetryCount) {
+                            Write-LogAndHost -Message ("Upload verification failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
+
+                            throw
                         }
-                    }
-                    else {
-
-                        # Blob not found
-                        Write-LogAndHost -Message "Blob not found in the specified container and path." -LogId $LogId -Severity 3
-
-                        break
-                    } 
-                }
-                catch {
-                    if ($attempt -ge $RetryCount) {
-                        Write-LogAndHost -Message ("Upload verification failed after {0} attempts: {1}" -f $RetryCount, $_.Exception.Message) -LogId $LogId -Severity 3
-
-                        throw
-                    }
             
-                    Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying..." -f $attempt, $RetryCount) -LogId $LogId -Severity 2
-                    Start-Sleep -Seconds $RetryDelay
-                    $attempt++
-                }
-            } while (-not $success -and $attempt -le $RetryCount)
+                        Write-LogAndHost -Message ("Attempt {0}/{1} failed. Retrying..." -f $attempt, $RetryCount) -LogId $LogId -Severity 2
+                        Start-Sleep -Seconds $RetryDelay
+                        $attempt++
+                    }
+                } while (-not $success -and $attempt -le $RetryCount)
+            }
+            else {
+                Write-LogAndHost -Message "Skipping upload verification because PowerShell version is less than 7" -LogId $LogId -ForegroundColor Cyan
+                
+                # Assume success because we can't verify withour PowerShell 7+ for the Get-AzStorageBlob cmdlet
+                $success = $true
+            }
         }
         catch {
             Write-LogAndHost -Message ("Upload failed: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3

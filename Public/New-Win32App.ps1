@@ -5,13 +5,18 @@ Updated on:   01/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
-The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.
+The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3 apps in The Intune admin center.
 The script supports different authentication methods for connecting to the Microsoft Graph API. The preferred method is using a certificate, as this method is more secure. If you don't have a certificate, the Delegate and devicecode flow are also supported. Client Secret is an option too, but it is not recommended for production environments.
 Documentation can be found at https://github.com/byteben/Win32App-Migration-Tool/blob/main/README.md
 
 .Description
-This script is designed to export the Application and Deployment Data from ConfigMgr to firstly create an .intunewin file and secondly publish the Win32App to Intune
+This script is designed to export the Application and Deployment Data from ConfigMgr to firstly create an .intunewin file and secondly publish the Win32 app to Intune
 Change Control Log: https://github.com/byteben/Win32App-Migration-Tool/blob/main/Release_Notes.md
+
+.NOTES
+PowerShell 5.1 or later is required to run this script. 
+PowerShell 7 or later is recommended for best performance. 
+Some Az storage cmdlets for upload verification will be skipped if not running in PowerShell 7 or later.
 
 ---------------------------------------------------------------------------------
 LEGAL DISCLAIMER
