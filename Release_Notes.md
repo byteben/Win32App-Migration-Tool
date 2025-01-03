@@ -1,5 +1,11 @@
 # Win32App Migration Tool - Release Notes
 
+## 3.0.02 - General Availability - 03/01/2025  
+
+✅ Fixed styling issue in New-FolderToCreate function  
+✅ Added support for MSI detection methods  
+✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/23>
+
 ## 3.0.01 - General Availability - 01/01/2025
 
 ✅ New Branch for 3.0.01

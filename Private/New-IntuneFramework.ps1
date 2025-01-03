@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   24/03/2024
-Updated on:   01/01/2025
+Updated on:   03/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32appFramework.ps1
 
@@ -61,6 +61,12 @@ The JSON body for the detection method of the app
 .PARAMETER DetectionScript
 The base64 value of the detection method script for the app
 
+.PARAMETER DetectionScriptType
+The detection method type for the app
+
+.PARAMETER DetectionMethodMSI
+The MSI product information for detection
+
 .PARAMETER MinimumOSArchitecture
 The minimum operating system architecture required for the app
 
@@ -117,21 +123,23 @@ function New-IntuneWinFramework {
         [string]$DetectionMethodJson,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "The base64 value of the detection method script for the app")]
         [string]$DetectionScript,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "The minimum operating system architecture required for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "The MSI product information for detection")]
+        [object]$DetectionMethodMSI,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 16, HelpMessage = "The minimum operating system architecture required for the app")]
         [string]$MinimumOSArchitecture = 'x64,x86',
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 16, HelpMessage = "The minimum operating system version required for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 17, HelpMessage = "The minimum operating system version required for the app")]
         [string]$MinimumOSVersion = "Windows10_21H2",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 17, HelpMessage = "System or User")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 18, HelpMessage = "System or User")]
         [ValidateSet('System', 'User')]
         [string]$InstallExperience,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 18, HelpMessage = "The mdefault restart behavior for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 19, HelpMessage = "The mdefault restart behavior for the app")]
         [ValidateSet("allow", "basedOnReturnCode", "suppress", "force")]
         [string]$RestartBehavior = "basedOnReturnCode",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 19, HelpMessage = "The maximum time (in minutes) that the app is expected to take to execute")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 20, HelpMessage = "The maximum time (in minutes) that the app is expected to take to execute")]
         [int]$MaxExecutionTime = 60,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 20, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 21, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
         [bool]$AllowAvailableUninstall,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 21, HelpMessage = "Hash table of default return codes")]
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 22, HelpMessage = "Json string of default return codes")]
         [string]$ReturnCodes = '{"0": "success","1707": "success","3010": "softReboot","1641": "hardReboot","1618": "retry"}'
     )
 
@@ -225,16 +233,6 @@ function New-IntuneWinFramework {
                         valueName            = $rule.valueName
                     }
                 }
-                # Product code detection
-                elseif ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppProductCodeRule") {
-                    Write-LogAndHost -Message "Using Product code detection" -LogId $LogId -ForegroundColor Cyan
-                    $transformedRules += [ordered]@{
-                        '@odata.type'          = "#microsoft.graph.win32LobAppProductCodeRule"
-                        productCode            = $rule.productCode
-                        productVersion         = $rule.productVersion
-                        productVersionOperator = $rule.productVersionOperator
-                    }
-                }
             }
         }
         elseif ($PSBoundParameters.ContainsKey('DetectionScript')) {
@@ -244,6 +242,15 @@ function New-IntuneWinFramework {
                 'scriptContent'         = $DetectionScript
                 'enforceSignatureCheck' = $false
                 'runAs32Bit'            = $false
+            }
+        }
+        elseif ($PSBoundParameters.ContainsKey('DetectionMethodMSI')) {
+            Write-LogAndHost -Message "Using MSI method for building detection" -LogId $LogId -ForegroundColor Cyan
+            $transformedRules += [ordered]@{
+                '@odata.type'            = "#microsoft.graph.win32LobAppProductCodeRule"
+                'productCode'            = $DetectionMethodMSI.productCode
+                'productVersion'         = $DetectionMethodMSI.productVersion
+                'productVersionOperator' = if ([string]::IsNullOrWhiteSpace($DetectionMethodMSI.productVersionOperator)) { 'notConfigured' } else { $DetectionMethodMSI.productVersionOperator }
             }
         }
 

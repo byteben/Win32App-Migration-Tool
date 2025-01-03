@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Updated on:    01/01/2025
+Updated on:   03/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
@@ -110,6 +110,8 @@ function Get-DeploymentTypeInfo {
 
                         # If Detection Method is a 'Script'
                         'Script' {
+
+                            Write-LogAndHost -Message 'Detection Method Provider is Script' -LogId $LogId -ForegroundColor Green
                             $detectionTypeScriptBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptBody' }).InnerText
                             $detectionTypeScriptRunAs32Bit = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'RunAs32Bit' }).InnerText
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
@@ -176,6 +178,7 @@ function Get-DeploymentTypeInfo {
 
                         # If Detection Method is File/Reg/MSICode
                         'Local' {
+                            Write-LogAndHost -Message 'Detection Method Provider is Local' -LogId $LogId -ForegroundColor Green
                             $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
                             $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
                             
@@ -231,6 +234,15 @@ function Get-DeploymentTypeInfo {
                                 Write-LogAndHost -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
                             }
                         }
+                        'MSI' {
+
+                            Write-LogAndHost -Message 'Detection Method Provider is MSI' -LogId $LogId -ForegroundColor Green
+                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
+                            $detectionTypeProductCode = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ProductCode' }).InnerText
+                            $detectionTypePackageCode = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'PackageCode' }).InnerText
+                            $detectionTypePatchCodes = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'PatchCodes' }).InnerText
+
+                        }
                     }
                     
                     # Add detection method details to the PSCustomObject
@@ -240,11 +252,15 @@ function Get-DeploymentTypeInfo {
                     $deploymentObject | Add-Member NoteProperty -Name DetectionMethodScriptFile -Value $detectionMethodFile
                     $deploymentObject | Add-Member NoteProperty -Name DetectionMethodXmlFile -Value $detectionMethodXmlFile
                     $deploymentObject | Add-Member NoteProperty -Name DetectionMethodJsonFile -Value $detectionMethodJsonFile
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeProductCode -Value $detectionTypeProductCode
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypePackageCode -Value $detectionTypePackageCode
+                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypePatchCodes -Value $detectionTypePatchCodes
 
                     Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', `
                     Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', `
                     UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}', DetectionTypeScriptRunAs32Bit = '{15}', `
-                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodScriptFile = '{18}', DetectionMethodXmlFile = '{19}', DetectionMethodJsonFile = '{20}'" -f `
+                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodScriptFile = '{18}', DetectionMethodXmlFile = '{19}', `
+                    DetectionMethodJsonFile = '{20}', DetectionTypeProductCode = '{21}', DetectionTypePackageCode = '{22}', DetectionTypePatchCodes = '{23}'" -f `
                             $ApplicationId, `
                             $xmlContent.AppMgmtDigest.Application.title.'#text', `
                             $xmlContent.AppMgmtDigest.Application.LogicalName, `
@@ -265,7 +281,10 @@ function Get-DeploymentTypeInfo {
                             $detectionTypeExecutionContext, `
                             $detectionMethodScriptFile, `
                             $detectionMethodXmlFile, `
-                            $detectionMethodJsonFile) -LogId $LogId
+                            $detectionMethodJsonFile, `
+                            $detectionTypeProductCode, `
+                            $detectionMethodPackageCode, `
+                            $detectionMethodPatchCodes) -LogId $LogId
 
                     # Output the deployment type object
                     Write-Host "`nDeplopymentType Details extracted" -ForegroundColor Cyan

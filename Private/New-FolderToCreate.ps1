@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   27/10/2023
-Updated on:   01/01/2025
+Updated on:   03/01/2025
 Created by:   Ben Whitmore
 Filename:     New-FolderToCreate.ps1
 
@@ -52,7 +52,7 @@ function New-FolderToCreate {
                 }
             }
             else {
-                Write-Host -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate)
+                Write-Host -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
             }
         }
     }

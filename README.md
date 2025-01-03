@@ -20,9 +20,9 @@ Instead of manually checking Application and Deployment Type information and gat
 
 This solution is distributed under the **GNU GENERAL PUBLIC LICENSE**.
 
-The PowerShell script provided is shared with the community *as-is*. The author and co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose. 
-Please note that the script may need to be modified or adapted to fit your specific environment or requirements. It is recommended to thoroughly test the script in a non-production environment before using it in a live or critical system. 
-The author and co-author(s) cannot be held responsible for any damages, losses, or adverse effects that may arise from the use of this script. 
+The PowerShell script provided is shared with the community *as-is*. The author and co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose.  
+Please note that the script may need to be modified or adapted to fit your specific environment or requirements. It is recommended to thoroughly test the script in a non-production environment before using it in a live or critical system.  
+The author and co-author(s) cannot be held responsible for any damages, losses, or adverse effects that may arise from the use of this script.  
 You assume all risks and responsibilities associated with its usage.
 
 ---

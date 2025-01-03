@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   01/01/2025
+Updated on:   03/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -592,7 +592,8 @@ function New-Win32App {
                         $paramsToPassWin32App = @{}
                         $paramsToPassWin32App.Add('Name', $app.Name)
                         $paramsToPassWin32App.Add('Description', $Description)
-                        $paramsToPassWin32App.Add('Publisher', $app.Publisher)
+                        $publisher = if ([string]::IsNullOrWhiteSpace($app.Publisher)) { "Not Specified" } else { $app.Publisher }
+                        $paramsToPassWin32App.Add('Publisher', $publisher)
                         $paramsToPassWin32App.Add('AppVersion', $app.Version)
                         $paramsToPassWin32App.Add('InformationURL', $app.InfoURL)
                         $paramsToPassWin32App.Add('PrivacyURL', $app.PrivacyURL)
@@ -625,6 +626,14 @@ function New-Win32App {
                         elseif ($deploymentType.DetectionTypeScriptType) {
                             $bytes = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path "$($deploymentType.DetectionMethodScriptFile)" -Raw -Encoding UTF8)))
                             $paramsToPassWin32App.Add('DetectionScript', $bytes)
+                        }
+                        elseif ($deploymentType.DetectionTypeProductCode) {
+                            $detectionMethodMSIArray = [ordered]@{
+                                ProductCode = $deploymentType.DetectionTypeProductCode
+                                PackageCode = $deploymentType.DetectionTypePackageCode
+                                PatchCodes  = $deploymentType.DetectionTypePatchCodes
+                            }
+                            $paramsToPassWin32App.Add('DetectionMethodMSI', $detectionMethodMSIArray)
                         }
                         else {
                             Write-LogAndHost -Message ("No detection method found for '{0}'" -f $app.Name) -LogId $LogId -Severity 3
