@@ -29,8 +29,8 @@ You assume all risks and responsibilities associated with its usage.
   
 ## Development Status
 
-  **STATUS: Generally Available**  
-  The Win32App Migration Tool is now Generally Available as of January 2025. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
+  **STATUS: Generally Available (Preview)**  
+  The Win32App Migration Tool is now Generally Available (in Preview) as of January 2025. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
   
 ## Requirements  
 
