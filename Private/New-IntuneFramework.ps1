@@ -55,6 +55,9 @@ The install command line for the app
 .PARAMETER UninstallCommandLine
 The uninstall command line for the app
 
+.PARAMETER UninstallCommandLineFallback
+The uninstall command line for the app if one is not provided. We set this to the InstallCommandLine by default. You could use "cmd /c" (which does nothing)
+
 .PARAMETER DetectionMethodJson
 The JSON body for the detection method of the app
 
@@ -119,27 +122,29 @@ function New-IntuneWinFramework {
         [string]$InstallCommandLine,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 12, HelpMessage = "The uninstall command line for the app")]
         [string]$UninstallCommandLine,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = "The JSON body for the detection method of the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = "The uninstall command line for the app")]
+        [string]$UninstallCommandLineFallback = $InstallCommandLine,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "The JSON body for the detection method of the app")]
         [string]$DetectionMethodJson,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "The base64 value of the detection method script for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "The base64 value of the detection method script for the app")]
         [string]$DetectionScript,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "The MSI product information for detection")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 16, HelpMessage = "The MSI product information for detection")]
         [object]$DetectionMethodMSI,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 16, HelpMessage = "The minimum operating system architecture required for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 17, HelpMessage = "The minimum operating system architecture required for the app")]
         [string]$MinimumOSArchitecture = 'x64,x86',
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 17, HelpMessage = "The minimum operating system version required for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 18, HelpMessage = "The minimum operating system version required for the app")]
         [string]$MinimumOSVersion = "Windows10_21H2",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 18, HelpMessage = "System or User")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 19, HelpMessage = "System or User")]
         [ValidateSet('System', 'User')]
         [string]$InstallExperience,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 19, HelpMessage = "The mdefault restart behavior for the app")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 20, HelpMessage = "The mdefault restart behavior for the app")]
         [ValidateSet("allow", "basedOnReturnCode", "suppress", "force")]
         [string]$RestartBehavior = "basedOnReturnCode",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 20, HelpMessage = "The maximum time (in minutes) that the app is expected to take to execute")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 21, HelpMessage = "The maximum time (in minutes) that the app is expected to take to execute")]
         [int]$MaxExecutionTime = 60,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 21, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 22, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
         [bool]$AllowAvailableUninstall,
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 22, HelpMessage = "Json string of default return codes")]
+        [Parameter(Mandatory = $false, ValuefromPipeline = $false, Position = 23, HelpMessage = "Json string of default return codes")]
         [string]$ReturnCodes = '{"0": "success","1707": "success","3010": "softReboot","1641": "hardReboot","1618": "retry"}'
     )
 
@@ -184,7 +189,7 @@ function New-IntuneWinFramework {
             fileName                       = $FileName
             setupFilePath                  = $SetupFile
             installCommandLine             = $deploymentType.InstallCommandLine
-            uninstallCommandLine           = $deploymentType.UninstallCommandLine
+            uninstallCommandLine           = if ([string]::IsNullOrEmpty($deploymentType.UninstallCommandLine)) { $UninstallCommandLineFallback } else { $deploymentType.UninstallCommandLine }
             minimumSupportedWindowsRelease = $MinimumOSVersion
             applicableArchitectures        = $MinimumOSArchitecture
         }

@@ -36,7 +36,7 @@ function Get-InstallCommand {
         Write-LogAndHost -Message ("'{0}' installer type was detected" -f $InstallTech) -LogId $LogId -ForegroundColor Green
 
         # Build the command to be used with the Win32 Content Prep Tool
-        $right = ($SetupFile -split "$InstallTech")[0]
+        $right = ($SetupFile -split [regex]::Escape("$InstallTech"))[0]
         $rightMod = ($right -split '["'']')[-1]
         $fileName = $rightMod.TrimStart("\", ".", "`"", "'", " ")
         $command = $fileName + $InstallTech

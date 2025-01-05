@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   11/11/2023
-Updated on:   01/01/2025
+Updated on:   04/01/2025
 Created by:   Ben Whitmore
 Filename:     New-IntuneWin.ps1
 
@@ -44,29 +44,41 @@ function New-IntuneWin {
 
         # Search the Install Command line for other the installer type
         if ($SetupFile -match "powershell" -and $SetupFile -match "\.ps1") {
+            Write-LogAndHost -Message "PowerShell script detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.ps1' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.exe" -and $SetupFile -notmatch "msiexec" -and $SetupFile -notmatch "cscript" -and $SetupFile -notmatch "wscript") {
+            Write-LogAndHost -Message "Executable detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.exe' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.msi") {
+            Write-LogAndHost -Message "MSI detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.msi' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.vbs") {
+            Write-LogAndHost -Message "VBScript detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.vbs' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.cmd") {
+            Write-LogAndHost -Message "CMD script detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.cmd' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.bat") {
+            Write-LogAndHost -Message "Batch script detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.bat' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.js") {
+            Write-LogAndHost -Message "JavaScript detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.js' -SetupFile $SetupFile
+        }
+        elseif ($SetupFile -match "\.exe" -and $SetupFile -match "msiexec") {
+            Write-LogAndHost -Message "Executable detected but command line contains msiexec (hmmmm - not sure what to do here. Will use .exe)" -LogId $LogId -ForegroundColor Cyan
+            $commandToUse = Get-InstallCommand -InstallTech '.exe' -SetupFile $SetupFile
         }
         else {
             # Handle the default case if none of the conditions match
-            Write-Host "No matching extension found."
+            Write-LogAndHost "No matching extension found." -LogId $LogId -Severity 3
+            Get-ScriptEnd -LogId $LogId
         }
     
         Write-LogAndHost -Message ("Building IntuneWinAppUtil.exe execution string: '{0}' -s '{1}' -c '{2}' -o '{3}'" -f "$workingFolder_Root\ContentPrepTool\IntuneWinAppUtil.exe", $commandToUse, $ContentFolder, $OutputFolder) -LogId $LogId -ForegroundColor Cyan

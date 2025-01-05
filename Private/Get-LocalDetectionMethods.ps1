@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/02/2024
-Update on:    01/01/2025
+Update on:    04/01/2025
 Created by:   Ben Whitmore
 Filename:     Get-LocalDetectionMethods.ps1
 
@@ -51,6 +51,7 @@ function Get-DetectionMethod {
                     if (-not $rules.Value.ContainsKey($logicalName)) {
                         $rules.Value[$logicalName] = @()
                     }
+
                     $parentExpression = $node.ParentNode.ParentNode
                     $ruleDetail = @{
                         Operator         = $parentExpression.Operator
@@ -73,8 +74,17 @@ function Get-DetectionMethod {
         $rules = @{}
 
         # Find SettingReferences in the first level of the EnhancedDetectionMethod
-        $xmlDocument.EnhancedDetectionMethod.Rule.Expression.Operands.Expression | ForEach-Object {
-            Find-SettingReferences -Node $_ -Rules ([ref]$rules)
+        if ($xmlDocument.EnhancedDetectionMethod.Rule.Expression.Operands.Expression) {
+            $xmlDocument.EnhancedDetectionMethod.Rule.Expression.Operands.Expression | ForEach-Object {
+                Find-SettingReferences -Node $_ -Rules ([ref]$rules)
+            }
+        }
+
+        # Find SettingReferences if a child operands node doesn't exist
+        elseif ($xmlDocument.EnhancedDetectionMethod.Rule.Expression) {
+            $xmlDocument.EnhancedDetectionMethod.Rule.Expression | ForEach-Object {
+                Find-SettingReferences -Node $_ -Rules ([ref]$rules)
+            }
         }
         
         # Create an array to store the settings

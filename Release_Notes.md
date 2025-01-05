@@ -1,12 +1,25 @@
 # Win32App Migration Tool - Release Notes
 
-## 3.0.02 - General Availability - 03/01/2025  
+## 3.0.03 - General Availability (Preview) - 03/01/2025  
+
+✅ Fixed unexpecetd -Message output from the New-FolderToCreate function  
+✅ Removed unnecessary PSBoundParameters tests from the New-IntuneDetection function  
+✅ Fixed an issue with Find-SettingReferences if a child operands node doesn't exist in Get-LocalDetectionMethods function. We now test if the node exists before attempting to access it.
+✅ Fixed an issue with New-IntuneDetection function where we didnt pass the correct datatype and value for a local setting detection method in some cases  
+✅ Fixed an issue with New-IntuneDetection function where we were not converting Int64 datatype to integer for the Win32 app JSON detection method  
+✅ Fixed an issue with New-IntuneDetection function where we were not converting the operator 'Equals' to 'equal' for the Win32 app JSON detection method  
+✅ Improved error handling in New-IntuneWin if we cant find the extension of the install command  
+✅ We now select installer technoilogy .exe if the command line finds a -match "\.exe" -and -match "msiexec". This is to handle the case where the install command is an EXE but the command line contains msiexec (strange - I agree)  
+✅ Fixed an issue with how we get the name for the .intunewin filename from the install command line. We now escape the extension type for splitting [regex]::Escape("$InstallTech")  
+✅ Fixed an issue where no value was passsed if the ConfigMgr deplopyment type did not have an uninstall command. This is mandatory for the Win32 app JSON  
+
+## 3.0.02 - General Availability (Preview) - 03/01/2025  
 
 ✅ Fixed styling issue in New-FolderToCreate function  
 ✅ Added support for MSI detection methods  
 ✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/23>
 
-## 3.0.01 - General Availability - 01/01/2025
+## 3.0.01 - General Availability (Preview) - 01/01/2025
 
 ✅ New Branch for 3.0.01
 ✅ Removed dependency on MSAL.PS and replaced with Microsoft.Graph.Authentication  

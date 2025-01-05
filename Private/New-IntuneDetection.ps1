@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/03/2024
-Update on:    01/01/2025
+Update on:    04/01/2025
 Created by:   Ben Whitmore
 Filename:     New-IntuneDetection.ps1
 
@@ -93,7 +93,7 @@ function New-IntuneDetectionMethod {
             # Prepare operands for the Intune detection method
             switch ($operator) {
                 'Equals' {
-                    $operator = 'equals'
+                    $operator = 'equal'
                 }
                 'NotEquals' {
                     $operator = 'notEquals'
@@ -127,6 +127,13 @@ function New-IntuneDetectionMethod {
                 }
                 'EndsWith' {
                     $operator = 'endsWith'
+                }
+            }
+
+            # Prepare detection types for the Intune detection method
+            switch ($detectionType) {
+                'Int64' {
+                    $detectionType = 'integer'
                 }
             }
 
@@ -270,44 +277,23 @@ function New-IntuneDetectionMethod {
         }
     }
     process {
-
         if ($PSCmdlet.ParameterSetName -eq 'Methods') {
-
-            # Check if more than one parameter was passed within the parameter set
-        
             if ($PSBoundParameters.Keys.Count -gt 1) {
                 Write-LogAndHost -Message 'Only one parameter is allowed in parameter set "Methods". Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
                 return
             }
             else {
-
-                # Check if the LocalSettings or script parameter was passed
                 if ($PSBoundParameters['LocalSettings']) {
-                    $settings = $Settings
-                }
-                elseif ($PSBoundParameters['Script']) {
-                }
-                else {
-                    Write-LogAndHost -Message 'No settings were passed to the function' -LogId $LogId -Severity 3
-
-                    return
-                }
-
-                # Check if the LocalSettings parameter was passed
-
-                if ($PSBoundParameters['LocalSettings']) {
-
-                    # Create an empty array to store the JSON objects
                     $jsonArray = @()
-
-                    foreach ($setting in $Localsettings) {
-
-                        Switch ($setting.Type) {
+    
+                    foreach ($setting in $LocalSettings) {
+                        switch ($setting.Type) {
                             'SimpleSetting' {
 
-                                # Create the key path
+                                # Create the registry key path
                                 $regPath = Join-Path -Path $setting.Hive -ChildPath $setting.Key -ErrorAction SilentlyContinue
-
+    
+                                # Add the registry detection object
                                 $jsonArray += Add-SimpleSetting `
                                     -is64Bit $setting.is64Bit `
                                     -keyPath $regPath `
@@ -317,7 +303,6 @@ function New-IntuneDetectionMethod {
                                     -detectionValue $setting.Rules_ConstantValue
                             }
                             'File' {
-
                                 $jsonArray += Add-File `
                                     -is64Bit $setting.is64Bit `
                                     -detectionType $setting.Rules_ConstantDataType `
@@ -332,21 +317,21 @@ function New-IntuneDetectionMethod {
                                     -ProductVersion $setting.Rules_ConstantValue `
                                     -ProductVersionOperator $setting.Rules_Operator
                             }
+                            default {
+                                Write-LogAndHost -Message "Unhandled detection type: $($setting.Type)" -LogId $LogId -Severity 3
+                            }
                         }
                     }
+    
+                    # Convert to JSON
+                    $json = $jsonArray | ConvertTo-Json -Depth 5
+                    Convert-EmptyStringToNullInJson -Json $json
                 }
-                
-                # Convert the array to JSON
-                $json = $jsonArray | ConvertTo-Json -Depth 5
-            
-                # Display or output the JSON
-                Convert-EmptyStringToNullInJson -Json $json
+                else {
+                    Write-LogAndHost -Message 'No settings were passed to the function' -LogId $LogId -Severity 3
+                    return
+                }
             }
         }
-        else {
-            Write-LogAndHost -Message 'At least one parameter from parameter set "Methods" is required. Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
-
-            return
-        }
-    }
-}
+    }  
+}  

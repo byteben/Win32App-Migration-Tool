@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   27/10/2023
-Updated on:   03/01/2025
+Updated on:   04/01/2025
 Created by:   Ben Whitmore
 Filename:     New-FolderToCreate.ps1
 
@@ -29,7 +29,7 @@ function New-FolderToCreate {
     )
     begin {
     
-        Write-Host -Message 'Function: New-FolderToCreate was called' -ForegroundColor Cyan
+        Write-Host 'Function: New-FolderToCreate was called' -ForegroundColor Cyan
     }
     process {
         foreach ($folder in $FolderNames) {
@@ -38,21 +38,21 @@ function New-FolderToCreate {
             $folderToCreate = Join-Path -Path $Root -ChildPath $folder
         
             if (-not (Test-Path -Path $folderToCreate)) {
-                Write-Host -Message ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
+                Write-Host ("Creating Folder '{0}'..." -f $folderToCreate) -ForegroundColor Cyan
 
                 try {
 
                     # Create the folder
                     New-Item -Path $folderToCreate -ItemType Directory -Force -ErrorAction Stop | Out-Null
-                    Write-Host -Message ("Folder '{0}' was created succesfully" -f $folderToCreate) -ForegroundColor Green
+                    Write-Host ("Folder '{0}' was created succesfully" -f $folderToCreate) -ForegroundColor Green
                 }
                 catch {
-                    Write-Host -Message ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
+                    Write-Host ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
                     Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
                 }
             }
             else {
-                Write-Host -Message ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
+                Write-Host ("Folder '{0}' already exists. Skipping folder creation" -f $folderToCreate) -ForegroundColor Yellow
             }
         }
     }
