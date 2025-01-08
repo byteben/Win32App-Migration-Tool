@@ -9,7 +9,7 @@
 ## 3.0.04 - Preview - 08/01/2025  
 
 ✅ Reverted to single app selection while investigating an issue with multiple app selection  
-✅ Updated License terms to Non-Commercial (reasons)
+✅ Updated License terms to Non-Commercial 
 
 ## 3.0.03 - Preview - 05/01/2025  
 
