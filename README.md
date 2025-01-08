@@ -1,49 +1,57 @@
-# Win32App Migration Tool
 
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)  
+# Win32 App Migration Tool
+![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Win32AppMigrationTool?color=green&label=PowerShell%20Gallery%20Downloads&logo=powershell)  
+![License: Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-purple.svg)  
+![PowerShell](https://img.shields.io/badge/PowerShell-v7%2B-yellow?logo=powershell)  
+![PowerShell](https://img.shields.io/badge/PowerShell-v5.1-blue?logo=powershell)  
 
-## Watch the tool in action  
-  
-[![Watch the video](https://byteben.com/bb/Downloads/GitHub/YouTube-MigTool.jpg)](https://www.youtube.com/watch?v=xpQO5naqsnA)  
-https://www.youtube.com/watch?v=xpQO5naqsnA  
-  
-## Synopsis  
-  
-The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The Intune Admin Center.  
-Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32App Migration Tool is designed to do that for you.
-  
-**Blog Post** https://msendpointmgr.com/2021/03/27/automatically-migrate-applications-from-configmgr-to-intune-with-the-win32app-migration-tool/
+![Tool Preview](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)  
 
 ---
 
-**LEGAL DISCLAIMER**
+## 📝 Synopsis
 
-This solution is distributed under the **GNU GENERAL PUBLIC LICENSE**.
+The **Win32AppMigrationTool** is designed to inventory **ConfigMgr Applications** and Deployment Types, build .intunewin files, and create win32 apps in the Intune.  
 
-The PowerShell script provided is shared with the community *as-is*. The author and co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose.  
-Please note that the script may need to be modified or adapted to fit your specific environment or requirements. It is recommended to thoroughly test the script in a non-production environment before using it in a live or critical system.  
-The author and co-author(s) cannot be held responsible for any damages, losses, or adverse effects that may arise from the use of this script.  
-You assume all risks and responsibilities associated with its usage.
+---
+
+## 🪪 License
+
+- **Non-Commercial Use**: This software is provided for non-commercial use only. Commercial use is prohibited without prior written consent from the author.
+
+- **Modifications**: You may modify/fork the code for personal use but cannot distribute the code, or modified versions of the code, for commercial purposes.
+
+This project is licensed under the [Non-Commercial License](License). You may not reproduce, distribute, or use any part of this code for commercial purposes. For detailed terms and conditions, please refer to the [License](License) file in this directory.
+
+---
+
+## ⚖️ Legal Disclaimer
+
+The provided PowerShell script is shared with the community as-is. The author and any co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose.
+
+This script may require modifications to fit your specific environment or requirements. It is strongly recommended to test the script in a non-production environment before using it in a live or critical system.
+
+The author and co-author(s) shall not be held responsible for any damages, losses, or unintended effects resulting from the use of this script. By using this script, you assume all associated risks and responsibilities.
 
 ---
   
-## Development Status
+## 👩‍💻 Development Status
 
-  **STATUS: Generally Available**  
-  The Win32App Migration Tool is now Generally Available as of January 2025. I would welcome feedback or suggestions for improvement. Reach out on Twitter to DM @byteben (DM's are open)  
+  **STATUS: Preview**  
+  The Win32App Migration Tool is in Preview.  
   
-## Requirements  
+## 📋 Requirements  
 
 - **Configuration Manager Console** The console must be installed on the machine you are running the Win32App Migration Tool from. The following path should resolve true: $ENV:SMS_ADMIN_UI_PATH
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
 - **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
 - **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
-- **PowerShell 5.1**  PowerShell 7 is recommended
+- **PowerShell 5.1**  PowerShell 7 is recommended to ensure Blob files are verificed after chunking to Azure Storage and to correctly analyzing certain ConfigMgr detection types
 - **Internet Access** to download the Win32 Content Prep Tool
 - **Microsoft.Graph.Authentication Module** Install-Module -Name Microsoft.Graph.Authentication (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
 - **Az.Storage Module** Install-Module -Name Az.Storage (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
   
-## Quick Start  
+## 👏 Quick Start  
   
   **1. Install-Module Win32AppMigrationTool**  
   **2. New-Win32App** -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *"  
@@ -53,7 +61,7 @@ You assume all risks and responsibilities associated with its usage.
   New-Win32App -ProviderMachineName <String> -AppName <String>
   ```
 
-## Order of Operations  
+## 🔢 Order of Operations  
 
 The current release of the Win32 App Migration Tool will do the following:-  
   
@@ -122,7 +130,7 @@ The current release of the Win32 App Migration Tool will do the following:-
  ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool12-CreateWin32App.jpg)
   
   
-## Important Information
+## ⚠️ Important Information
 
 _**// Please use the tool with caution and test in your lab (dont be the person who tests in production). I accept no responsibility for loss or damage as a result of using these scripts //**_
 
@@ -132,7 +140,7 @@ _**// Please use the tool with caution and test in your lab (dont be the person 
   
  ![alt text](https://byteben.com/bb/Downloads/GitHub/Main-Log.jpg)
 
-## Parameters  
+## ↘️ Parameters  
 
 ### -SiteCode
 

@@ -35,7 +35,7 @@ function Get-AppInfo {
 
     }
     process {
-
+    
         # Iterate through each application and get the details
         foreach ($application in $applicationName) {
 

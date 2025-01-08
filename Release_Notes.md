@@ -1,10 +1,11 @@
 # Win32App Migration Tool - Release Notes
 
-## 3.0.04 - General Availability (Preview) - 03/01/2025  
+## 3.0.04 - Preview - 08/01/2025  
 
-✅ Fixed
+✅ Reverted to single app selection while investigating an issue with multiple app selection  
+✅ Updated License terms to Non-Commercial (reasons)
 
-## 3.0.03 - General Availability (Preview) - 05/01/2025  
+## 3.0.03 - Preview - 05/01/2025  
 
 ✅ Fixed unexpecetd -Message output from the New-FolderToCreate function  
 ✅ Removed unnecessary PSBoundParameters tests from the New-IntuneDetection function  
@@ -17,15 +18,14 @@
 ✅ Fixed an issue with how we get the name for the .intunewin filename from the install command line. We now escape the extension type for splitting [regex]::Escape("$InstallTech")  
 ✅ Fixed an issue where no value was passsed if the ConfigMgr deplopyment type did not have an uninstall command. This is mandatory for the Win32 app JSON  
 
-## 3.0.02 - General Availability (Preview) - 03/01/2025  
+## 3.0.02 - Preview - 03/01/2025  
 
 ✅ Fixed styling issue in New-FolderToCreate function  
 ✅ Added support for MSI detection methods  
 ✅ Fixed <https://github.com/byteben/Win32App-Migration-Tool/issues/23>
 
-## 3.0.01 - General Availability (Preview) - 01/01/2025
+## 3.0.01 - Preview - 01/01/2025
 
-✅ New Branch for 3.0.01
 ✅ Removed dependency on MSAL.PS and replaced with Microsoft.Graph.Authentication  
 ✅ New Module Connect-MgGraphCustom to authenticate to the Microsoft Graph API  
 ✅ New Module Test-MgGraphConnection to test the connection to the Microsoft Graph API and required scopes  
