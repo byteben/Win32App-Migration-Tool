@@ -1,6 +1,10 @@
 # Win32App Migration Tool - Release Notes
 
-## 3.0.03 - General Availability (Preview) - 03/01/2025  
+## 3.0.04 - General Availability (Preview) - 03/01/2025  
+
+✅ Fixed
+
+## 3.0.03 - General Availability (Preview) - 05/01/2025  
 
 ✅ Fixed unexpecetd -Message output from the New-FolderToCreate function  
 ✅ Removed unnecessary PSBoundParameters tests from the New-IntuneDetection function  

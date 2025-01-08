@@ -370,17 +370,14 @@ function New-Win32App {
  
         # ApplicationName(s) returned from the Get-AppList function
         if ($applicationName) {
-            Write-Log -Message "The Win32App Migration Tool will process the following applications:" -LogId $LogId
-            Write-Host "The Win32App Migration Tool will process the following applications:" -ForegroundColor Cyan
+            Write-LogAndHost -Message "The Win32App Migration Tool will process the following applications:" -LogId $LogId -ForegroundColor Cyan
         
             foreach ($application in $ApplicationName) {
-                Write-Log -Message ("Id = '{0}', Name = '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId
-                Write-Host ("Id = '{0}', Name = '{1}'" -f $application.Id, $application.LocalizedDisplayName) -ForegroundColor Green
+                Write-LogAndHost -Message ("Id = '{0}', Name = '{1}'" -f $application.Id, $application.LocalizedDisplayName) -LogId $LogId -ForegroundColor Green
             }
         }
         else {
-            Write-Log -Message ("There were no applications found that match the crieria '{0}' or the Out-GrideView was closed with no selection made. Cannot continue" -f $AppName) -LogId $LogId -Severity 3
-            Write-Warning -Message ("There were no applications found that match the crieria '{0}' or the Out-GrideView was closed with no selection made. Cannot continue" -f $AppName)
+            Write-LogAndHost -Message ("There were no applications found that match the crieria '{0}' or the Out-GrideView was closed with no selection made. Cannot continue" -f $AppName) -LogId $LogId -Severity 3
             Get-ScriptEnd
         }
         
@@ -390,8 +387,7 @@ function New-Win32App {
         New-VerboseRegion -Message 'Getting application details' -ForegroundColor 'Gray'
 
         # Calling function to grab application details
-        Write-Log -Message "Calling 'Get-AppInfo' function to grab application details" -LogId $LogId
-        Write-Host "Calling 'Get-AppInfo' function to grab application details" -ForegroundColor Cyan
+        Write-LogAndHost -Message "Calling 'Get-AppInfo' function to grab application details" -LogId $LogId -ForegroundColor Cyan
 
         $app_Array = Get-AppInfo -ApplicationName $applicationName
         #endregion
@@ -400,8 +396,7 @@ function New-Win32App {
         New-VerboseRegion -Message 'Getting deployment type details' -ForegroundColor 'Gray'
 
         # Calling function to grab deployment types details
-        Write-Log -Message "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -LogId $LogId
-        Write-Host "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -ForegroundColor Cyan
+        Write-LogAndHost -Message "Calling 'Get-DeploymentTypeInfo' function to grab deployment type details" -LogId $LogId -ForegroundColor Cyan
     
         $deploymentTypes_Array = foreach ($app in $app_Array) { Get-DeploymentTypeInfo -ApplicationId $app.Id }
         #endregion
