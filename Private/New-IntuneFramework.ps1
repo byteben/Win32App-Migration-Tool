@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   24/03/2024
-Updated on:   03/01/2025
+Updated on:   08/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32appFramework.ps1
 
@@ -219,7 +219,7 @@ function New-IntuneWinFramework {
                         ruleType             = 'detection'
                         check32BitOn64System = $rule.check32BitOn64System
                         operationType        = $rule.detectionType
-                        comparisonValue      = $rule.detectionVale
+                        comparisonValue      = $rule.detectionValue
                         fileOrFolderName     = $rule.fileOrFolderName
                         operator             = $rule.operator
                         path                 = $rule.path
@@ -238,6 +238,15 @@ function New-IntuneWinFramework {
                         valueName            = $rule.valueName
                     }
                 }
+                # MSI Detection
+                elseif ($rule.'@odata.type' -eq "#microsoft.graph.win32LobAppProductCodeDetection") {
+                    $transformedRules += [ordered]@{
+                        '@odata.type'          = "#microsoft.graph.win32LobAppProductCodeRule"
+                        productCode            = $rule.productCode
+                        productVersion         = $rule.productVersion
+                        productVersionOperator = $rule.productVersionOperator
+                    }
+                }
             }
         }
         elseif ($PSBoundParameters.ContainsKey('DetectionScript')) {
@@ -249,15 +258,7 @@ function New-IntuneWinFramework {
                 'runAs32Bit'            = $false
             }
         }
-        elseif ($PSBoundParameters.ContainsKey('DetectionMethodMSI')) {
-            Write-LogAndHost -Message "Using MSI method for building detection" -LogId $LogId -ForegroundColor Cyan
-            $transformedRules += [ordered]@{
-                '@odata.type'            = "#microsoft.graph.win32LobAppProductCodeRule"
-                'productCode'            = $DetectionMethodMSI.productCode
-                'productVersion'         = $DetectionMethodMSI.productVersion
-                'productVersionOperator' = if ([string]::IsNullOrWhiteSpace($DetectionMethodMSI.productVersionOperator)) { 'notConfigured' } else { $DetectionMethodMSI.productVersionOperator }
-            }
-        }
+        
 
         $body['rules'] = $transformedRules
 

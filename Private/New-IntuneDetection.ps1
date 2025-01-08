@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   17/03/2024
-Update on:    04/01/2025
+Update on:    08/01/2025
 Created by:   Ben Whitmore
 Filename:     New-IntuneDetection.ps1
 
@@ -96,7 +96,7 @@ function New-IntuneDetectionMethod {
                     $operator = 'equal'
                 }
                 'NotEquals' {
-                    $operator = 'notEquals'
+                    $operator = 'notEqual'
                 }
                 'GreaterThan' {
                     $operator = 'greaterThan'
@@ -174,10 +174,10 @@ function New-IntuneDetectionMethod {
             # Prepare operands for the Intune detection method
             switch ($operator) {
                 'Equals' {
-                    $operator = 'equals'
+                    $operator = 'equal'
                 }
                 'NotEquals' {
-                    $operator = 'notEquals'
+                    $operator = 'notEqual'
                 }
                 'GreaterThan' {
                     $operator = 'greaterThan'
@@ -242,10 +242,10 @@ function New-IntuneDetectionMethod {
             # Prepare operands for the Intune detection method
             switch ($productVersionOperator) {
                 'Equals' {
-                    $productVersionOperator = 'equals'
+                    $productVersionOperator = 'equal'
                 }
                 'NotEquals' {
-                    $productVersionOperator = 'notEquals'
+                    $productVersionOperator = 'notEqual'
                 }
                 'GreaterThan' {
                     $productVersionOperator = 'greaterThan'

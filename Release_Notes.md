@@ -1,5 +1,11 @@
 # Win32App Migration Tool - Release Notes
 
+## 3.0.05 - Preview - 08/01/2025  
+
+✅ Fixed how we were handling scopes for Interactive authentication in Connect-MgGraphCustom function
+✅ Updated README.md to indicate the requirement of the redirect URI for the Connect-MgGraphCustom function (should be http://localhost)  
+✅ Fixed MSI rule detection method in New-IntuneDetection function
+
 ## 3.0.04 - Preview - 08/01/2025  
 
 ✅ Reverted to single app selection while investigating an issue with multiple app selection  
