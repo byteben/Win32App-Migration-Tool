@@ -15,11 +15,11 @@ The **Win32AppMigrationTool** is designed to inventory **ConfigMgr Applications*
 
 ---
 
-## 🪪 License
+## 🔐 License
 
 - **Non-Commercial Use**: This software is provided for non-commercial use only. Commercial use is prohibited without prior written consent from the author.
 
-- **Modifications**: You may modify/fork the code for personal use but cannot distribute the code, or modified versions of the code, for commercial purposes.
+- **Modifications**: You are permitted to modify or fork the code for personal use only. However, you may not distribute the original or modified versions of the code, share it to add additional functionality, or incorporate it into commercial products.
 
 This project is licensed under the [Non-Commercial License](License). You may not reproduce, distribute, or use any part of this code for commercial purposes. For detailed terms and conditions, please refer to the [License](License) file in this directory.
 
@@ -50,6 +50,7 @@ The author and co-author(s) shall not be held responsible for any damages, losse
 - **Internet Access** to download the Win32 Content Prep Tool
 - **Microsoft.Graph.Authentication Module** Install-Module -Name Microsoft.Graph.Authentication (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
 - **Az.Storage Module** Install-Module -Name Az.Storage (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
+- **Entra ID App Registration** The Client App must have a redirect URI configured for **http://localhost**. This is required for `Connect-MgGraph` to work correctly
   
 ## 👏 Quick Start  
   

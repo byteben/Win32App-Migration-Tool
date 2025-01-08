@@ -1,7 +1,7 @@
 ﻿<#
 .Synopsis
 Created on:   14/03/2021
-Updated on:   03/01/2025
+Updated on:   08/01/2025
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
@@ -626,14 +626,6 @@ function New-Win32App {
                         elseif ($deploymentType.DetectionTypeScriptType) {
                             $bytes = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path "$($deploymentType.DetectionMethodScriptFile)" -Raw -Encoding UTF8)))
                             $paramsToPassWin32App.Add('DetectionScript', $bytes)
-                        }
-                        elseif ($deploymentType.DetectionTypeProductCode) {
-                            $detectionMethodMSIArray = [ordered]@{
-                                ProductCode = $deploymentType.DetectionTypeProductCode
-                                PackageCode = $deploymentType.DetectionTypePackageCode
-                                PatchCodes  = $deploymentType.DetectionTypePatchCodes
-                            }
-                            $paramsToPassWin32App.Add('DetectionMethodMSI', $detectionMethodMSIArray)
                         }
                         else {
                             Write-LogAndHost -Message ("No detection method found for '{0}'" -f $app.Name) -LogId $LogId -Severity 3

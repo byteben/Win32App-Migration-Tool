@@ -164,7 +164,7 @@ function Connect-MgGraphCustom {
             }
             'Interactive' {
                 $connectMgParams['ClientId'] = $ClientId
-                $connectMgParams['Scopes'] = $RequiredScopes
+                $connectMgParams['Scopes'] = $RequiredScopes -join ' '
             }
             default {
                 Write-LogAndHost -Message ("Unknown authentication method: {0}" -f $AuthenticationMethod) -LogId $LogId -Severity 3
