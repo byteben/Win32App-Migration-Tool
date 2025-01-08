@@ -15,7 +15,7 @@
 
 ✅ Fixed unexpecetd -Message output from the New-FolderToCreate function  
 ✅ Removed unnecessary PSBoundParameters tests from the New-IntuneDetection function  
-✅ Fixed an issue with Find-SettingReferences if a child operands node doesn't exist in Get-LocalDetectionMethods function. We now test if the node exists before attempting to access it.
+✅ Fixed an issue with Find-SettingReferences if a child operands node doesn't exist in Get-LocalDetectionMethods function. We now test if the node exists before attempting to access it  
 ✅ Fixed an issue with New-IntuneDetection function where we didnt pass the correct datatype and value for a local setting detection method in some cases  
 ✅ Fixed an issue with New-IntuneDetection function where we were not converting Int64 datatype to integer for the Win32 app JSON detection method  
 ✅ Fixed an issue with New-IntuneDetection function where we were not converting the operator 'Equals' to 'equal' for the Win32 app JSON detection method  
