@@ -35,10 +35,12 @@ function New-IntuneWin {
         [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 2, HelpMessage = 'The setup file to be used for packaging. Normally the .msi, .exe or .ps1 file used to install the application')]
         [string]$SetupFile,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 3, HelpMessage = 'Override intunewin filename. Default is the name calcualted from the install command line')]
-        [string]$OverrideIntuneWin32FileName
+        [string]$OverrideIntuneWin32FileName,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 4, HelpMessage = 'Run IntuneWinAppUtil with no console output')]
+        [switch]$silentMode
     )
     begin {
-        Write-Log -Message "Function: New-IntuneWin was called" -Log "Main.log"
+        Write-Log -Message "Function: New-IntuneWin was called"
     }
     process {
 
@@ -54,6 +56,10 @@ function New-IntuneWin {
         elseif ($SetupFile -match "\.msi") {
             Write-LogAndHost -Message "MSI detected" -LogId $LogId -ForegroundColor Cyan
             $commandToUse = Get-InstallCommand -InstallTech '.msi' -SetupFile $SetupFile
+        }
+        elseif ($SetupFile -match "\.msp") {
+            Write-LogAndHost -Message "MSP detected" -LogId $LogId -ForegroundColor Cyan
+            $commandToUse = Get-InstallCommand -InstallTech '.msp' -SetupFile $SetupFile
         }
         elseif ($SetupFile -match "\.vbs") {
             Write-LogAndHost -Message "VBScript detected" -LogId $LogId -ForegroundColor Cyan
@@ -94,8 +100,20 @@ function New-IntuneWin {
                 "`"$OutputFolder`""
                 '-q'
             )
-            Start-Process -FilePath (Join-Path -Path "$workingFolder_Root\ContentPrepTool" -ChildPath "IntuneWinAppUtil.exe") -ArgumentList $arguments -Wait
-        
+
+            $procArgs = @{
+                FilePath     = (Join-Path -Path "$workingFolder_Root\ContentPrepTool" -ChildPath "IntuneWinAppUtil.exe")
+                ArgumentList = $arguments
+                Wait         = $true
+            }
+
+            if ($silentMode) {
+                $procArgs.WindowStyle = 'Hidden'
+            } else {
+                $procArgs.WindowStyle = 'Normal'
+            }
+
+            Start-Process @procArgs
         }
         catch {
             Write-LogAndHost -Message ("An error was encountered when attempting to create a intunewin file at '{0}'" -f $OutputFolder) -LogId $LogId -Severity 3

@@ -294,6 +294,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Parameter Win32ContentPrepToolSilentMode
+
+Pass this parameter to hide the IntuneWinAppUtil Window which is shown when packaging apps
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter NoConsoleOutput
+
+Pass this parameter to disable writing to host (output still gets logged)
+
+```yaml
+Type: Switch
+Parameter Sets: (All)
+
+Required: False
+Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Parameter CreateApps
 
 Pass this parameter to create the Win32apps in Intune
@@ -319,6 +349,21 @@ Parameter Sets: (All)
 
 Required: False
 Position:
+Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameter logFileName
+
+The name of the main log file excluing the ".log" extension (Default: "Main") - Useful when running multiple instances of New-Win32App in the same working directory, so a seperate log file is generated for each instance.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: 
 Default value:
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -465,6 +510,9 @@ New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge C
   ```
   ```
 New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog  
+  ```
+  ```
+New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog -logFileName "Microsoft Edge Export"
   ```
   ```
 New-Win32App -ProviderMachineName "SCCM1.byteben.com" -AppName "Microsoft Edge Chromium *" -ExportLogo -PackageApps -ResetLog -NoOGV  

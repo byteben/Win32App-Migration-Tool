@@ -150,44 +150,50 @@ function New-Win32App {
         [Switch]$PackageApps,
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 7, HelpMessage = 'ResetLog: Pass this parameter to reset the log file')]
         [Switch]$ResetLog,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 8, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 8, HelpMessage = 'The name of the main log file excluing the ".log" extension (Default: "Main")')]
+        [string]$logFileName = "Main",
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 9, HelpMessage = 'ExcludePMPC: Pass this parameter to exclude apps created by PMPC from the results. Filter is applied to Application "Comments". string can be modified in Get-AppList Function')]
         [Switch]$ExcludePMPC,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 9, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 10, HelpMessage = 'ExcludeFilter: Pass this parameter to exclude specific apps from the results. string value that accepts wildcards e.g. "Microsoft*"')]
         [string]$ExcludeFilter,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 10, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 11, HelpMessage = 'NoOGV: When passed, the Out-Gridview is suppressed')]
         [Switch]$NoOgv,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 11, HelpMessage = 'URI for Win32 Content Prep Tool')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 12, HelpMessage = 'URI for Win32 Content Prep Tool')]
         [string]$Win32ContentPrepToolUri = 'https://raw.githubusercontent.com/microsoft/Microsoft-Win32-Content-Prep-Tool/refs/heads/master/IntuneWinAppUtil.exe',
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 12, HelpMessage = 'Override intunewin filename. Default is the name calculated from the install command line')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = 'Override intunewin filename. Default is the name calculated from the install command line')]
         [string]$OverrideIntuneWin32FileName,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 13, HelpMessage = 'Notes field value to add to the Win32App JSON body')]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = 'Notes field value to add to the Win32App JSON body')]
         [string]$Win32AppNotes = "Created by the Win32App Migration Tool",
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 14, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
+        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 15, HelpMessage = "When creating the Win32App, allow the user to uninstall the app if it is available in the Company Portal")]
         [bool]$AllowAvailableUninstall = $true,
-        [Parameter(Mandatory = $false, Position = 15, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
+        [Parameter(Mandatory = $false, Position = 16, HelpMessage = 'CreateApps: Pass this parameter to create the Win32apps in Intune')]
         [Switch]$CreateApps,
+        [Parameter(Mandatory = $false, Position = 17, HelpMessage = 'NoConsoleOutput: Pass this parameter to disable writing to host (output still gets logged)')]
+        [Switch]$NoConsoleOutput,
+        [Parameter(Mandatory = $false, Position = 18, HelpMessage = 'Win32ContentPrepToolSilentMode: Pass this parameter to hide the IntuneWinAppUtil Window which is shown when packaging apps')]
+        [Switch]$Win32ContentPrepToolSilentMode,
 
         # Shared Parameters for Graph Authentication
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 19, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 19, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 19, HelpMessage = 'Tenant Id or name to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 19, HelpMessage = 'Tenant Id or name to connect to')]
         [string]$TenantId,
 
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
-        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 17, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 20, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 20, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 20, HelpMessage = 'Client Id (App Registration) to connect to')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive', Position = 20, HelpMessage = 'Client Id (App Registration) to connect to')]
         [string]$ClientId,
 
         # AuthN and AuthZ Parameters
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 18, HelpMessage = 'Client secret for authentication')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 21, HelpMessage = 'Client secret for authentication')]
         [string]$ClientSecret,
-        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 18, HelpMessage = 'Client certificate thumbprint for authentication')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ClientCertificateThumbprint', Position = 21, HelpMessage = 'Client certificate thumbprint for authentication')]
         [string]$ClientCertificateThumbprint,
-        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 18, HelpMessage = 'Use device authentication for Microsoft Graph API')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'UseDeviceAuthentication', Position = 21, HelpMessage = 'Use device authentication for Microsoft Graph API')]
         [switch]$UseDeviceAuthentication,
-        [Parameter(Mandatory = $false, Position = 19, HelpMessage = 'The scopes required for Microsoft Graph API access')]
+        [Parameter(Mandatory = $false, Position = 22, HelpMessage = 'The scopes required for Microsoft Graph API access')]
         [string[]]$RequiredScopes = ('DeviceManagementApps.ReadWrite.All'),
     
         # Additional Parameters
@@ -213,6 +219,13 @@ function New-Win32App {
         # Create global variable(s) 
         $global:workingFolder_Root = $workingFolder
         $global:scopes = $RequiredScopes
+        $global:logFileName = $("$logFileName.log")
+
+        # Overriding "Write-Host" and "Write-Progress" to disable console output
+        if ($NoConsoleOutput) { 
+            function global:Write-Host(){}
+            function global:Write-Progress(){}
+        }
 
         #region Prepare_Workspace
         # Initialize folders to prepare workspace for logging
@@ -528,6 +541,8 @@ function New-Win32App {
                 if ($OverrideIntuneWin32FileName) { 
                     $paramsToPassIntuneWin.Add('OverrideIntuneWin32FileName', $OverrideIntuneWin32FileName) 
                 }
+
+                $paramsToPassIntuneWin.Add('silentMode', $Win32ContentPrepToolSilentMode)
 
                 # Create the .intunewin file
                 New-IntuneWin @paramsToPassIntuneWin

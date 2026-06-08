@@ -65,24 +65,24 @@ function Get-AppList {
                         $true {
                             switch ($NoOgv) {
                                 $true {
-                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' excluding apps like '{1}' and where the comment field is like '{2}' (NoOgv parameter passed)" -f $AppName, $ExcludeFilter, $Pmpc_Comment) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { (-not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) -and (-not ($_.LocalizedDescription -like "$Pmpc_Comment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
+                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' excluding apps like '{1}' and where the comment field is like '{2}' (NoOgv parameter passed)" -f $AppName, $ExcludeFilter, $PmpcComment) -LogId $LogId -ForegroundColor Cyan
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { (-not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) -and (-not ($_.LocalizedDescription -like "$PmpcComment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
                                 }
                                 $false {
                                     Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' excluding apps like '{1}'" -f $AppName, $ExcludeFilter) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { (-not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) -and (-not ($_.LocalizedDescription -like "$Pmpc_Comment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application(s) to process the associated deployment types' -OutputMode Single
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { (-not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) -and (-not ($_.LocalizedDescription -like "$PmpcComment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application(s) to process the associated deployment types' -OutputMode Single
                                 }
                             }
                         }
                         $false {
                             switch ($NoOgv) {
                                 $true {
-                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' where the comment field is like '{1}' (NoOgv parameter passed)" -f $AppName, $Pmpc_Comment) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { (-not ($_.LocalizedDescription -like "$Pmpc_Comment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
+                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' where the comment field is like '{1}' (NoOgv parameter passed)" -f $AppName, $PmpcComment) -LogId $LogId -ForegroundColor Cyan
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { (-not ($_.LocalizedDescription -like "$PmpcComment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
                                 }
                                 $false {
-                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' where the comment field is like '{1}'" -f $AppName, $Pmpc_Comment) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { (-not ($_.LocalizedDescription -like "$Pmpc_Comment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application(s) to process the associated deployment types' -OutputMode Single
+                                    Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' where the comment field is like '{1}'" -f $AppName, $PmpcComment) -LogId $LogId -ForegroundColor Cyan
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { (-not ($_.LocalizedDescription -like "$PmpcComment") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application(s) to process the associated deployment types' -OutputMode Single
                                 }
                             }
                         }
@@ -94,11 +94,11 @@ function Get-AppList {
                             switch ($NoOgv) {
                                 $true {
                                     Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' excluding apps like '{1}' (NoOgv parameter passed)" -f $AppName, $ExcludeFilter) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { (-not($_.LocalizedDisplayName -like "$ExcludeFilter")) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { (-not($_.LocalizedDisplayName -like "$ExcludeFilter")) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
                                 }
                                 $false {
                                     Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' excluding apps like '{1}'" -f $AppName, $ExcludeFilter) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Where-Object { ( -not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an Application(s) to process the associated deployment types' -OutputMode Single
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Where-Object { ( -not ($_.LocalizedDisplayName -like "$ExcludeFilter") ) } | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an Application(s) to process the associated deployment types' -OutputMode Single
                                 }
                             }
                         }
@@ -107,11 +107,11 @@ function Get-AppList {
                                 $true {
                                     write-host "hank"
                                     Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}' (NoOgv parameter passed)" -f $AppName) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName
                                 }
                                 $false {
                                     Write-LogAndHost -Message ("Invoking Get-CMApplication (fast) including apps like '{0}'" -f $AppName) -LogId $LogId -ForegroundColor Cyan
-                                    $applicationResult = Get-CMApplication -Fast -Name "*$AppName*" | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application to process the associated deployment types' -OutputMode Single
+                                    $applicationResult = Get-CMApplication -Fast -Name "$AppName" | Select-Object @{ Name = 'Id'; Expression = { $_.CI_ID.toString() } }, LocalizedDisplayName, HasContent, NumberOfDeploymentTypes, IsDeployable, IsDeployed, DateCreated, DateLastModified, LastModifiedBy | Sort-Object LocalizedDisplayName | Out-GridView -Title 'Select an application to process the associated deployment types' -OutputMode Single
                                 }
                             }
                         }
