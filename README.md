@@ -5,7 +5,7 @@
 ![PowerShell](https://img.shields.io/badge/PowerShell-v7%2B-yellow?logo=powershell)  
 ![PowerShell](https://img.shields.io/badge/PowerShell-v5.1-blue?logo=powershell)  
 
-![Tool Preview](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)  
+![Tool Preview](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool3-AppSelection.jpg)  
 
 ---
 
@@ -84,51 +84,51 @@ The current release of the Win32 App Migration Tool will do the following:-
   
 ### 1. Environment Setup  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool1-Env.jpg)  
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool1-Env.jpg)  
   
 ### 2. Authentication  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool2-Authentication.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool2-Authentication.jpg)
   
 ### 3. Application Selection  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool3-AppSelection.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool3-AppSelection.jpg)
   
 ### 4. Application Details Export  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool4-AppDetails.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool4-AppDetails.jpg)
   
 ### 5. Deployment Type Details Export  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool5-DeploymentTypeDetails.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool5-DeploymentTypeDetails.jpg)
 
 ### 6. Content Details Export  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool6-ContentDetails.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool6-ContentDetails.jpg)
   
 ### 7. Content Download  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool7-ContentCopy.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool7-ContentCopy.jpg)
   
 ### 8. CSV Export of Application Details  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool8-CSVExport.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool8-CSVExport.jpg)
   
 ### 9. Icon Export  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool9-IconExport.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool9-IconExport.jpg)
   
 ### 10. Create an Intunewin  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool10-CreateIntunewinjpg.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool10-CreateIntunewinjpg.jpg)
 
 ### 11. Create Win32App JSON Body  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool11-CreateWin32AppJson.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool11-CreateWin32AppJson.jpg)
   
 ### 12. Create the WIn32 app in Intune  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/MigTool12-CreateWin32App.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/MigTool12-CreateWin32App.jpg)
   
   
 ## ⚠️ Important Information
@@ -139,7 +139,7 @@ _**// Please use the tool with caution and test in your lab (dont be the person 
   
 **Main.log** in the **%WorkingFolder%\Logs** folder contains a detailed verbose output of the solution  
   
- ![alt text](https://byteben.com/bb/Downloads/GitHub/Main-Log.jpg)
+ ![alt text](https://raw.githubusercontent.com/byteben/byteben.com/main/repo-files/downloads-GitHub/Main-Log.jpg)
 
 ## ↘️ Parameters  
 
