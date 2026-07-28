@@ -132,7 +132,7 @@ function New-IntuneDetectionMethod {
 
             # Prepare detection types for the Intune detection method
             switch ($detectionType) {
-                'Int64' {
+                'int64' {
                     $detectionType = 'integer'
                 }
             }
@@ -168,8 +168,10 @@ function New-IntuneDetectionMethod {
                 $check32BitOn64System = [bool]$true
             }
 
-            # Set the detection type
-            $detectionType = $detectionType.ToLower()
+            # Set and normalize the detection type when provided
+            if (-not [string]::IsNullOrWhiteSpace($detectionType)) {
+                $detectionType = $detectionType.ToLower()
+            }
 
             # Prepare operands for the Intune detection method
             switch ($operator) {
@@ -211,8 +213,8 @@ function New-IntuneDetectionMethod {
                 }
             }
 
-            # Check detection types
-            if ($operator -eq 'notEquals' -and $detectionValue -eq 0 -and $detectionType -eq 'int64') {
+            # "Exists" file/folder checks from MECM can come through as NotEquals + Int64 + 0
+            if (($operator -eq 'notEqual' -and $detectionValue -eq 0 -and $detectionType -eq 'int64') -or [string]::IsNullOrWhiteSpace($detectionType)) {
                 $operator = 'notConfigured'
                 $detectionType = 'exists'
                 $detectionValue = $null
