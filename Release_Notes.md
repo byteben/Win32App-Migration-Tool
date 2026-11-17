@@ -47,6 +47,7 @@ Improvements
 ✅ App creation requests are only retried when throttled, so a lost response can't create a duplicate app  
 ✅ Detection scripts are uploaded as UTF-8 with a BOM so non-ASCII text survives Windows PowerShell 5.1  
 ✅ -NoPrompt skips the "disconnect from Microsoft Graph" question  
+✅ -LogFileName sets the log file name, so several runs can share a working folder, and -NoConsoleOutput writes to the log and results files only. Both from pull request #40 by XxMrTyronexX  
 ✅ Tested against real ConfigMgr detection XML and a ConfigMgr lab of 37 test applications  
 
 ## 3.0.05 - Preview - 08/01/2025  

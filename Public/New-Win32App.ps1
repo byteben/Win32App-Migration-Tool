@@ -104,6 +104,14 @@ By default, if the content upload or commit fails after the Win32 app was create
 .PARAMETER NoPrompt
 Don't ask whether to disconnect from Microsoft Graph at the end of the run
 
+.PARAMETER LogFileName
+The name of the log file in the working folder's Logs folder. Default Main.log. Give each run its own name to run
+several migrations at once in the same working folder without them competing for one log file
+
+.PARAMETER NoConsoleOutput
+Don't write messages or progress bars to the console. Everything is still written to the log file and the results
+file. Implies -NoPrompt. Sign-in prompts from Microsoft Graph (for example a device code) are still shown
+
 .PARAMETER TenantId
 Tenant Id or name to connect to. This parameter is mandatory for obtaining a token
 
@@ -183,6 +191,11 @@ function New-Win32App {
         [Switch]$KeepFailedApps,
         [Parameter(Mandatory = $false, HelpMessage = 'Do not prompt to disconnect from Microsoft Graph at the end')]
         [Switch]$NoPrompt,
+        [Parameter(Mandatory = $false, HelpMessage = 'The log file name in the Logs folder. Default Main.log')]
+        [ValidatePattern('^[^\\/:*?"<>|]+$')]
+        [string]$LogFileName = 'Main.log',
+        [Parameter(Mandatory = $false, HelpMessage = 'Do not write to the console. The log and results files are still written')]
+        [Switch]$NoConsoleOutput,
 
         # Shared Parameters for Graph Authentication
         [Parameter(Mandatory = $true, ParameterSetName = 'ClientSecret', Position = 16, HelpMessage = 'Tenant Id or name to connect to')]
@@ -222,6 +235,11 @@ function New-Win32App {
         $global:workingFolder_Root = $workingFolder
         $global:scopes = $RequiredScopes
 
+        # Module-wide settings for this run, read by Write-Log and the Write-Host/Write-Progress proxies. Reset when the run ends
+        $script:Win32AppMigrationTool_LogFileName = $LogFileName
+        $script:Win32AppMigrationTool_NoConsoleOutput = [bool]$NoConsoleOutput
+        if ($NoConsoleOutput) { $NoPrompt = [switch]$true }
+
         # Characters that are not allowed in Windows folder names
         $invalidChars = '[<>:"/\\|\?\*]'
 
@@ -245,6 +263,8 @@ function New-Win32App {
 
         if (-not $AppName -and -not $AppId) {
             Write-LogAndHost -Message "Specify -AppName or -AppId" -LogId $LogId -Severity 3
+            $script:Win32AppMigrationTool_LogFileName = $null
+            $script:Win32AppMigrationTool_NoConsoleOutput = $false
             return
         }
 
@@ -660,6 +680,8 @@ function New-Win32App {
             }
 
             Get-ScriptEnd -LogId $LogId -NoPrompt:$NoPrompt
+            $script:Win32AppMigrationTool_LogFileName = $null
+            $script:Win32AppMigrationTool_NoConsoleOutput = $false
         }
     }
 }
