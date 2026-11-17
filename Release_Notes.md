@@ -1,5 +1,55 @@
 # Win32App Migration Tool - Release Notes
 
+## 3.0.06 - Preview - 16/11/2026  
+
+Licence  
+✅ The licence now states that the tool is not licensed for commercial or business use, including use within an organization. Use is at your own risk  
+
+Fixes  
+✅ Certificate thumbprint is now passed to Connect-MgGraphCustom (#42)  
+✅ File and folder "exists" detections no longer send detectionType 'int64' to Graph (#35)  
+✅ Folder detections are supported (#36)  
+✅ Single-rule detections work in Windows PowerShell 5.1 (#24, #27, #43)  
+✅ MSI deployment types that use product code detection now get a detection rule (#27, #43)  
+✅ Execution context is read from the deployment type's install action, and "Any" maps to system (#45)  
+✅ The PowerShell window no longer closes when no app is found or Out-GridView is cancelled (#33)  
+✅ Large packages: the commit wait is time based (-UploadTimeoutMinutes, default 30), blocks are retried individually and the upload SAS URI is renewed (#32)  
+✅ ConfigMgr requirements are listed in the results file (RequirementsNotMigrated) and the log. They aren't migrated yet and never stop a migration  
+✅ Microsoft Graph: a connection already in the session is reused only if it's for the same app registration and a test request works. Otherwise the tool signs in again at the start, instead of the Graph SDK asking for a sign-in partway through the run  
+✅ IntuneWinAppUtil.exe output goes to IntuneWinAppUtil.log next to each package instead of the console. The last lines are shown if it fails  
+✅ Packages over Intune's 30 GB Win32 app limit are skipped before the Intune app is created (-MaxAppSizeGB to change the limit)  
+✅ Each block is retried up to 8 times (about 3 minutes) with exponential backoff and jitter, and Azure Storage's Retry-After is honoured  
+✅ -ExcludeFilter returned no apps, and -ExcludePMPC excluded apps with an empty description instead of Patch My PC apps  
+✅ Unquoted install commands (msiexec /i app.msi, powershell.exe -File install.ps1) produced the wrong setup file  
+✅ Restart behavior and maximum run time are now sent to Intune  
+✅ Registry value and MSI "exists" detections are no longer converted to value comparisons  
+✅ Detection settings no longer carry over from one deployment type to the next. In an app with a Local (rules) deployment type followed by a Script one, the Script deployment type was given the other one's rules  
+✅ Only the active detection is migrated. When the detection method is changed in the console, ConfigMgr keeps the old script or rules in the deployment type's CustomData (confirmed with real exports). That leftover is ignored and reported as a warning  
+✅ Deployment types with no content no longer stop the run  
+✅ The uninstall fallback no longer reruns the install command  
+✅ Content copy verification now compares files and sizes  
+✅ A relative -WorkingFolder now resolves before the session moves to the ConfigMgr site drive  
+✅ Entering a site code at the prompt can be retried after a typo  
+
+Improvements  
+✅ Pass -AppId with one or more application CI_IDs to migrate several apps in one run, unattended (#38, #44). Out-GridView still selects one app  
+✅ Each deployment type is processed on its own. A failure is recorded and the run continues (#41)  
+✅ Results file Details\MigrationResults_<timestamp>.csv with status, stage, Intune app Id and reason  
+✅ Pre-flight checks for the content folder and setup file before packaging (#41)  
+✅ Detections Intune can't express (OR logic, VBScript/JScript, unsupported operators) are reported and the deployment type is skipped, instead of creating an app with wrong or missing detection  
+✅ ConfigMgr return codes and restart behavior are migrated  
+✅ A half-created Intune app is deleted if its upload fails (-KeepFailedApps to keep it)  
+✅ Graph requests retry on throttling (429) and transient errors, honouring Retry-After  
+✅ Az.Storage is no longer required. Content is uploaded with the Azure Blob REST API  
+✅ IntuneWinAppUtil.exe is downloaded once and its Microsoft signature is checked  
+✅ SAS tokens and encryption keys are no longer written to the log  
+✅ TLS 1.2 is enabled for the content download and upload in Windows PowerShell 5.1  
+✅ App creation requests are only retried when throttled, so a lost response can't create a duplicate app  
+✅ Detection scripts are uploaded as UTF-8 with a BOM so non-ASCII text survives Windows PowerShell 5.1  
+✅ -NoPrompt skips the "disconnect from Microsoft Graph" question  
+✅ -LogFileName sets the log file name, so several runs can share a working folder, and -NoConsoleOutput writes to the log and results files only. Both from pull request #40 by XxMrTyronexX  
+✅ Tested against real ConfigMgr detection XML and a ConfigMgr lab of 37 test applications  
+
 ## 3.0.05 - Preview - 08/01/2025  
 
 ✅ Fixed how we were handling scopes for Interactive authentication in Connect-MgGraphCustom function  

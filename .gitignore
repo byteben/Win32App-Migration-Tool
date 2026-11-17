@@ -1,1 +1,3 @@
 **/.DS_Store
+# Local tests, test fixtures and the ConfigMgr lab kit are kept out of the repo
+Tests/

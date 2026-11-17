@@ -20,3 +20,7 @@ foreach ($GetFunction in @($PublicFunctions + $PrivateFunctions)) {
         throw
     }
 }
+
+# Export only the public functions. The private ones, including the module's own Write-Host and Write-Progress,
+# stay inside the module even if the .psm1 is imported directly instead of through the manifest
+Export-ModuleMember -Function $PublicFunctions.BaseName

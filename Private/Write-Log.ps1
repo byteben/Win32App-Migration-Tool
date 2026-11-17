@@ -2,6 +2,7 @@
 <#
 .Synopsis
 Created on:   26/10/2023
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Write-Log.ps1
 
@@ -38,7 +39,7 @@ function Write-Log {
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 1, HelpMessage = 'Location of the log file to write to')]
         [String]$LogFolder = "$workingFolder_Root\Logs", #$workingFolder is defined as a Global parameter in the main script
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 2, HelpMessage = 'Name of the log file to write to. Main is the default log file')]
-        [String]$Log = 'Main.log',
+        [String]$Log = $(if ($script:Win32AppMigrationTool_LogFileName) { $script:Win32AppMigrationTool_LogFileName } else { 'Main.log' }),
         [Parameter(Mandatory = $false, ValueFromPipeline = $false, HelpMessage = 'LogId name of the script of the calling function')]
         [String]$LogId = $($MyInvocation.MyCommand).Name,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 3, HelpMessage = 'Severity of the log entry 1-3')]
@@ -55,6 +56,23 @@ function Write-Log {
         $date = $dateTime.ToString("MM-dd-yyyy", [Globalization.CultureInfo]::InvariantCulture)
         $time = $dateTime.ToString("HH:mm:ss.ffffff", [Globalization.CultureInfo]::InvariantCulture)
         $logToWrite = Join-Path -Path $LogFolder -ChildPath $Log
+
+        # Context is the current user
+        $Context = $env:USER
+        try {
+            if (($PSVersionTable.PSVersion.Major -le 5) -or ((Get-Variable -Name IsWindows -ValueOnly -ErrorAction SilentlyContinue) -eq $true)) {
+                $Context = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+            }
+        }
+        catch {
+            $Context = $env:USERNAME
+        }
+        if (-not $Context) { $Context = 'unknown' }
+
+        # Make sure the log folder exists
+        if (-not (Test-Path -LiteralPath $LogFolder)) {
+            New-Item -Path $LogFolder -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        }
     }
 
     Process {
@@ -62,16 +80,10 @@ function Write-Log {
             try {
 
                 # Check if the logfile exists. We only need to reset it if it already exists
-                if (Test-Path -Path $logToWrite) {
+                if (Test-Path -LiteralPath $logToWrite) {
 
-                    # Create a StreamWriter instance and open the file for writing
-                    $streamWriter = New-Object -TypeName System.IO.StreamWriter -ArgumentList $logToWrite
-        
-                    # Write an empty string to the file without the append parameter
-                    $streamWriter.Write("")
-        
-                    # Close the StreamWriter, which also flushes the content to the file
-                    $streamWriter.Close()
+                    # Wipe the file
+                    [System.IO.File]::WriteAllText($logToWrite, '')
                     Write-Host ("Log file '{0}' wiped" -f $logToWrite) -ForegroundColor Yellow
                 }
                 else {
@@ -92,9 +104,7 @@ function Write-Log {
 
                 # Attempt log write
                 try {
-                    $streamWriter = New-Object -TypeName System.IO.StreamWriter -ArgumentList $logToWrite, 'Append'
-                    $streamWriter.WriteLine($logDetail)
-                    $streamWriter.Close()
+                    [System.IO.File]::AppendAllText($logToWrite, $logDetail + [Environment]::NewLine)
                 }
                 catch {
                     Write-Error -Message ("Unable to append log entry to '{0}' file. Error message: {1}" -f $logToWrite, $_.Exception.Message)
