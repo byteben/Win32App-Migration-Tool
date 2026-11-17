@@ -4,7 +4,7 @@
     RootModule        = 'Win32AppMigrationTool.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '3.0.05'
+    ModuleVersion     = '3.0.06'
    
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -92,7 +92,7 @@
             #Prerelease = 'beta'
 
             # A URL to the license for this module.
-            # LicenseUri = ''
+            LicenseUri = 'https://github.com/byteben/Win32App-Migration-Tool/blob/main/License'
 
             # A URL to the main website for this project.
             ProjectUri = 'https://github.com/byteben/Win32App-Migration-Tool'

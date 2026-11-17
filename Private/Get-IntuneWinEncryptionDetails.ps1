@@ -104,7 +104,8 @@ function Get-IntuneWinEncryptionInfo {
     # Return the intunewin encryption details
     if (-not [string]::IsNullOrEmpty($contentEncryptionData)) {
         Write-LogAndHost -Message ("Application info details: {0}" -f ($contentApplicationInfo | ConvertTo-Json -Compress)) -LogId $LogId -ForegroundColor Green
-        Write-LogAndHost -Message ("Encryption details: {0}" -f ($contentEncryptionData | ConvertTo-Json -Compress)) -LogId $LogId -ForegroundColor Green
+        # Never log the key material. Only report which values were found
+        Write-LogAndHost -Message ("Encryption details read: {0}" -f (($contentEncryptionData.Keys | Where-Object { $contentEncryptionData[$_] }) -join ', ')) -LogId $LogId -ForegroundColor Green
 
         return @{
             encryptionDetails      = ($contentEncryptionData | ConvertTo-Json -Compress)

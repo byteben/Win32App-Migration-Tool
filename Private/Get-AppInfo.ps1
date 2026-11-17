@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Update on:    01/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Get-AppInfo.ps1
 
@@ -61,13 +61,24 @@ function Get-AppInfo {
                 # Add application details to PSCustomObject
                 $applicationObject | Add-Member NoteProperty -Name Id -Value $application.Id
                 $applicationObject | Add-Member NoteProperty -Name LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
-                $applicationObject | Add-Member NoteProperty -Name Name -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
+                # The title node may have no attributes, in which case there is no '#text' property
+                $titleNode = $xmlContent.AppMgmtDigest.Application.title
+                $titleText = $null
+                if ($titleNode -is [string]) { $titleText = $titleNode }
+                elseif ($null -ne $titleNode) {
+                    $titleText = $titleNode.'#text'
+                    if (-not $titleText) { $titleText = $titleNode.InnerText }
+                }
+                $tags = @($xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag) -join ', '
+
+                $applicationObject | Add-Member NoteProperty -Name Name -Value $titleText
                 $applicationObject | Add-Member NoteProperty -Name Description -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description
                 $applicationObject | Add-Member NoteProperty -Name Publisher -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
                 $applicationObject | Add-Member NoteProperty -Name Version -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version
                 $applicationObject | Add-Member NoteProperty -Name ReleaseDate -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate
                 $applicationObject | Add-Member NoteProperty -Name InfoUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl
                 $applicationObject | Add-Member NoteProperty -Name PrivacyUrl -Value $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.PrivacyUrl
+                $applicationObject | Add-Member NoteProperty -Name Tags -Value $tags
                 $applicationObject | Add-Member NoteProperty -Name TotalDeploymentTypes -Value $totalDeploymentTypes
                 $applicationObject | Add-Member NoteProperty -Name IconId -Value $xmlContent.AppMgmtDigest.Resources.Icon.Id
 
@@ -85,13 +96,13 @@ function Get-AppInfo {
                 Write-Log -Message ("Id = '{0}', LogicalName = '{1}', Name = '{2}',Description = '{3}', Publisher = '{4}', Version = '{5}', ReleaseDate = '{6}', InfoUrl = '{7}', Tags = '{8}', TotalDeploymentTypes = '{9}', IconId = '{10}', IconPath = '{11}'" -f `
                         $application.Id, `
                         $xmlContent.AppMgmtDigest.Application.LogicalName, `
-                        $xmlContent.AppMgmtDigest.Application.title.'#text', `
+                        $titleText, `
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Description, `
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Publisher, `
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.Version, `
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.ReleaseDate, `
                         $xmlContent.AppMgmtDigest.Application.DisplayInfo.Info.InfoUrl, `
-                        $xmlContent.AppMgmtDigest.Application.DisplayInfo.Tags.Tag, `
+                        $tags, `
                         $totalDeploymentTypes, `
                         $xmlContent.AppMgmtDigest.Resources.Icon.Id, `
                         $iconPath) -LogId $LogId
@@ -105,7 +116,8 @@ function Get-AppInfo {
             }
             catch {
                 Write-LogAndHost -Message ("Could not get application information for '{0}'" -f $application.LocalizedDisplayName) -LogId $LogId -Severity 3
-                Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+                Write-Log -Message $_.Exception.Message -LogId $LogId -Severity 3
+                throw
             }
         }
         return $applicationTypes

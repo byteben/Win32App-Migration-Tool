@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   30/12/2024
-Updated on:   01/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Initialize-Module.ps1
 
@@ -16,6 +16,9 @@ Package provider required for module installation
 
 .PARAMETER ModuleScope
 Scope for module installation (CurrentUser/AllUsers)
+
+.PARAMETER MinimumVersion
+Optional hashtable of module name to minimum version string (for example @{ 'Az.Storage' = '5.0.0' }). Throws if the installed module is older. Nothing is installed to satisfy this check
 
 .PARAMETER LogId
 Component name for logging
@@ -32,6 +35,9 @@ function Initialize-Module {
         [Parameter(Mandatory = $false, HelpMessage = 'Scope for module installation')]
         [ValidateSet('CurrentUser', 'AllUsers')]
         [string]$ModuleScope = "CurrentUser",
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Hashtable of module name to minimum version string')]
+        [hashtable]$MinimumVersion,
 
         [Parameter(Mandatory = $false, HelpMessage = 'Component name for logging')]
         [string]$LogId = $($MyInvocation.MyCommand).Name
@@ -70,11 +76,23 @@ function Initialize-Module {
                     catch {
                         Write-LogAndHost -Message ("Error importing module '{0}': {1}" -f $Module, $_.Exception.Message) -LogId $LogId -Severity 3
 
-                        break
+                        throw ("Failed to import module '{0}': {1}" -f $Module, $_.Exception.Message)
                     }
                 }
                 else {
                     Write-LogAndHost -Message ("Module '{0}' already imported" -f $Module) -LogId $LogId -ForegroundColor Green
+                }
+
+                # Check the minimum version if one was requested for this module
+                if ($MinimumVersion -and $MinimumVersion.ContainsKey($Module)) {
+                    $required = [version]([string]$MinimumVersion[$Module])
+                    $installed = Get-Module -Name $Module -ListAvailable | Sort-Object -Property Version -Descending | Select-Object -First 1
+
+                    if (-not $installed -or $installed.Version -lt $required) {
+                        $installedText = 'not found'
+                        if ($installed) { $installedText = [string]$installed.Version }
+                        throw ("Module '{0}' version {1} or later is required. Installed version: {2}" -f $Module, $required, $installedText)
+                    }
                 }
             }
         }
