@@ -468,6 +468,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -LogFileName
+
+The name of the log file in the working folder's Logs folder. Default Main.log. Give each run its own name to run several migrations at once in the same working folder without them competing for one log file
+
+```yaml
+Type: String
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: Main.log
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoConsoleOutput
+
+Don't write messages or progress bars to the console. Everything is still written to the log file and the results file. Implies -NoPrompt. Sign-in prompts from Microsoft Graph, such as a device code, are still shown
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -TenantId
 
 Tenant Id or name to connect to.
