@@ -1,309 +1,465 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Updated on:   03/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Get-DeploymentTypeInfo.ps1
 
 .Description
-Function to get deployment type information from ConfigMgr
+Gets deployment type information from ConfigMgr and converts each deployment type's detection method
+into Intune detection rules.
+
+ConvertFrom-SdmPackageXml does the parsing and has no ConfigMgr dependency, so it can be tested against
+SDMPackageXML fixtures. Get-DeploymentTypeInfo calls Get-CMApplication, then ConvertFrom-SdmPackageXml,
+then writes the detection method files to the working folder for reference.
+
+SDMPackageXML paths used (see Tests\Fixtures\README.md for the evidence):
+  DeploymentType/Installer/Contents/Content/Location                       content location(s)
+  DeploymentType/Installer/InstallAction/Args/Arg[@Name='ExecutionContext'] System | User | Any
+  DeploymentType/Installer/InstallAction/Args/Arg[@Name='PostInstallBehavior'] BasedOnExitCode | NoAction | ProgramReboot | ForceReboot
+  DeploymentType/Installer/DetectAction/Provider                            Script | Local | MSI
+  DeploymentType/Installer/DetectAction/Args/Arg                            provider specific (ScriptBody, MethodBody, ProductCode...)
+  DeploymentType/Installer/CustomData/ExitCodes/ExitCode/@Code, @Class      return codes
 
 .PARAMETER LogId
-The component (script name) passed as LogID to the 'Write-Log' function. 
-This parameter is built from the line number of the call from the function up the
+The component (script name) passed as LogID to the 'Write-Log' function.
 
 .PARAMETER ApplicationId
 The CI_ID of the application to get deployment type information for
 #>
+
+function Get-SdmArgValue {
+    param (
+        [object]$Action,
+        [string]$Name
+    )
+
+    if ($null -eq $Action -or $null -eq $Action.Args) { return $null }
+    foreach ($argument in @($Action.Args.Arg)) {
+        if ($null -ne $argument -and $argument.Name -eq $Name) {
+            return $argument.InnerText
+        }
+    }
+    return $null
+}
+
+function Get-SdmText {
+    param ([object]$Node)
+
+    if ($null -eq $Node) { return $null }
+    if ($Node -is [string]) { return $Node }
+    if ($Node -is [System.Xml.XmlNode]) { return $Node.InnerText }
+    return [string]$Node
+}
+
+function ConvertTo-IntuneRunAsAccount {
+    param ([string]$Context)
+
+    switch ($Context) {
+        'System' { return 'system' }
+        'User' { return 'user' }
+        default { return 'system' }
+    }
+}
+
+function ConvertTo-IntuneRestartBehavior {
+    param ([string]$PostInstallBehavior)
+
+    # ConfigMgr PostInstallBehavior -> Intune deviceRestartBehavior
+    switch ($PostInstallBehavior) {
+        'BasedOnExitCode' { return 'basedOnReturnCode' }
+        'NoAction' { return 'suppress' }
+        'ProgramReboot' { return 'allow' }
+        'ForceReboot' { return 'force' }
+        default { return 'basedOnReturnCode' }
+    }
+}
+
+function ConvertTo-IntuneReturnCodes {
+    param ([object]$ExitCodesNode)
+
+    # Intune defaults, overridden by whatever the deployment type defines
+    $codes = [ordered]@{
+        '0'    = 'success'
+        '1707' = 'success'
+        '3010' = 'softReboot'
+        '1641' = 'hardReboot'
+        '1618' = 'retry'
+    }
+
+    $classMap = @{
+        'Success'    = 'success'
+        'Failure'    = 'failed'
+        'SoftReboot' = 'softReboot'
+        'HardReboot' = 'hardReboot'
+        'FastRetry'  = 'retry'
+    }
+
+    if ($null -ne $ExitCodesNode) {
+        foreach ($exitCode in @($ExitCodesNode.ExitCode)) {
+            if ($null -eq $exitCode) { continue }
+            $code = [string]$exitCode.Code
+            $class = [string]$exitCode.Class
+            $value = 0
+            if ([int]::TryParse($code, [ref]$value) -and $classMap.ContainsKey($class)) {
+                $codes[$code] = $classMap[$class]
+            }
+        }
+    }
+
+    $result = foreach ($key in $codes.Keys) {
+        [pscustomobject]@{ returnCode = [int]$key; type = $codes[$key] }
+    }
+    return , @($result)
+}
+
+function Get-DecodedDetectionScript {
+    param ([string]$ScriptBody)
+
+    # Signed scripts are stored base64 encoded between ConfigMgr markers
+    $pattern = '# ENCODEDSCRIPT # Begin Configuration Manager encoded script block #\s*(.*?)\s*# ENCODEDSCRIPT# End Configuration Manager encoded script block'
+    $match = [regex]::Match([string]$ScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+
+    if ($match.Success) {
+        $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($match.Groups[1].Value))
+
+        # Remove the padding line the XML adds after the encoded block so signatures stay valid
+        $lines = $scriptContent -split "`n"
+        if ($lines.Count -gt 1) { $lines = $lines[0..($lines.Count - 2)] }
+        return ($lines -join "`n")
+    }
+
+    return $ScriptBody
+}
+
+function Get-SdmRequirement {
+    # Describes each requirement rule on a deployment type, for the log and results file. Requirements are not
+    # converted to Intune yet: Intune can only express some of them, and the conversion will be built from real
+    # exports. The description uses the rule's display name when ConfigMgr stored one, otherwise its operator,
+    # setting and values. Namespace-agnostic, and never throws
+    param ([System.Xml.XmlNode]$DeploymentTypeNode)
+
+    $descriptions = New-Object System.Collections.Generic.List[string]
+    if ($null -eq $DeploymentTypeNode) { return , $descriptions.ToArray() }
+
+    try {
+        $rules = $DeploymentTypeNode.SelectNodes("./*[local-name()='Requirements']/*[local-name()='Rule']")
+        foreach ($rule in $rules) {
+            $displayName = $rule.SelectSingleNode("./*[local-name()='Annotation']/*[local-name()='DisplayName']")
+            $text = $null
+            if ($null -ne $displayName) { $text = $displayName.GetAttribute('Text') }
+
+            if ([string]::IsNullOrWhiteSpace($text)) {
+                $operator = $rule.SelectSingleNode(".//*[local-name()='Operator']")
+                $settings = @($rule.SelectNodes(".//*[local-name()='GlobalSettingReference' or local-name()='SettingReference']") | ForEach-Object {
+                        $name = (@($_.GetAttribute('LogicalName'), $_.GetAttribute('SettingLogicalName')) | Where-Object { $_ } | Select-Object -Unique) -join '/'
+                        if ($name) { $name }
+                    })
+                $values = @($rule.SelectNodes(".//*[local-name()='ConstantValue']") | ForEach-Object { $_.GetAttribute('Value') } | Where-Object { $_ })
+                $parts = @()
+                if ($settings.Count -gt 0) { $parts += ($settings | Select-Object -Unique) -join ', ' }
+                if ($null -ne $operator) { $parts += $operator.InnerText }
+                if ($values.Count -gt 0) { $parts += ($values -join ', ') }
+                $text = $parts -join ' '
+            }
+
+            if ([string]::IsNullOrWhiteSpace($text)) { $text = "Rule '$($rule.GetAttribute('id'))'" }
+            $descriptions.Add($text.Trim())
+        }
+    }
+    catch {
+        $descriptions.Add("The requirements couldn't be read: $($_.Exception.Message)")
+    }
+
+    return , $descriptions.ToArray()
+}
+
+function Get-SdmLeftoverDetection {
+    # Reports detection data that doesn't belong to the active provider. It never changes which detection is used
+    param (
+        [object]$DetectAction,
+        [object]$CustomData,
+        [string]$Provider
+    )
+
+    $messages = New-Object System.Collections.Generic.List[string]
+    $argsByProvider = @{
+        'Script' = @('ExecutionContext', 'ScriptType', 'ScriptBody', 'RunAs32Bit')
+        'Local'  = @('ExecutionContext', 'MethodBody')
+        'MSI'    = @('ExecutionContext', 'ProductCode', 'PackageCode', 'PatchCodes')
+    }
+    # Values seen in real exports. An MSI deployment type (lab app R1) says 'ProductCode'
+    $customDataByProvider = @{ 'Script' = 'Script'; 'Local' = 'Enhanced'; 'MSI' = 'ProductCode' }
+
+    if (-not $argsByProvider.ContainsKey([string]$Provider)) { return , $messages.ToArray() }
+
+    if ($null -ne $DetectAction -and $null -ne $DetectAction.Args) {
+        $extra = @(@($DetectAction.Args.Arg) | Where-Object { $null -ne $_ -and $_.Name -notin $argsByProvider[$Provider] -and -not [string]::IsNullOrWhiteSpace($_.InnerText) } | ForEach-Object { $_.Name })
+        if ($extra.Count -gt 0) {
+            $messages.Add(("The detection also contains '{0}' from another detection type, probably left over from an earlier detection method. It was ignored; the active '{1}' detection was used" -f ($extra -join "', '"), $Provider))
+        }
+    }
+
+    # Seen in real exports (lab apps L30 and L31): when the detection method is changed in the console, ConfigMgr
+    # updates DetectAction and CustomData/DetectionMethod but keeps the old detection in CustomData, as a
+    # DetectionScript element (script changed to rules) or an EnhancedDetectionMethod element (rules changed to script)
+    if ($null -ne $CustomData) {
+        $hasOldScript = $null -ne $CustomData.SelectSingleNode("./*[local-name()='DetectionScript']")
+        $hasOldRules = $null -ne $CustomData.SelectSingleNode("./*[local-name()='EnhancedDetectionMethod']")
+        if ($Provider -ne 'Script' -and $hasOldScript) {
+            $messages.Add(("The deployment type still holds an earlier detection script, which ConfigMgr keeps when the detection method is changed. It was ignored; the active '{0}' detection was migrated" -f $Provider))
+        }
+        if ($Provider -ne 'Local' -and $hasOldRules) {
+            $messages.Add(("The deployment type still holds earlier detection rules, which ConfigMgr keeps when the detection method is changed. They were ignored; the active '{0}' detection was migrated" -f $Provider))
+        }
+
+        $customDetection = Get-SdmText -Node $CustomData.DetectionMethod
+        if ($customDetection -and $customDetection -ne $customDataByProvider[$Provider]) {
+            $messages.Add(("CustomData says the detection method is '{0}' but the active detection provider is '{1}'. The active provider was used" -f $customDetection, $Provider))
+        }
+    }
+
+    return , $messages.ToArray()
+}
+
+function ConvertFrom-SdmPackageXml {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
+        [string]$LogId = $($MyInvocation.MyCommand).Name,
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = 'The SDMPackageXML of the application')]
+        [string]$SdmPackageXml,
+        [Parameter(Mandatory = $false, Position = 1, HelpMessage = 'The CI_ID of the application')]
+        [string]$ApplicationId
+    )
+
+    $xmlContent = [xml]$SdmPackageXml
+    $application = $xmlContent.AppMgmtDigest.Application
+    $applicationName = Get-SdmText -Node $application.Title
+    $deploymentTypes = New-Object System.Collections.Generic.List[object]
+
+    foreach ($object in @($xmlContent.AppMgmtDigest.DeploymentType)) {
+        if ($null -eq $object) { continue }
+
+        # Every value is computed fresh for each deployment type. Earlier versions reused variables
+        # from the previous deployment type, so a Local detection could inherit a Script detection
+        $installer = $object.Installer
+        $warnings = New-Object System.Collections.Generic.List[string]
+
+        # Content locations: first = install, second (if present) = uninstall
+        $locations = @($installer.Contents.Content | ForEach-Object { if ($_) { Get-SdmText -Node $_.Location } } | Where-Object { $_ })
+        $installLocation = $null
+        $uninstallLocation = $null
+        if ($locations.Count -gt 0) {
+            $installLocation = $locations[0].TrimEnd('\')
+            $uninstallLocation = $installLocation
+            if ($locations.Count -gt 1) { $uninstallLocation = $locations[1].TrimEnd('\') }
+        }
+        else {
+            $warnings.Add('The deployment type has no content location')
+        }
+
+        # Execution context lives in the install action arguments. Fall back to the attribute older versions read
+        $dtExecutionContext = Get-SdmArgValue -Action $installer.InstallAction -Name 'ExecutionContext'
+        if (-not $dtExecutionContext) { $dtExecutionContext = [string]$installer.ExecutionContext }
+        $installExperience = ConvertTo-IntuneRunAsAccount -Context $dtExecutionContext
+        if ($dtExecutionContext -notin @('System', 'User')) {
+            $warnings.Add(("Execution context '{0}' has no Intune equivalent; using 'system'" -f $dtExecutionContext))
+        }
+
+        $postInstallBehavior = Get-SdmArgValue -Action $installer.InstallAction -Name 'PostInstallBehavior'
+        $customData = $installer.CustomData
+
+        $detection = [ordered]@{
+            Provider         = Get-SdmText -Node $installer.DetectAction.Provider
+            ExecutionContext = Get-SdmArgValue -Action $installer.DetectAction -Name 'ExecutionContext'
+            ScriptType       = $null
+            ScriptRunAs32Bit = $null
+            ScriptContent    = $null
+            MethodBody       = $null
+            ProductCode      = $null
+            PackageCode      = $null
+            PatchCodes       = $null
+            Rules            = @()
+            Supported        = $false
+            Issues           = @()
+        }
+
+        try {
+            switch ($detection.Provider) {
+                'Script' {
+                    $detection.ScriptType = Get-SdmArgValue -Action $installer.DetectAction -Name 'ScriptType'
+                    $detection.ScriptRunAs32Bit = Get-SdmArgValue -Action $installer.DetectAction -Name 'RunAs32Bit'
+                    $detection.ScriptContent = Get-DecodedDetectionScript -ScriptBody (Get-SdmArgValue -Action $installer.DetectAction -Name 'ScriptBody')
+                    $converted = New-IntuneScriptDetectionRule -ScriptContent ([string]$detection.ScriptContent) -ScriptType ([string]$detection.ScriptType) -RunAs32Bit ($detection.ScriptRunAs32Bit -eq 'true')
+                }
+                'Local' {
+                    $detection.MethodBody = Get-SdmArgValue -Action $installer.DetectAction -Name 'MethodBody'
+                    $parsed = Get-DetectionMethod -LogId $LogId -XMLObject $detection.MethodBody
+                    $converted = ConvertTo-IntuneDetectionRule -LogId $LogId -Detection $parsed
+                }
+                'MSI' {
+                    $detection.ProductCode = Get-SdmArgValue -Action $installer.DetectAction -Name 'ProductCode'
+                    $detection.PackageCode = Get-SdmArgValue -Action $installer.DetectAction -Name 'PackageCode'
+                    $detection.PatchCodes = Get-SdmArgValue -Action $installer.DetectAction -Name 'PatchCodes'
+                    $converted = New-IntuneProductCodeDetectionRule -ProductCode ([string]$detection.ProductCode)
+                }
+                default {
+                    $converted = [pscustomobject]@{ Rules = @(); Unsupported = @("Detection provider '$($detection.Provider)' isn't supported"); IsSupported = $false }
+                }
+            }
+        }
+        catch {
+            $converted = [pscustomobject]@{ Rules = @(); Unsupported = @("The detection method couldn't be read: $($_.Exception.Message)"); IsSupported = $false }
+        }
+
+        $detection.Rules = @($converted.Rules)
+        $detection.Issues = @($converted.Unsupported)
+        $detection.Supported = [bool]$converted.IsSupported
+
+        # When a deployment type's detection is changed (for example from a script to a file rule), parts of the
+        # old detection can stay in the XML. Only DetectAction/Provider and that provider's arguments are used;
+        # anything else is reported so it's clear it was ignored
+        # Both helpers return their list with 'return ,' so assign first, then enumerate (wrapping the call in @()
+        # would give a one-element array holding the list)
+        $leftovers = Get-SdmLeftoverDetection -DetectAction $installer.DetectAction -CustomData $customData -Provider $detection.Provider
+        foreach ($leftover in $leftovers) {
+            $warnings.Add($leftover)
+        }
+
+        # Requirements are reported, not migrated, and never stop the migration
+        $requirements = Get-SdmRequirement -DeploymentTypeNode $object
+        if ($null -eq $requirements) { $requirements = @() }
+        if ($requirements.Count -gt 0) {
+            $warnings.Add(("Requirements not migrated to Intune: {0}. Recreate them as Intune requirements or assignment filters if they're still needed" -f ($requirements -join '; ')))
+        }
+
+        $deploymentTypes.Add([pscustomobject]@{
+                Application_Id                = $ApplicationId
+                ApplicationName               = $applicationName
+                Application_LogicalName       = [string]$application.LogicalName
+                LogicalName                   = [string]$object.LogicalName
+                Name                          = Get-SdmText -Node $object.Title
+                Technology                    = [string]$installer.Technology
+                ExecutionContext              = $dtExecutionContext
+                InstallExperience             = $installExperience
+                InstallContent                = $installLocation
+                InstallCommandLine            = Get-SdmText -Node $customData.InstallCommandLine
+                UnInstallSetting              = Get-SdmText -Node $customData.UninstallSetting
+                UninstallContent              = $uninstallLocation
+                UninstallCommandLine          = Get-SdmText -Node $customData.UninstallCommandLine
+                ExecuteTime                   = Get-SdmText -Node $customData.ExecuteTime
+                MaxExecuteTime                = Get-SdmText -Node $customData.MaxExecuteTime
+                PostInstallBehavior           = $postInstallBehavior
+                RestartBehavior               = ConvertTo-IntuneRestartBehavior -PostInstallBehavior $postInstallBehavior
+                ReturnCodes                   = ConvertTo-IntuneReturnCodes -ExitCodesNode $customData.ExitCodes
+                DetectionProvider             = $detection.Provider
+                DetectionTypeScriptRunAs32Bit = $detection.ScriptRunAs32Bit
+                DetectionTypeScriptType       = $detection.ScriptType
+                DetectionTypeExecutionContext = $detection.ExecutionContext
+                DetectionTypeProductCode      = $detection.ProductCode
+                DetectionTypePackageCode      = $detection.PackageCode
+                DetectionTypePatchCodes       = $detection.PatchCodes
+                DetectionScriptContent        = $detection.ScriptContent
+                DetectionMethodBody           = $detection.MethodBody
+                DetectionRules                = $detection.Rules
+                DetectionSupported            = $detection.Supported
+                DetectionIssues               = ($detection.Issues -join ' | ')
+                Requirements                  = ($requirements -join '; ')
+                Warnings                      = ($warnings -join ' | ')
+                DetectionMethodScriptFile     = $null
+                DetectionMethodXmlFile        = $null
+                DetectionMethodJsonFile       = $null
+            })
+    }
+
+    return , $deploymentTypes.ToArray()
+}
+
 function Get-DeploymentTypeInfo {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
         [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The id of the application(s) to get information for')]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The id of the application to get information for')]
         [string]$ApplicationId
     )
-    begin {
 
-        # Create an empty array to store the deployment type information
-        $deploymentTypes = @()
+    # Characters that are not allowed in Windows folder names
+    $invalidChars = '[<>:"/\\|\?\*]'
 
-        # Characters that are not allowed in Windows folder names
-        $invalidChars = '[<>:"/\\|\?\*]'
+    # Get UTF-8 encoding without BOM
+    $utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $false
 
-        # Get UTF-8 encoding without BOM
-        $utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $false 
-        
+    Write-LogAndHost -Message ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -LogId $LogId -ForegroundColor Cyan
+    $xmlPackage = Get-CMApplication -Id $ApplicationId | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -First 1 -ExpandProperty SDMPackageXML
+
+    if (-not $xmlPackage) {
+        throw ("Get-CMApplication returned no SDMPackageXML for application Id '{0}'" -f $ApplicationId)
     }
-    process {
+
+    $deploymentTypes = ConvertFrom-SdmPackageXml -LogId $LogId -SdmPackageXml $xmlPackage -ApplicationId $ApplicationId
+
+    if ($deploymentTypes.Count -eq 0) {
+        Write-LogAndHost -Message ("No deployment types found for application Id '{0}'" -f $ApplicationId) -LogId $LogId -Severity 2
+        return , @()
+    }
+
+    Write-LogAndHost -Message ("The total number of deployment types for '{0}' is '{1}'" -f $deploymentTypes[0].ApplicationName, $deploymentTypes.Count) -LogId $LogId -ForegroundColor Green
+
+    foreach ($deploymentType in $deploymentTypes) {
+
+        # Detection Methods child folder, recreated each run so files from an earlier run can't be picked up
+        $applicationNameSanitized = ([string]$deploymentType.ApplicationName -replace $invalidChars, '_').TrimEnd('.', ' ')
+        $deploymentTypeNameSanitized = ([string]$deploymentType.Name -replace $invalidChars, '_').TrimEnd('.', ' ')
+        $detectionMethodsFolderPath = "{0}\{1}" -f $applicationNameSanitized, $deploymentTypeNameSanitized
+        $detectionMethodsFolder = Join-Path -Path "$workingFolder_Root\DetectionMethods" -ChildPath $detectionMethodsFolderPath
+
+        New-FolderToCreate -Root "$workingFolder_Root\DetectionMethods" -FolderNames $detectionMethodsFolderPath
+
+        foreach ($file in [System.IO.Directory]::GetFiles($detectionMethodsFolder)) {
+            Write-Log -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
+            [System.IO.File]::Delete($file)
+        }
+
+        Write-LogAndHost -Message ("Deployment type '{0}': detection provider is '{1}'" -f $deploymentType.Name, $deploymentType.DetectionProvider) -LogId $LogId -ForegroundColor Cyan
 
         try {
-
-            # Grab the SDMPackgeXML which contains the application and deployment type details
-            Write-LogAndHost -Message ("Invoking Get-CMApplication where Id equals '{0}'" -f $ApplicationId) -LogId $LogId -ForegroundColor Cyan
-            $xmlPackage = Get-CMApplication -Id $ApplicationId | Where-Object { $null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
-        
-            # Prepare xml from SDMPackageXML
-            $xmlContent = [xml]($xmlPackage)
-
-            # Get the total number of deployment types for the application
-            $totalDeploymentTypes = ($xmlContent.AppMgmtDigest.Application.DeploymentTypes.DeploymentType | Measure-Object | Select-Object -ExpandProperty Count)
-            Write-LogAndHost -Message ("The total number of deployment types for '{0}' is '{1}')" -f $xmlContent.AppMgmtDigest.Application.title.'#text', $totalDeploymentTypes) -LogId $LogId -ForegroundColor Green
-
-            if ($totalDeploymentTypes -gt 0) {
-
-                # If there are deployment types, iterate through each deployment type and collect the details
-                foreach ($object in $xmlContent.AppMgmtDigest.DeploymentType) {
-
-                    # Handle multiple objects if content is an array
-                    if ($object.Installer.Contents.Content.Location.Count -gt 1) {
-                        $installLocation = $object.Installer.Contents.Content.Location[0]
-                        $uninstallLocation = $object.Installer.Contents.Content.Location[1]
-                    }
-                    else {
-                        $installLocation = $object.Installer.Contents.Content.Location
-                        $uninstallLocation = $object.Installer.Contents.Content.Location
-                    }
-
-                    # Sanitize the folder names
-                    $applicationNameSanitized = ($xmlContent.AppMgmtDigest.Application.title.'#text' -replace $invalidChars, '_').TrimEnd('.', ' ')
-                    $deploymentTypeNameSanitized = ($object.Title.InnerText -replace $invalidChars, '_').TrimEnd('.', ' ')
-
-                    # Detection Methods child folder path
-                    $detectionMethodsFolderPath = ("{0}\{1}" -f $applicationNameSanitized, $deploymentTypeNameSanitized)
-
-                    # Build final folder name strings
-                    $detectionMethodsFolder = Join-Path -Path "$workingFolder_Root\DetectionMethods" -ChildPath $detectionMethodsFolderPath
-
-                    # Create the Detection Methods folder
-                    New-FolderToCreate -Root "$workingFolder_Root\DetectionMethods" -FolderNames $detectionMethodsFolderPath
-
-                    # Remove existing files from the Detection Methods folder to avoid ambiguity on import
-                    $existingFiles = [System.IO.Directory]::GetFiles($detectionMethodsFolder)
-                    
-                    foreach ($file in $existingFiles) {
-                        Write-LogAndHost -Message ("Removing existing file '{0}'" -f $file) -LogId $LogId -Severity 2
-                        [System.IO.File]::Delete($file) 
-                    }
-
-                    # Create a new custom hashtable to store Deployment type details
-                    $deploymentObject = [PSCustomObject]@{}
-
-                    # Add deployment type details to the PSCustomObject
-                    $deploymentObject | Add-Member NoteProperty -Name Application_Id -Value $ApplicationId
-                    $deploymentObject | Add-Member NoteProperty -Name ApplicationName -Value $xmlContent.AppMgmtDigest.Application.title.'#text'
-                    $deploymentObject | Add-Member NoteProperty -Name Application_LogicalName -Value $xmlContent.AppMgmtDigest.Application.LogicalName
-                    $deploymentObject | Add-Member NoteProperty -Name LogicalName -Value $object.LogicalName
-                    $deploymentObject | Add-Member NoteProperty -Name Name -Value $object.Title.InnerText
-                    $deploymentObject | Add-Member NoteProperty -Name Technology -Value $object.Installer.Technology
-                    $deploymentObject | Add-Member NoteProperty -Name ExecutionContext -Value $object.Installer.ExecutionContext
-                    $deploymentObject | Add-Member NoteProperty -Name InstallContent -Value $installLocation.TrimEnd('\') 
-                    $deploymentObject | Add-Member NoteProperty -Name InstallCommandLine -Value $object.Installer.CustomData.InstallCommandLine
-                    $deploymentObject | Add-Member NoteProperty -Name UnInstallSetting -Value $object.Installer.CustomData.UnInstallSetting
-                    $deploymentObject | Add-Member NoteProperty -Name UninstallContent -Value $uninstallLocation.TrimEnd('\') 
-                    $deploymentObject | Add-Member NoteProperty -Name UninstallCommandLine -Value $object.Installer.CustomData.UninstallCommandLine
-                    $deploymentObject | Add-Member NoteProperty -Name ExecuteTime -Value $object.Installer.CustomData.ExecuteTime
-                    $deploymentObject | Add-Member NoteProperty -Name MaxExecuteTime -Value $object.Installer.CustomData.MaxExecuteTime
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionProvider -Value $object.Installer.DetectAction.Provider
-
-                    # Switch on the detection method and save to file
-                    Switch ($object.Installer.DetectAction.Provider) {
-
-                        # If Detection Method is a 'Script'
-                        'Script' {
-
-                            Write-LogAndHost -Message 'Detection Method Provider is Script' -LogId $LogId -ForegroundColor Green
-                            $detectionTypeScriptBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptBody' }).InnerText
-                            $detectionTypeScriptRunAs32Bit = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'RunAs32Bit' }).InnerText
-                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
-                            $detectionTypeScriptType = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ScriptType' }).InnerText
-        
-                            # ScriptType
-                            # 0 = PowerShell
-                            # 1 = VBScript
-                            # 2 = JavaScript
-        
-                            Switch ($detectionTypeScriptType) {
-                                '0' {
-                                    $detectionTypeScriptFileExtension = '.ps1'
-                                }
-                                '1' {
-                                    $detectionTypeScriptFileExtension = '.vbs'
-                                }
-                                '2' {
-                                    $detectionTypeScriptFileExtension = '.js'
-                                }
-                            }
-        
-                            # Extract only the encoded base64 script from the script body
-                            $pattern = '# ENCODEDSCRIPT # Begin Configuration Manager encoded script block #\s*(.*?)\s*# ENCODEDSCRIPT# End Configuration Manager encoded script block'
-                            $matchSigned = [regex]::Match($detectionTypeScriptBody, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-        
-                            if ($matchSigned.Success) {
-                                $extractedContent = $matchSigned.Groups[1].Value
-
-                                # Decode the Base64 string
-                                #$Encoding = [System.Text.Encoding]::GetEncoding('windows-1252')
-                                #$scriptContent = $Encoding.GetString([System.Convert]::FromBase64String($extractedContent))
-                                $scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($extractedContent))
-
-                                # We need to trim the script to honor digital signatures
-                                # Split the original string into lines
-                                $lines = $scriptContent -split "`n"
-
-                                # Remove the last line because the xml adds padding before the encoded string
-                                $lines = $lines[0..($lines.Count - 2)]
-
-                                # Join the lines back into a single string
-                                $finalScriptContent = $lines -join "`n"
-                            }
-                            else {
-                                
-                                # No need to deal with encoding, just pass the script body to the final object for saving
-                                $finalScriptContent = $detectionTypeScriptBody
-                            }
-  
-                            # Write the detection method to a file
-                            $detectionMethodFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$detectionTypeScriptFileExtension"
-   
-                            try {
-
-                                # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead to write to file
-                                [System.IO.File]::WriteAllText($detectionMethodFile, $finalScriptContent, $utf8NoBomEncoding)
-                                Write-LogAndHost -Message ("Detection method script saved to file '{0}'" -f $detectionMethodFile) -LogId $LogId -ForegroundColor Green
-                            }
-                            catch {
-                                Write-LogAndHost -Message ("Could not write detection method to file '{0}'" -f $detectionMethodFile) -LogId $LogId -Severity 3
-                            }
-                        }
-
-                        # If Detection Method is File/Reg/MSICode
-                        'Local' {
-                            Write-LogAndHost -Message 'Detection Method Provider is Local' -LogId $LogId -ForegroundColor Green
-                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
-                            $detectionTypeMethodBody = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'MethodBody' }).InnerText
-                            
-                            # Define the detection method Xml file path
-                            $detectionMethodXmlFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
-                        
-                            # Write the detection method to an Xml file
-
-                            try {
-
-                                # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
-                                [System.IO.File]::WriteAllText($detectionMethodXmlFile, $detectionTypeMethodBody, $utf8NoBomEncoding)
-                                Write-LogAndHost -Message ("Detection method XML saved to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId -ForegroundColor Cyan
-                            }
-                            catch {
-                                Write-Log -Message ("Could not write detection method to file '{0}'" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
-                                Write-Host ("Could not write detection method to file '{0}'" -f $detectionMethodXmlFile) -ForegroundColor Red
-                            }
-
-                            # Attempt to extract the local detection methods from the XML. We will ignore any 'or' operators as these are not supported in Intune
-                            if (Test-Path -Path $detectionMethodXmlFile) {
-                                $localDetectionMethods = Get-DetectionMethod -LogId $LogId -XMLObject $detectionTypeMethodBody
-                                
-                                if ($localDetectionMethods.Count -gt 0) {
-                                    Write-LogAndHost -Message 'Local Detection Methods extracted from XML' -LogId $LogId -ForegroundColor Cyan
-
-                                    foreach ($method in $localDetectionMethods) {
-                                        Write-LogAndHost -Message ("{0}" -f $method) -LogId $LogId -ForegroundColor Green
-                                    }
-                                    
-                                    # Export the detection method to a Json file
-                                    # Define the detection method Json file path
-                                    $detectionMethodJsonFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionMethod.json'
-
-                                    # Create a detection method json file
-                                    $detectionJson = New-IntuneDetectionMethod -LocalSettings $localDetectionMethods
-
-                                    try {
-
-                                        # Specifying Out-File with Encoding UTF8 is not honored so use .NET method instead
-                                        [System.IO.File]::WriteAllText($detectionMethodJsonFile, $detectionJson, $utf8NoBomEncoding)
-                                        Write-LogAndHost -Message ("Intune detection method Json saved to file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -ForegroundColor Green
-                                    }
-                                    catch {
-                                        Write-LogAndHost -Message ("Could not create Intune detection method Json file '{0}'" -f $detectionMethodJsonFile) -LogId $LogId -Severity 3
-                                    }
-                                }
-                                else {
-                                    Write-LogAndHost -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
-                                }
-                            }
-                            else {
-                                Write-LogAndHost -Message ("There was an error getting the local detection methods for deployment type '{0}' from the XML" -f $detectionMethodXmlFile) -LogId $LogId -Severity 3
-                            }
-                        }
-                        'MSI' {
-
-                            Write-LogAndHost -Message 'Detection Method Provider is MSI' -LogId $LogId -ForegroundColor Green
-                            $detectionTypeExecutionContext = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ExecutionContext' }).InnerText
-                            $detectionTypeProductCode = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'ProductCode' }).InnerText
-                            $detectionTypePackageCode = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'PackageCode' }).InnerText
-                            $detectionTypePatchCodes = $object.Installer.DetectAction.Args.Arg.Where({ $_.Name -eq 'PatchCodes' }).InnerText
-
-                        }
-                    }
-                    
-                    # Add detection method details to the PSCustomObject
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptRunAs32Bit -Value $detectionTypeScriptRunAs32Bit
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeScriptType -Value $detectionTypeScriptType
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeExecutionContext -Value $detectionTypeExecutionContext
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodScriptFile -Value $detectionMethodFile
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodXmlFile -Value $detectionMethodXmlFile
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionMethodJsonFile -Value $detectionMethodJsonFile
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypeProductCode -Value $detectionTypeProductCode
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypePackageCode -Value $detectionTypePackageCode
-                    $deploymentObject | Add-Member NoteProperty -Name DetectionTypePatchCodes -Value $detectionTypePatchCodes
-
-                    Write-Log -Message ("Application_Id = '{0}', Application_Name = '{1}', Application_LogicalName = '{2}', LogicalName = '{3}', Name = '{4}', `
-                    Technology = '{5}', ExecutionContext = '{6}', InstallContext = '{7}', InstallCommandLine = '{8}', UninstallSetting = '{9}', UninstallContent = '{10}', `
-                    UninstallCommandLine = '{11}', ExecuteTime = '{12}', MaxExecuteTime = '{13}', DetectionProvider = '{14}', DetectionTypeScriptRunAs32Bit = '{15}', `
-                    DetectionTypeScriptType = '{16}', DetectionTypeExecutionContext = '{17}', DetectionMethodScriptFile = '{18}', DetectionMethodXmlFile = '{19}', `
-                    DetectionMethodJsonFile = '{20}', DetectionTypeProductCode = '{21}', DetectionTypePackageCode = '{22}', DetectionTypePatchCodes = '{23}'" -f `
-                            $ApplicationId, `
-                            $xmlContent.AppMgmtDigest.Application.title.'#text', `
-                            $xmlContent.AppMgmtDigest.Application.LogicalName, `
-                            $object.LogicalName, `
-                            $object.Title.InnerText, `
-                            $object.Installer.Technology, `
-                            $object.Installer.ExecutionContext, `
-                            $installLocation, `
-                            $object.Installer.CustomData.InstallCommandLine, `
-                            $object.Installer.CustomData.UnInstallSetting, `
-                            $uninstallLocation, `
-                            $object.Installer.CustomData.UninstallCommandLine, `
-                            $object.Installer.CustomData.ExecuteTime, `
-                            $object.Installer.CustomData.MaxExecuteTime, `
-                            $object.Installer.DetectAction.Provider, `
-                            $detectionTypeScriptRunAs32Bit, `
-                            $detectionTypeScriptType, `
-                            $detectionTypeExecutionContext, `
-                            $detectionMethodScriptFile, `
-                            $detectionMethodXmlFile, `
-                            $detectionMethodJsonFile, `
-                            $detectionTypeProductCode, `
-                            $detectionMethodPackageCode, `
-                            $detectionMethodPatchCodes) -LogId $LogId
-
-                    # Output the deployment type object
-                    Write-Host "`nDeplopymentType Details extracted" -ForegroundColor Cyan
-                    Write-Host "$deploymentObject`n" -ForegroundColor Green
-
-                    # Add the deployment type object to the array
-                    $deploymentTypes += $deploymentObject          
+            switch ($deploymentType.DetectionProvider) {
+                'Script' {
+                    $extension = switch ($deploymentType.DetectionTypeScriptType) { '1' { '.vbs' } '2' { '.js' } default { '.ps1' } }
+                    $deploymentType.DetectionMethodScriptFile = Join-Path -Path $detectionMethodsFolder -ChildPath "DetectionScript$extension"
+                    [System.IO.File]::WriteAllText($deploymentType.DetectionMethodScriptFile, [string]$deploymentType.DetectionScriptContent, $utf8NoBomEncoding)
+                }
+                'Local' {
+                    $deploymentType.DetectionMethodXmlFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'MethodBody.xml'
+                    [System.IO.File]::WriteAllText($deploymentType.DetectionMethodXmlFile, [string]$deploymentType.DetectionMethodBody, $utf8NoBomEncoding)
                 }
             }
-            else {
-                Write-LogAndHost -Message ("Warning: No DeploymentTypes found for '{0}'" -f $xmlContent.AppMgmtDigest.Application.LogicalName) -LogId $LogId -Severity 2
-            }
-        
-            return $deploymentTypes
 
+            if (@($deploymentType.DetectionRules).Count -gt 0) {
+                $deploymentType.DetectionMethodJsonFile = Join-Path -Path $detectionMethodsFolder -ChildPath 'DetectionRules.json'
+                $rulesJson = ConvertTo-Json -InputObject @($deploymentType.DetectionRules) -Depth 5
+                [System.IO.File]::WriteAllText($deploymentType.DetectionMethodJsonFile, $rulesJson, $utf8NoBomEncoding)
+            }
         }
         catch {
-            Write-LogAndHost -Message ("Could not get deployment type information for application Id '{0}'" -f $ApplicationId) -LogId $LogId -Severity 3
-            Get-ScriptEnd -LogId $LogId -ErrorMessage $_.Exception.Message
+            Write-LogAndHost -Message ("Could not write the detection method files to '{0}': {1}" -f $detectionMethodsFolder, $_.Exception.Message) -LogId $LogId -Severity 2
         }
+
+        if ($deploymentType.DetectionSupported) {
+            Write-LogAndHost -Message ("Converted the detection method to {0} Intune rule(s)" -f @($deploymentType.DetectionRules).Count) -LogId $LogId -ForegroundColor Green
+        }
+        else {
+            Write-LogAndHost -Message ("The detection method can't be migrated automatically: {0}" -f $deploymentType.DetectionIssues) -LogId $LogId -Severity 2
+        }
+
+        if ($deploymentType.Warnings) {
+            Write-LogAndHost -Message ("Warnings for '{0}': {1}" -f $deploymentType.Name, $deploymentType.Warnings) -LogId $LogId -Severity 2
+        }
+
+        Write-Log -Message ("Deployment type: {0}" -f ($deploymentType | Select-Object -Property * -ExcludeProperty DetectionRules, DetectionScriptContent, DetectionMethodBody, ReturnCodes | ConvertTo-Json -Compress -Depth 3)) -LogId $LogId
     }
+
+    return , $deploymentTypes
 }

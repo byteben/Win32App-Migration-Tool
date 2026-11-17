@@ -17,21 +17,21 @@ The **Win32AppMigrationTool** is designed to inventory **ConfigMgr Applications*
 
 ## 🔐 License
 
-- **Non-Commercial Use**: This software is provided for non-commercial use only. Commercial use is prohibited without prior written consent from the author.
+This tool is free for **personal, non-commercial use**, such as learning, research and testing in your own lab.
 
-- **Modifications**: You are permitted to modify or fork the code for personal use only. However, you may not distribute the original or modified versions of the code, share it to add additional functionality, or incorporate it into commercial products.
+It is **not licensed for commercial or business use**. That includes using it to manage an organization's devices or environments, using it to deliver services to clients, and selling it or including it in a product or service.
 
-This project is licensed under the [Non-Commercial License](License). You may not reproduce, distribute, or use any part of this code for commercial purposes. For detailed terms and conditions, please refer to the [License](License) file in this directory.
+You may modify the code for your own personal use, but you may not share or redistribute the original or modified versions.
+
+Full terms are in the [License](License) file. Versions 2.0.20 to 3.0.03 were released under the GNU GPL and remain under those terms.
 
 ---
 
 ## ⚖️ Legal Disclaimer
 
-The provided PowerShell script is shared with the community as-is. The author and any co-author(s) make no warranties or guarantees regarding its functionality, reliability, or suitability for any specific purpose.
+This tool is provided as-is, without warranty of any kind. The author and any co-author(s) make no guarantees about its functionality, reliability, or suitability for any purpose.
 
-This script may require modifications to fit your specific environment or requirements. It is strongly recommended to test the script in a non-production environment before using it in a live or critical system.
-
-The author and co-author(s) shall not be held responsible for any damages, losses, or unintended effects resulting from the use of this script. By using this script, you assume all associated risks and responsibilities.
+**Use it at your own risk.** You are responsible for testing it in your own lab and checking its results before relying on them. The author and co-author(s) are not responsible for any damage, loss, or unintended effects resulting from its use.
 
 ---
   
@@ -46,11 +46,10 @@ The author and co-author(s) shall not be held responsible for any damages, losse
 - **Local Administrator** The default Working folder is $ENV:SystemDrive\Win32AppMigrationTool. You will need permissions to create this directory on the System Drive  
 - **Roles** Permission to run the Configuration Manager cmdlet **Get-CMApplication**  
 - **Content Folder Permission** Read permissions to the content source for the Deployment Types that will be exported  
-- **PowerShell 5.1**  PowerShell 7 is recommended to ensure Blob files are verificed after chunking to Azure Storage and to correctly analyzing certain ConfigMgr detection types
+- **PowerShell 5.1 or 7** Both are supported. The ConfigurationManager module supports PowerShell 7 from ConfigMgr 2103
 - **Internet Access** to download the Win32 Content Prep Tool
 - **Microsoft.Graph.Authentication Module** Install-Module -Name Microsoft.Graph.Authentication (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
-- **Az.Storage Module** Install-Module -Name Az.Storage (This is installed as part of the Win32AppMigrationTool Module if the -CreateApps parameter is passed)
-- **Entra ID App Registration** The Client App must have a redirect URI configured for **http://localhost**. This is required for `Connect-MgGraph` to work correctly
+- **Entra ID App Registration** For interactive sign-in, add two redirect URIs under **Authentication > Mobile and desktop applications**: **http://localhost** and **ms-appx-web://Microsoft.AAD.BrokerPlugin/<your client id>**. Recent versions of Microsoft.Graph.Authentication sign in through the Windows broker (WAM) and need the second one; without it the sign-in window can fail. `-UseDeviceAuthentication`, `-ClientSecret` and `-ClientCertificateThumbprint` don't use these redirect URIs
   
 ## 👏 Quick Start  
   
@@ -81,6 +80,31 @@ The current release of the Win32 App Migration Tool will do the following:-
 - Upload file in chunks to Intune
 - Commit file to Intune
 - Log events to %WorkingDirectory%\Logs\Main.log  
+- Write a results file to %WorkingDirectory%\Details\MigrationResults_<timestamp>.csv with one row per deployment type (Success, Skipped or Failed, the stage reached, the Intune app Id and the reason)  
+
+Each deployment type is processed on its own. If one fails, it's recorded in the results file and the tool moves on to the next one.
+
+## 🔎 What is migrated
+
+| ConfigMgr | Intune |
+| --- | --- |
+| Install / uninstall command | Install / uninstall command. If the deployment type has no uninstall command, `cmd.exe /c exit 1` is used and a warning is logged |
+| Installation behavior (System, User, "Install for system if resource is device; otherwise user") | Install behavior system / user. The third option becomes system, with a warning |
+| Maximum allowed run time | Maximum installation time |
+| Program "Behavior" restart setting (Determine behavior based on return codes, No specific action, App may force a restart, Configuration Manager client will force a restart) | Device restart behavior (basedOnReturnCode, suppress, allow, force) |
+| Return codes (Success, Failure, Soft reboot, Hard reboot, Fast retry) | Return codes (success, failed, softReboot, hardReboot, retry), added to the Intune defaults |
+| Detection: Windows Installer product code (MSI deployment types) | Product code rule |
+| Detection: PowerShell script | PowerShell script rule, keeping "Run script as 32-bit process" |
+| Detection: file or folder exists; file version, size (whole MB), date modified, date created; folder dates | File system rule |
+| Detection: registry value exists, or String / Integer / Version comparison; registry key exists | Registry rule |
+| Detection: MSI product code exists or version comparison | Product code rule |
+
+These detections can't be migrated as they are. The deployment type is marked **Skipped** in the results file, with the reason, so you can add the detection in Intune by hand:
+
+- VBScript or JScript detection scripts (Intune runs PowerShell only)
+- Rules joined with **Or** (Intune requires every rule to be true)
+- Operators Intune doesn't have: Between, One of, None of, Begins with, Ends with, Contains and their negations
+- File size comparisons that aren't a whole number of MB
   
 ### 1. Environment Setup  
   
@@ -176,13 +200,13 @@ Accept wildcard characters: False
 
 ### -Parameter AppName
 
-Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader"
+Pass an app name to search for matching applications in ConfigMgr. You can use * as a wildcard e.g. "Microsoft*" or "\*Reader". Out-GridView lets you select one of the matching applications. To process several, pass -NoOgv (every match is processed) or -AppId. Not required when -AppId is passed
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 
-Required: True
+Required: False
 Position: 2
 Default value: None
 Accept pipeline input: False
@@ -341,7 +365,7 @@ Accept wildcard characters: False
 
 ### -Parameter NoOgv
 
-When passed, the Out-Gridview is suppressed and the value entered for $AppName will be searched using Get-CMApplication -Fast
+When passed, the Out-Gridview is suppressed and every application matching $AppName (after -ExcludeFilter and -ExcludePMPC) is processed
 
 ```yaml
 Type: Switch
@@ -356,7 +380,7 @@ Accept wildcard characters: False
 
 ### -Parameter AllowAvailableUninstall
 
-When passed, the AvailableUninstall value will be set to True when creating the Win32App
+Pass $true to allow users to uninstall the app from the Company Portal when it has an Available assignment. Default $false
 
 ```yaml
 Type: Boolean
@@ -365,6 +389,81 @@ Parameter Sets: (All)
 Required: False
 Position:
 Default value:
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AppId
+
+One or more ConfigMgr application CI_IDs to process. The search and Out-GridView are skipped, so the tool can run unattended. Use instead of, or as well as, -AppName
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxAppSizeGB
+
+The largest .intunewin, in GB (1,000,000,000 bytes), that will be uploaded. Intune limits Win32 apps to 30 GB per app, so a larger package is skipped before the Intune app is created, with the reason in the results file. With -PackageApps alone, an oversized package gets a warning. Only raise it if Microsoft has raised the limit for your tenant
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UploadTimeoutMinutes
+
+How long to wait for Intune to process uploaded content before giving up. Raise it for very large packages
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KeepFailedApps
+
+If the content upload or commit fails after the Win32 app was created, the half-created app is deleted from Intune. Pass this switch to keep it
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoPrompt
+
+Don't ask whether to disconnect from Microsoft Graph at the end of the run
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -1,337 +1,315 @@
 <#
 .Synopsis
 Created on:   17/03/2024
-Update on:    08/01/2025
+Update on:    16/11/2026
 Created by:   Ben Whitmore
 Filename:     New-IntuneDetection.ps1
 
 .Description
-Function to get the local detection methods from the detection methods xml object
+Converts ConfigMgr detection data into Microsoft Graph win32LobApp detection rules (the 'rules'
+collection, ruleType = detection).
 
-.PARAMETER LogId
-The component (script name) passed as LogID to the 'Write-Log' function. 
-This parameter is built from the line number of the call from the function up the
+Graph contract (Microsoft Graph beta, win32LobAppFileSystemRule / win32LobAppRegistryRule /
+win32LobAppProductCodeRule / win32LobAppPowerShellScriptRule):
+  operator                 notConfigured | equal | notEqual | greaterThan | greaterThanOrEqual | lessThan | lessThanOrEqual
+  file operationType       exists | doesNotExist | modifiedDate | createdDate | version | sizeInMB
+  registry operationType   exists | doesNotExist | string | integer | version
+ConfigMgr operators with no Graph equivalent (Between, OneOf, NoneOf, BeginsWith, EndsWith, Contains...)
+and OR logic (Intune ANDs every detection rule) are reported as unsupported rather than guessed.
 
-.PARAMETER LocalSettings
-The local detection method settings array to convert to JSON
-
-.PARAMETER Script
-The local detection method script to prepare
+.PARAMETER Detection
+The object returned by Get-DetectionMethod
 #>
 
-function New-IntuneDetectionMethod {
-    param (
-        [Parameter(Mandatory = $false, ValuefromPipeline = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
-        [string]$LogId = $($MyInvocation.MyCommand).Name,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 0, HelpMessage = 'The local detection method settings array to convert to JSON', ParameterSetName = 'Methods')]
-        [object]$LocalSettings,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $false, Position = 1, HelpMessage = 'The local detection method script to prepare', ParameterSetName = 'Methods')]
-        [object]$Script
-    )
-    begin {
+function Get-IntuneRuleOperator {
+    param ([string]$Operator)
 
-        # Helper functions to create the JSON objects
-        # Function to convert empty strings to $null in JSON
-        function Convert-EmptyStringToNullInJson {
-            param (
-                [Parameter(Mandatory = $true)]
-                [string]$Json
-            )
-            
-            # Convert the JSON to objects
-            $objects = $Json | ConvertFrom-Json
-            
-            function Update-Object {
-                param (
-                    $Object
-                )
-                
-                # Check key values for empty strings and convert to $null
-                foreach ($property in $Object.PSObject.Properties) {
-                    if ($property.Value -is [string] -and $property.Value -eq '') {
-                        $property.Value = $null
-                    }
-                    elseif ($property.Value -is [PSCustomObject] -or $property.Value -is [array]) {
-                        Update-Object -Object $property.Value
-                    }
-                }
-            }
-            
-            # Process each object
-            foreach ($obj in $objects) {
-                Update-Object -Object $obj
-            }
-            
-            # Return the new JSON
-            $newJson = $objects | ConvertTo-Json -Depth 5
-            return $newJson
-        }
-        
-        # Registry detection method
-        function Add-SimpleSetting {
-            param(
-                [string]$is64Bit,
-                [string]$keyPath,
-                [string]$valueName,
-                [string]$operator,
-                [string]$version,
-                [string]$detectionType,
-                [string]$detectionValue
-            )
-            
-            # Prepare 64bit check
-            if ($is64Bit -eq 'true') {
-                $check32BitOn64System = [bool]$false
-            }
-            else {
-                $check32BitOn64System = [bool]$true
-            }
-
-            # Set the detection type
-            $detectionType = $detectionType.ToLower()
-
-            # Prepare operands for the Intune detection method
-            switch ($operator) {
-                'Equals' {
-                    $operator = 'equal'
-                }
-                'NotEquals' {
-                    $operator = 'notEqual'
-                }
-                'GreaterThan' {
-                    $operator = 'greaterThan'
-                }
-                'GreaterEquals' {
-                    $operator = 'greaterThanOrEqual'
-                }
-                'LessThan' {
-                    $operator = 'lessThan'
-                }
-                'LessEquals' {
-                    $operator = 'lessThanOrEqual'
-                }
-                'Match' {
-                    $operator = 'match'
-                }
-                'NotMatch' {
-                    $operator = 'notMatch'
-                }
-                'Contains' {
-                    $operator = 'contains'
-                }
-                'NotContains' {
-                    $operator = 'notContains'
-                }
-                'BeginsWith' {
-                    $operator = 'beginsWith'
-                }
-                'EndsWith' {
-                    $operator = 'endsWith'
-                }
-            }
-
-            # Prepare detection types for the Intune detection method
-            switch ($detectionType) {
-                'Int64' {
-                    $detectionType = 'integer'
-                }
-            }
-
-            $object = [PSCustomObject]@{
-                '@odata.type'          = '#microsoft.graph.win32LobAppRegistryDetection'
-                'check32BitOn64System' = $check32BitOn64System
-                'detectionType'        = $detectionType
-                'detectionValue'       = $detectionValue
-                'keyPath'              = $keyPath
-                'operator'             = $operator
-                'valueName'            = $valueName
-            }
-            return $object
-        }
-        
-        # File or Folder detection method
-        function Add-File {
-            param(
-                [string]$is64Bit,
-                [string]$detectionType,
-                [string]$detectionValue,
-                [string]$fileOrFolderName,
-                [string]$operator,
-                [string]$path
-            )
-
-            # Prepare 64bit check
-            if ($is64Bit -eq 'true') {
-                $check32BitOn64System = [bool]$false
-            }
-            else {
-                $check32BitOn64System = [bool]$true
-            }
-
-            # Set the detection type
-            $detectionType = $detectionType.ToLower()
-
-            # Prepare operands for the Intune detection method
-            switch ($operator) {
-                'Equals' {
-                    $operator = 'equal'
-                }
-                'NotEquals' {
-                    $operator = 'notEqual'
-                }
-                'GreaterThan' {
-                    $operator = 'greaterThan'
-                }
-                'GreaterEquals' {
-                    $operator = 'greaterThanOrEqual'
-                }
-                'LessThan' {
-                    $operator = 'lessThan'
-                }
-                'LessEquals' {
-                    $operator = 'lessThanOrEqual'
-                }
-                'Match' {
-                    $operator = 'match'
-                }
-                'NotMatch' {
-                    $operator = 'notMatch'
-                }
-                'Contains' {
-                    $operator = 'contains'
-                }
-                'NotContains' {
-                    $operator = 'notContains'
-                }
-                'BeginsWith' {
-                    $operator = 'beginsWith'
-                }
-                'EndsWith' {
-                    $operator = 'endsWith'
-                }
-            }
-
-            # Check detection types
-            if ($operator -eq 'notEquals' -and $detectionValue -eq 0 -and $detectionType -eq 'int64') {
-                $operator = 'notConfigured'
-                $detectionType = 'exists'
-                $detectionValue = $null
-            }
-
-            $object = [PSCustomObject]@{
-                '@odata.type'          = '#microsoft.graph.win32LobAppFileSystemDetection'
-                'check32BitOn64System' = $check32BitOn64System
-                'detectionType'        = $detectionType
-                'detectionValue'       = $detectionValue
-                'fileOrFolderName'     = $fileOrFolderName
-                'operator'             = $operator
-                'path'                 = $path
-
-            }
-            return $object
-        }
-        
-        # MSI detection method
-        function Add-MSI {
-            param(
-                [string]$productCode,
-                [string]$productVersion,
-                [string]$productVersionOperator
-            )
-
-            # Prepare operands for the Intune detection method
-            switch ($productVersionOperator) {
-                'Equals' {
-                    $productVersionOperator = 'equal'
-                }
-                'NotEquals' {
-                    $productVersionOperator = 'notEqual'
-                }
-                'GreaterThan' {
-                    $productVersionOperator = 'greaterThan'
-                }
-                'GreaterEquals' {
-                    $productVersionOperator = 'greaterThanOrEqual'
-                }
-                'LessThan' {
-                    $productVersionOperator = 'lessThan'
-                }
-                'LessEquals' {
-                    $productVersionOperator = 'lessThanOrEqual'
-                }
-            }
-
-            # Check if the product version is not configured
-            if ( -not $productVersion -and -not $productVersionOperator) {
-                $productVersion = $null
-                $productVersionOperator = 'notConfigured'
-            }
-
-            $object = [PSCustomObject]@{
-                '@odata.type'            = '#microsoft.graph.win32LobAppProductCodeDetection'
-                'productCode'            = $productCode
-                'productVersion'         = $productVersion
-                'productVersionOperator' = $productVersionOperator
-            }
-            return $object
-        }
+    $map = @{
+        'Equals'        = 'equal'
+        'NotEquals'     = 'notEqual'
+        'GreaterThan'   = 'greaterThan'
+        'GreaterEquals' = 'greaterThanOrEqual'
+        'LessThan'      = 'lessThan'
+        'LessEquals'    = 'lessThanOrEqual'
     }
-    process {
-        if ($PSCmdlet.ParameterSetName -eq 'Methods') {
-            if ($PSBoundParameters.Keys.Count -gt 1) {
-                Write-LogAndHost -Message 'Only one parameter is allowed in parameter set "Methods". Choose either "LocalSettings" or "Script"' -LogId $LogId -Severity 3
-                return
-            }
-            else {
-                if ($PSBoundParameters['LocalSettings']) {
-                    $jsonArray = @()
-    
-                    foreach ($setting in $LocalSettings) {
-                        switch ($setting.Type) {
-                            'SimpleSetting' {
 
-                                # Create the registry key path
-                                $regPath = Join-Path -Path $setting.Hive -ChildPath $setting.Key -ErrorAction SilentlyContinue
-    
-                                # Add the registry detection object
-                                $jsonArray += Add-SimpleSetting `
-                                    -is64Bit $setting.is64Bit `
-                                    -keyPath $regPath `
-                                    -valueName $setting.ValueName `
-                                    -operator $setting.Rules_Operator `
-                                    -detectionType $setting.Rules_ConstantDataType `
-                                    -detectionValue $setting.Rules_ConstantValue
-                            }
-                            'File' {
-                                $jsonArray += Add-File `
-                                    -is64Bit $setting.is64Bit `
-                                    -detectionType $setting.Rules_ConstantDataType `
-                                    -detectionValue $setting.Rules_ConstantValue `
-                                    -fileOrFolderName $setting.Filter `
-                                    -operator $setting.Rules_Operator `
-                                    -path $setting.Path
-                            }
-                            'MSI' {
-                                $jsonArray += Add-MSI `
-                                    -productCode $setting.ProductCode `
-                                    -ProductVersion $setting.Rules_ConstantValue `
-                                    -ProductVersionOperator $setting.Rules_Operator
-                            }
-                            default {
-                                Write-LogAndHost -Message "Unhandled detection type: $($setting.Type)" -LogId $LogId -Severity 3
-                            }
+    if ($Operator -and $map.ContainsKey($Operator)) { return $map[$Operator] }
+    return $null
+}
+
+function ConvertTo-IntuneDateString {
+    param ([string]$Value)
+
+    # ConfigMgr stores DateTime constants as ISO 8601 ('2021-06-01T00:00:00Z'). Intune expects
+    # milliseconds ('2021-06-01T00:00:00.000Z')
+    $parsed = [datetime]::MinValue
+    $styles = [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal
+    if ([datetime]::TryParse($Value, [System.Globalization.CultureInfo]::InvariantCulture, $styles, [ref]$parsed)) {
+        return $parsed.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    return $null
+}
+
+function ConvertTo-IntuneDetectionRule {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false, HelpMessage = "The component (script name) passed as LogID to the 'Write-Log' function")]
+        [string]$LogId = $($MyInvocation.MyCommand).Name,
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = 'The object returned by Get-DetectionMethod')]
+        [object]$Detection
+    )
+
+    $rules = New-Object System.Collections.Generic.List[object]
+    $unsupported = New-Object System.Collections.Generic.List[string]
+
+    if ($Detection.HasOr) {
+        $unsupported.Add("The ConfigMgr detection uses OR logic. Intune evaluates every detection rule with AND, so the rules can't be converted without changing their meaning. Use a detection script for this app.")
+    }
+
+    foreach ($clause in @($Detection.Clauses)) {
+
+        $label = "{0} '{1}'" -f $clause.SettingType, $clause.SettingLogicalName
+
+        if (-not $clause.SettingType) {
+            $unsupported.Add("Clause references setting '$($clause.SettingLogicalName)' which was not found in the detection XML")
+            continue
+        }
+
+        if ($clause.ConstantValueList.Count -gt 0) {
+            $unsupported.Add("$label uses the '$($clause.Operator)' operator with a list of values, which Intune can't express")
+            continue
+        }
+
+        $intuneOperator = Get-IntuneRuleOperator -Operator $clause.Operator
+        $check32BitOn64System = ([string]$clause.Is64Bit -eq 'false')
+        $isBoolean = ($clause.DataType -eq 'Boolean' -or $clause.ConstantDataType -eq 'Boolean')
+        $isCountExists = ($clause.Method -eq 'Count' -and $clause.Operator -eq 'NotEquals' -and [string]$clause.ConstantValue -eq '0')
+
+        switch ($clause.SettingType) {
+
+            { $_ -in @('File', 'Folder') } {
+                $rule = [ordered]@{
+                    '@odata.type'        = '#microsoft.graph.win32LobAppFileSystemRule'
+                    ruleType             = 'detection'
+                    path                 = $clause.Path
+                    fileOrFolderName     = $clause.Filter
+                    check32BitOn64System = $check32BitOn64System
+                    operationType        = $null
+                    operator             = $null
+                    comparisonValue      = $null
+                }
+
+                if ($clause.Method -eq 'Count') {
+                    if ($isCountExists) {
+                        $rule.operationType = 'exists'
+                        $rule.operator = 'notConfigured'
+                        $rules.Add($rule)
+                    }
+                    else {
+                        $unsupported.Add("$label checks the item count with '$($clause.Operator) $($clause.ConstantValue)'. Only 'exists' (NotEquals 0) can be converted")
+                    }
+                    continue
+                }
+
+                if (-not $intuneOperator) {
+                    $unsupported.Add("$label uses the '$($clause.Operator)' operator, which has no Intune equivalent")
+                    continue
+                }
+
+                # Note: 'continue' inside a switch only leaves that switch, so problems are
+                # collected in $problem and checked after the switch
+                $problem = $null
+                switch ($clause.PropertyPath) {
+                    'Version' {
+                        if ($clause.SettingType -ne 'File') { $problem = "$label compares Version on a folder" }
+                        else {
+                            $rule.operationType = 'version'
+                            $rule.comparisonValue = [string]$clause.ConstantValue
                         }
                     }
-    
-                    # Convert to JSON
-                    $json = $jsonArray | ConvertTo-Json -Depth 5
-                    Convert-EmptyStringToNullInJson -Json $json
+                    'Size' {
+                        $bytes = [int64]0
+                        if ($clause.SettingType -ne 'File') { $problem = "$label compares Size on a folder" }
+                        elseif (-not [int64]::TryParse([string]$clause.ConstantValue, [ref]$bytes)) {
+                            $problem = "$label has a size value '$($clause.ConstantValue)' that isn't a number of bytes"
+                        }
+                        elseif ($bytes % 1MB -ne 0) {
+                            $problem = "$label compares file size to $bytes bytes. Intune only compares whole MB, so the rule would change meaning"
+                        }
+                        else {
+                            $rule.operationType = 'sizeInMB'
+                            $rule.comparisonValue = [string]($bytes / 1MB)
+                        }
+                    }
+                    { $_ -in @('DateModified', 'DateCreated') } {
+                        $date = ConvertTo-IntuneDateString -Value $clause.ConstantValue
+                        if (-not $date) { $problem = "$label has a date value '$($clause.ConstantValue)' that couldn't be parsed" }
+                        else {
+                            $rule.operationType = if ($clause.PropertyPath -eq 'DateModified') { 'modifiedDate' } else { 'createdDate' }
+                            $rule.comparisonValue = $date
+                        }
+                    }
+                    default {
+                        $problem = "$label compares property '$($clause.PropertyPath)', which Intune doesn't support"
+                    }
+                }
+
+                if ($problem) {
+                    $unsupported.Add($problem)
                 }
                 else {
-                    Write-LogAndHost -Message 'No settings were passed to the function' -LogId $LogId -Severity 3
-                    return
+                    $rule.operator = $intuneOperator
+                    $rules.Add($rule)
                 }
             }
+
+            { $_ -in @('SimpleSetting', 'RegistryKey') } {
+                $keyPath = if ($clause.Hive -and $clause.Key) { '{0}\{1}' -f $clause.Hive, $clause.Key.TrimStart('\') } else { $clause.Key }
+                $rule = [ordered]@{
+                    '@odata.type'        = '#microsoft.graph.win32LobAppRegistryRule'
+                    ruleType             = 'detection'
+                    check32BitOn64System = $check32BitOn64System
+                    keyPath              = $keyPath
+                    valueName            = if ($clause.SettingType -eq 'SimpleSetting' -and $clause.ValueName) { $clause.ValueName } else { $null }
+                    operationType        = $null
+                    operator             = $null
+                    comparisonValue      = $null
+                }
+
+                # Existence: ConfigMgr writes a Boolean comparison against true/false
+                # ('RegistryValueExists' for a value). A Count <> 0 check is treated the same way.
+                if ($isBoolean -or $isCountExists) {
+                    $expected = if ($isCountExists) { $true } else { [string]$clause.ConstantValue -eq 'true' }
+                    if ($clause.Operator -eq 'NotEquals' -and -not $isCountExists) { $expected = -not $expected }
+                    elseif ($clause.Operator -notin @('Equals', 'NotEquals')) {
+                        $unsupported.Add("$label checks existence with the '$($clause.Operator)' operator"); continue
+                    }
+                    $rule.operationType = if ($expected) { 'exists' } else { 'doesNotExist' }
+                    $rule.operator = 'notConfigured'
+                    $rules.Add($rule)
+                    continue
+                }
+
+                if ($clause.SettingType -eq 'RegistryKey') {
+                    $unsupported.Add("$label is a registry key rule that isn't an existence check"); continue
+                }
+
+                if (-not $intuneOperator) {
+                    $unsupported.Add("$label uses the '$($clause.Operator)' operator, which has no Intune equivalent")
+                    continue
+                }
+
+                $registryType = switch ($clause.DataType) {
+                    'String' { 'string' }
+                    'Int64' { 'integer' }
+                    'Integer' { 'integer' }
+                    'Version' { 'version' }
+                    default { $null }
+                }
+                if (-not $registryType) {
+                    $unsupported.Add("$label compares data type '$($clause.DataType)', which Intune doesn't support"); continue
+                }
+
+                $rule.operationType = $registryType
+                $rule.operator = $intuneOperator
+                $rule.comparisonValue = [string]$clause.ConstantValue
+                $rules.Add($rule)
+            }
+
+            'MSI' {
+                $rule = [ordered]@{
+                    '@odata.type'          = '#microsoft.graph.win32LobAppProductCodeRule'
+                    ruleType               = 'detection'
+                    productCode            = $clause.ProductCode
+                    productVersionOperator = 'notConfigured'
+                    productVersion         = $null
+                }
+
+                if ($isCountExists) {
+                    $rules.Add($rule)
+                    continue
+                }
+
+                if ($clause.DataType -eq 'Version' -and $intuneOperator) {
+                    $rule.productVersionOperator = $intuneOperator
+                    $rule.productVersion = [string]$clause.ConstantValue
+                    $rules.Add($rule)
+                    continue
+                }
+
+                $unsupported.Add("$label uses '$($clause.Method)/$($clause.DataType)/$($clause.Operator)', which can't be converted to a product code rule")
+            }
+
+            default {
+                $unsupported.Add("Detection setting type '$($clause.SettingType)' isn't supported")
+            }
         }
-    }  
-}  
+    }
+
+    return [pscustomobject]@{
+        Rules       = $rules.ToArray()
+        Unsupported = $unsupported.ToArray()
+        IsSupported = ($unsupported.Count -eq 0 -and $rules.Count -gt 0)
+    }
+}
+
+function New-IntuneScriptDetectionRule {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, HelpMessage = 'The detection script content')]
+        [AllowEmptyString()]
+        [string]$ScriptContent,
+        [Parameter(Mandatory = $false, HelpMessage = 'ConfigMgr ScriptType: 0 = PowerShell, 1 = VBScript, 2 = JScript')]
+        [string]$ScriptType = '0',
+        [Parameter(Mandatory = $false, HelpMessage = 'Run the script as a 32-bit process on 64-bit clients')]
+        [bool]$RunAs32Bit = $false
+    )
+
+    if ($ScriptType -ne '0') {
+        $language = switch ($ScriptType) { '1' { 'VBScript' } '2' { 'JScript' } default { "script type '$ScriptType'" } }
+        return [pscustomobject]@{
+            Rules       = @()
+            Unsupported = @("The ConfigMgr detection is a $language script. Intune only runs PowerShell detection scripts, so it must be rewritten in PowerShell")
+            IsSupported = $false
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ScriptContent)) {
+        return [pscustomobject]@{ Rules = @(); Unsupported = @('The detection script is empty'); IsSupported = $false }
+    }
+
+    $rule = [ordered]@{
+        '@odata.type'         = '#microsoft.graph.win32LobAppPowerShellScriptRule'
+        ruleType              = 'detection'
+        enforceSignatureCheck = $false
+        runAs32Bit            = $RunAs32Bit
+        scriptContent         = [System.Convert]::ToBase64String([byte[]]([System.Text.Encoding]::UTF8.GetPreamble() + [System.Text.Encoding]::UTF8.GetBytes($ScriptContent.TrimStart([char]0xFEFF))))
+        operationType         = 'notConfigured'
+        operator              = 'notConfigured'
+    }
+
+    return [pscustomobject]@{ Rules = @($rule); Unsupported = @(); IsSupported = $true }
+}
+
+function New-IntuneProductCodeDetectionRule {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, HelpMessage = 'The MSI product code')]
+        [AllowEmptyString()]
+        [string]$ProductCode
+    )
+
+    if ($ProductCode -notmatch '^\{?[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}\}?$') {
+        return [pscustomobject]@{ Rules = @(); Unsupported = @("The MSI detection product code '$ProductCode' isn't a valid GUID"); IsSupported = $false }
+    }
+
+    $rule = [ordered]@{
+        '@odata.type'          = '#microsoft.graph.win32LobAppProductCodeRule'
+        ruleType               = 'detection'
+        productCode            = $ProductCode
+        productVersionOperator = 'notConfigured'
+        productVersion         = $null
+    }
+
+    return [pscustomobject]@{ Rules = @($rule); Unsupported = @(); IsSupported = $true }
+}

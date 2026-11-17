@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   27/10/2023
-Updated on:   04/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     New-FolderToCreate.ps1
 
@@ -44,11 +44,11 @@ function New-FolderToCreate {
 
                     # Create the folder
                     New-Item -Path $folderToCreate -ItemType Directory -Force -ErrorAction Stop | Out-Null
-                    Write-Host ("Folder '{0}' was created succesfully" -f $folderToCreate) -ForegroundColor Green
+                    Write-Host ("Folder '{0}' was created successfully" -f $folderToCreate) -ForegroundColor Green
                 }
                 catch {
-                    Write-Host ("Couldn't create '{0}' folder" -f $folderToCreate) -Severity 3
-                    Get-ScriptEnd -LogId $LogId -Message $_.Exception.Message
+                    Write-LogAndHost -Message ("Couldn't create '{0}' folder. {1}" -f $folderToCreate, $_.Exception.Message) -LogId $LogId -Severity 3
+                    throw ("Couldn't create '{0}' folder. {1}" -f $folderToCreate, $_.Exception.Message)
                 }
             }
             else {

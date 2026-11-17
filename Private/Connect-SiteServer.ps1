@@ -1,12 +1,13 @@
 <#
 .Synopsis
 Created on:   28/10/2023
-Updated on:   01/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Connect-SiteServer.ps1
 
 .Description
-Function to connect to a ConfigMgr site server
+Function to connect to a ConfigMgr site server. The caller's location is saved in
+$global:Win32AppMigrationTool_OriginalLocation (if not already set) so Get-ScriptEnd can restore it.
 
 .PARAMETER LogId
 The component (script name) passed as LogID to the 'Write-Log' function. 
@@ -32,7 +33,7 @@ function Connect-SiteServer {
 
     begin {
         Write-LogAndHost -Message "Function: Connect-SiteServer was called" -LogId $LogId -ForegroundColor Cyan
-        Write-LogAndHost ("Importing Module: 'ConfigurationManager.psd1' and connecting to Provider '{0}'..." -f $ProviderMachineName) -LogId $LogId -ForegroundColor Cyan
+        Write-LogAndHost -Message ("Importing Module: 'ConfigurationManager' and connecting to Provider '{0}'..." -f $ProviderMachineName) -LogId $LogId -ForegroundColor Cyan
     }
     
     process {
@@ -46,14 +47,21 @@ function Connect-SiteServer {
             if (-not $SiteCode) {
                 try {
 
-                    # Get the Site Code from the provider machine
-                    $siteCodeQuery = Get-CIMInstance -Namespace "root\SMS" -Class "SMS_ProviderLocation" -ComputerName $ProviderMachineName
-                    $SiteCode = $siteCodeQuery.SiteCode
-                    Write-LogAndHost -Message ("Retrieved Site Code: {0}" -f $SiteCode) -LogId $LogId -ForegroundColor Green
-                    $siteCodeRetrieved = $true
+                    # Get the Site Code from the provider machine. There can be several providers, take the first
+                    $retrieved = Get-CimInstance -Namespace 'root\SMS' -ClassName 'SMS_ProviderLocation' -ComputerName $ProviderMachineName -ErrorAction Stop |
+                        Select-Object -First 1 -ExpandProperty SiteCode
+
+                    if ($retrieved) {
+                        $SiteCode = $retrieved
+                        Write-LogAndHost -Message ("Retrieved Site Code: {0}" -f $SiteCode) -LogId $LogId -ForegroundColor Green
+                        $siteCodeRetrieved = $true
+                    }
+                    else {
+                        Write-LogAndHost -Message ("No SMS_ProviderLocation instance was returned by '{0}'" -f $ProviderMachineName) -LogId $LogId -Severity 3
+                    }
                 }
                 catch {
-                    Write-LogAndHost -Message "Failed to retrieve Site Code from provider machine: $($_.Exception.Message)" -Severity 3
+                    Write-LogAndHost -Message "Failed to retrieve Site Code from provider machine: $($_.Exception.Message)" -LogId $LogId -Severity 3
                 }
             }
             else {
@@ -62,13 +70,15 @@ function Connect-SiteServer {
 
             # If the Site Code was not retrieved, prompt the user to enter it
             if (-not $siteCodeRetrieved) {
-                $SiteCode = Read-Host -Prompt "Please enter the Site Code (3 alphanumeric characters)"
+                # Read into a separate variable: $SiteCode has [ValidatePattern], so assigning invalid input to it throws
+                $enteredSiteCode = Read-Host -Prompt "Please enter the Site Code (3 alphanumeric characters)"
 
-                if ($SiteCode -match '^[a-zA-Z0-9]{3}$') {
+                if ($enteredSiteCode -match '^[a-zA-Z0-9]{3}$') {
+                    $SiteCode = $enteredSiteCode
                     $siteCodeRetrieved = $true
                 }
                 else {
-                    Write-LogAndHost -Message ("Invalid Site Code entered: {0}" -f $SiteCode) -LogId $LogId -Severity 3
+                    Write-LogAndHost -Message ("Invalid Site Code entered: {0}" -f $enteredSiteCode) -LogId $LogId -Severity 3
                 }
             }
 
@@ -77,32 +87,48 @@ function Connect-SiteServer {
 
         # If the Site Code was not retrieved after the maximum attempts, throw an error
         if (-not $siteCodeRetrieved) {
-            Write-LogAndHost -Message ("Failed to retrieve or enter a valid Site Code after {0} attempts." -f $maxAttempts) -LogId $LogId -Severity 3
-
-            throw
+            $message = "Failed to retrieve or enter a valid Site Code after {0} attempts" -f $maxAttempts
+            Write-LogAndHost -Message $message -LogId $LogId -Severity 3
+            throw $message
         }
 
-        # Import the ConfigurationManager.psd1 module 
+        # Import the ConfigurationManager module
         try {
             if (-not (Get-Module ConfigurationManager)) {
-                Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" -Verbose:$false
+                if ($env:SMS_ADMIN_UI_PATH) {
+                    Import-Module "$($env:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" -Verbose:$false -ErrorAction Stop
+                }
+                else {
+                    Import-Module ConfigurationManager -Verbose:$false -ErrorAction Stop
+                }
             }
         }
         catch {
-            Write-LogAndHost -Message "Failed to import ConfigurationManager module: $($_.Exception.Message)" -LogId $LogId -Severity 3
-
-            throw
+            $message = "Failed to import the ConfigurationManager module: $($_.Exception.Message)"
+            Write-LogAndHost -Message $message -LogId $LogId -Severity 3
+            throw $message
         }
 
         # Connect to the site
         try {
-            Set-Location "$SiteCode`:"
-            Write-LogAndHost ("Connected to site: {0}" -f $SiteCode) -LogId $LogId -ForegroundColor Green
+
+            # Save the caller's location so it can be restored by Get-ScriptEnd
+            if (-not $global:Win32AppMigrationTool_OriginalLocation) {
+                $global:Win32AppMigrationTool_OriginalLocation = (Get-Location).Path
+            }
+
+            # Create the site drive if it does not exist (first import of the module on this computer)
+            if (-not (Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue)) {
+                New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName -Scope Global | Out-Null
+            }
+
+            Set-Location -Path "$SiteCode`:" -ErrorAction Stop
+            Write-LogAndHost -Message ("Connected to site: {0}" -f $SiteCode) -LogId $LogId -ForegroundColor Green
         }
         catch {
-            Write-LogAndHost -Message ("Failed to connect to site: {0}" -f $_.Exception.Message) -LogId $LogId -Severity 3
-            
-            throw
+            $message = "Failed to connect to site '{0}': {1}" -f $SiteCode, $_.Exception.Message
+            Write-LogAndHost -Message $message -LogId $LogId -Severity 3
+            throw $message
         }
     }
 }

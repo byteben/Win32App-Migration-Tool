@@ -1,44 +1,44 @@
-Non-Commercial Software License Agreement
+Win32 App Migration Tool - Non-Commercial Licence
 
-Version 1.0
+Version 2.0. Applies to version 3.0.06 of the Software and later.
 
 1. Definitions
-	•	'Software': Refers to [Win32 App Migration Tool], including all associated files, documentation, updates, and modifications.
-	•	'Licensor': Ben Whitmore.
-	•	'Licensee': Any individual or entity that uses the Software under the terms of this Agreement.
+	•	"Software": the Win32 App Migration Tool, including all associated files, documentation, updates and modifications.
+	•	"Licensor": Ben Whitmore.
+	•	"You": any individual or organisation that uses the Software.
+	•	"Commercial Use": any use of the Software by or on behalf of a business or other organisation, or any use for which You or anyone else is paid. This includes, but is not limited to:
+		-	using the Software in, or to manage, an organisation's devices, applications or environments, including production, test and pilot environments;
+		-	using the Software to provide services to clients or customers, including consultancy and managed services;
+		-	selling, licensing, renting or hosting the Software, or including the Software or any part of it in a product or service.
 
-2. Grant of License
+2. Permitted Use
+	•	You may use, copy and modify the Software for personal, non-commercial purposes only, such as learning, research and testing in Your own lab.
 
-The Licensor grants the Licensee a non-exclusive, non-transferable, royalty-free license to use, copy, modify, and distribute the Software, subject to the following conditions:
-
-3. Non-Commercial Use
-	•	The Software may only be used for non-commercial purposes.
-	•	Commercial use, including but not limited to selling, licensing, or integrating the Software into a commercial product, is strictly prohibited without prior written consent from the Licensor.
+3. Commercial Use
+	•	The Software is not licensed for Commercial Use. No licence is granted for Commercial Use under this Agreement.
 
 4. Redistribution
-	•	Redistributions of the Software must retain this License Agreement.
-	•	Sharing the Code/Software in original or modified form, even for the purpose of collaborative non-commercial enhancements, is not permitted
-	•	Redistributions in binary form must reproduce this License Agreement in the associated documentation or other materials provided with the distribution.
-	•	You may not share or distribute modified versions of the Code/Software with third parties, even for non-commercial collaborations or feature additions, without explicit permission from the Licensor
+	•	You may not distribute, publish or share the Software, or any modified version of it, with anyone else, in source or binary form.
 
 5. Modifications
-	•	Modifications to the Software are permitted for non-commercial purposes.
-	•	Modified versions must be clearly marked as such and must not misrepresent the origin of the Software.
+	•	You may modify the Software for Your own personal, non-commercial use.
+	•	Modified versions must not misrepresent the origin of the Software.
 
 6. Intellectual Property Rights
-	•	The Licensor retains all rights, title, and interest in and to the Software.
-	•	This Agreement does not grant the Licensee any rights to trademarks or service marks of the Licensor.
+	•	The Licensor retains all rights, title and interest in and to the Software.
+	•	This Agreement does not grant You any rights to the Licensor's trademarks or service marks.
 
 7. Disclaimer of Warranty
-	•	The Software is provided “as is,” without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
+	•	The Software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement.
+	•	You use the Software at Your own risk. You are responsible for testing the Software and checking its results before relying on them.
 
 8. Limitation of Liability
-	•	In no event shall the Licensor be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the Software or the use or other dealings in the Software.
+	•	In no event shall the Licensor or any contributor be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the Software or the use of or other dealings in the Software.
 
 9. Termination
-	•	This License Agreement is effective until terminated.
-	•	The Licensee may terminate it at any time by destroying all copies of the Software.
-	•	This Agreement will terminate immediately, without notice from the Licensor, if the Licensee fails to comply with any provision herein.
+	•	This Agreement is effective until terminated.
+	•	You may terminate it at any time by destroying all copies of the Software.
+	•	This Agreement terminates immediately, without notice from the Licensor, if You fail to comply with any of its terms.
 
-10. Governing Law
-	•	This Agreement shall be governed by and construed in accordance with the laws of [Your Country/State], without regard to its conflict of law principles.
+10. Earlier Versions
+	•	Versions of the Software released under other licence terms remain under the terms they were released with. Versions 2.0.20 to 3.0.03 were released under the GNU General Public License.

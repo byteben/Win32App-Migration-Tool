@@ -1,7 +1,7 @@
 <#
 .Synopsis
 Created on:   03/04/2024
-Updated on:   01/01/2025
+Updated on:   16/11/2026
 Created by:   Ben Whitmore
 Filename:     Get-ClientCertificate.ps1
 
@@ -25,22 +25,16 @@ function Get-ClientCertificate {
     
     process {
 
-        # Define the certificate stores to search
-        $stores = @('CurrentUser', 'LocalMachine') 
-        foreach ($certStore in $stores) {
-
-            # Get the certificate from the certificate store
-            $result = Get-Item -Path "Cert:\$($certStore)\My\$($thumbprint)"
-            if (-not $result) {
-                Write-LogAndHost -Message ("Certificate with thumbprint '{0}' was not found in the '{1}' certificate store" -f $thumbprint, $certStore) -LogId $LogId -Severity 2
-
-                return $false
-            }
-            else {
-                Write-LogAndHost -Message ("Certificate with thumbprint '{0}' was found in the '{1}' certificate store with the subject '{2}'" -f $thumbprint, $certStore, $result.Subject) -LogId $LogId -ForegroundColor Green
-
+        # Search both certificate stores and return the certificate from the first store that has it
+        foreach ($certStore in @('CurrentUser', 'LocalMachine')) {
+            $result = Get-Item -Path "Cert:\$($certStore)\My\$($Thumbprint)" -ErrorAction SilentlyContinue
+            if ($result) {
+                Write-LogAndHost -Message ("Certificate with thumbprint '{0}' was found in the '{1}' certificate store with the subject '{2}'" -f $Thumbprint, $certStore, $result.Subject) -LogId $LogId -ForegroundColor Green
                 return $result
             }
+            Write-LogAndHost -Message ("Certificate with thumbprint '{0}' was not found in the '{1}' certificate store" -f $Thumbprint, $certStore) -LogId $LogId -Severity 2
         }
+
+        return $null
     }
 }

@@ -173,7 +173,7 @@ function Connect-MgGraphCustom {
         }
 
         # Convert the parameters to a string for logging
-        $connectMgParamsString = 'Connect-MgGraph ' + ($connectMgParams.Keys | ForEach-Object { '-{0} {1}' -f $_, $connectMgParams.$_ }) -join ' '
+        $connectMgParamsString = 'Connect-MgGraph ' + ($connectMgParams.Keys | ForEach-Object { '-{0} {1}' -f $_, (@($connectMgParams.$_) -join ' ') }) -join ' '
         Write-LogAndHost -Message ("Connecting to Microsoft Graph with the following parameters: {0}" -f $connectMgParamsString) -LogId $LogId -ForegroundColor Cyan
             
         try {
