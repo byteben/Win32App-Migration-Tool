@@ -7,7 +7,7 @@
     ModuleVersion     = '3.0.06'
    
     # Supported PSEditions
-    # CompatiblePSEditions = @()
+    CompatiblePSEditions = @('Desktop', 'Core')
 
     # ID used to uniquely identify this module
     GUID              = '0d9d68b0-02da-4209-b1e2-7fa64124b45f'
@@ -67,7 +67,7 @@
     CmdletsToExport   = @()
 
     # Variables to export from this module
-    VariablesToExport = '*'
+    VariablesToExport = @()
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
     AliasesToExport   = @()
@@ -87,7 +87,7 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags = @('Win32AppMigrationTool', 'New-Win32App', 'Intune', 'Migrate')
+            Tags = @('Win32AppMigrationTool', 'New-Win32App', 'Intune', 'Migrate', 'ConfigMgr', 'SCCM', 'Win32App', 'PSEdition_Desktop', 'PSEdition_Core', 'Windows')
 
             #Prerelease = 'beta'
 
@@ -101,7 +101,7 @@
             # IconUri = ''
 
             # ReleaseNotes of this module
-            # ReleaseNotes = ''
+            ReleaseNotes = 'https://github.com/byteben/Win32App-Migration-Tool/blob/main/Release_Notes.md'
 
             # External dependent modules of this module
             # ExternalModuleDependencies = '$ENV:SMS_ADMIN_UI_PATH\..\ConfigurationManager.psd1'
